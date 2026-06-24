@@ -122,37 +122,22 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
-    authDomain: "transapp-prueba.firebaseapp.com",
-    databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
-    projectId: "transapp-prueba",
-    storageBucket: "transapp-prueba.firebasestorage.app",
-    messagingSenderId: "1020351679207",
-    appId: "1:1020351679207:web:75bff846e26cf60e263042"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
+<script>
   let map = null;
   let marker = null;
   let sendCount = 0;
 
   function log(msg) {
-    const el = document.getElementById('log');
-    const line = document.createElement('div');
-    const t = new Date().toLocaleTimeString();
+    var el = document.getElementById('log');
+    var line = document.createElement('div');
+    var t = new Date().toLocaleTimeString();
     line.textContent = '[' + t + '] ' + msg;
     el.prepend(line);
   }
 
   function setStatus(cls, text) {
-    const el = document.getElementById('status');
+    var el = document.getElementById('status');
     el.className = cls;
     document.getElementById('status-text').textContent = text;
   }
@@ -167,11 +152,11 @@
     }).addTo(map);
   }
 
-  async function onPosition(pos) {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const acc = Math.round(pos.coords.accuracy);
-    const vehicleId = document.getElementById('vehicle-id').value.trim() || 'vehiculo1';
+  function onPosition(pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+    var acc = Math.round(pos.coords.accuracy);
+    var vehicleId = document.getElementById('vehicle-id').value.trim() || 'vehiculo1';
 
     document.getElementById('lat').textContent = lat.toFixed(6);
     document.getElementById('lng').textContent = lng.toFixed(6);
@@ -180,26 +165,78 @@
     if (!map) { initMap(lat, lng); }
     else { marker.setLatLng([lat, lng]); map.panTo([lat, lng]); }
 
-    try {
-      await set(ref(db, 'vehiculos/' + vehicleId), {
-        lat: lat,
-        lng: lng,
-        accuracy: acc,
-        timestamp: Date.now()
-      });
+    log('GPS leido -> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ' (\u00b1' + acc + 'm)');
+
+    if (!window.firebaseReady) {
+      setStatus('st-error', 'GPS ok, pero Firebase no cargo todavia');
+      log('Aviso: Firebase no esta listo, no se pudo subir este dato.');
+      return;
+    }
+
+    window.setFn(window.refFn(window.dbInstance, 'vehiculos/' + vehicleId), {
+      lat: lat, lng: lng, accuracy: acc, timestamp: Date.now()
+    }).then(function () {
       sendCount++;
       document.getElementById('count').textContent = sendCount;
       setStatus('st-active', 'Transmitiendo a Firebase en vivo');
-      log('Enviado #' + sendCount + ' -> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ' (\u00b1' + acc + 'm)');
-    } catch (err) {
+      log('Enviado #' + sendCount + ' a Firebase.');
+    }).catch(function (err) {
       setStatus('st-error', 'Error subiendo a Firebase');
       log('Error de Firebase: ' + err.message);
-    }
+    });
   }
 
   function onError(err) {
     setStatus('st-error', 'Error de GPS: ' + err.message);
-    log('Error de geolocalizacion: ' + err.message);
+    log('Error de geolocalizacion (codigo ' + err.code + '): ' + err.message);
   }
 
-  document.getElementById('start-btn').addEventListener('click', function() {
+  document.getElementById('start-btn').addEventListener('click', function () {
+    log('Boton presionado.');
+    if (!navigator.geolocation) {
+      setStatus('st-error', 'Este navegador no soporta geolocalizacion');
+      log('navigator.geolocation no existe en este navegador.');
+      return;
+    }
+    this.disabled = true;
+    this.textContent = 'Transmitiendo...';
+    setStatus('st-waiting', 'Solicitando permiso al sistema...');
+    log('Solicitando permiso de ubicacion...');
+
+    navigator.geolocation.watchPosition(onPosition, onError, {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 15000
+    });
+  });
+
+  log('Pagina cargada. Esperando Firebase...');
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
+    authDomain: "transapp-prueba.firebaseapp.com",
+    databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
+    projectId: "transapp-prueba",
+    storageBucket: "transapp-prueba.firebasestorage.app",
+    messagingSenderId: "1020351679207",
+    appId: "1:1020351679207:web:75bff846e26cf60e263042"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    window.dbInstance = getDatabase(app);
+    window.refFn = ref;
+    window.setFn = set;
+    window.firebaseReady = true;
+    log('Firebase listo.');
+  } catch (e) {
+    log('Error inicializando Firebase: ' + e.message);
+  }
+</script>
+</body>
+</html>
