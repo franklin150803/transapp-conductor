@@ -115,7 +115,7 @@
   </div>
 
   <p class="note">
-    Cada 5 segundos esto vuelve a leer tu GPS y sube
+    Cada vez que tu celular detecta un cambio de posicion, esto sube
     lat/lng/hora a Firebase bajo el ID de vehiculo indicado arriba.
   </p>
 
@@ -204,18 +204,10 @@
     log('Solicitando permiso de ubicacion...');
 
     navigator.geolocation.watchPosition(onPosition, onError, {
-      enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 15000
+      enableHighAccuracy: false,
+      maximumAge: 5000,
+      timeout: 20000
     });
-
-    setInterval(function () {
-      navigator.geolocation.getCurrentPosition(onPosition, onError, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 15000
-      });
-    }, 5000);
   });
 
   log('Pagina cargada. Esperando Firebase...');
