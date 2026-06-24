@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransApp &mdash; Conductor de prueba</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #0E4D45;
+    color: #222;
+    min-height: 100vh;
+  }
+  header { padding: 18px 16px 14px; text-align: center; color: #ffffff; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header p { font-size: 12.5px; color: #cfe6e0; margin-top: 2px; }
+
+  .panel {
+    background: #ffffff;
+    border-radius: 16px 16px 0 0;
+    min-height: calc(100vh - 70px);
+    padding: 18px 16px 28px;
+  }
+
+  #status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
+  }
+  .st-waiting { background: #fff4dd; color: #8a5a00; }
+  .st-active  { background: #e1f5ee; color: #0F6E56; }
+  .st-error   { background: #fbeded; color: #a32d2d; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .st-active .dot { animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  #map { width: 100%; height: 240px; border-radius: 12px; margin-bottom: 14px; background: #eee; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: #6b6b6b; margin-bottom: 5px; }
+  .field input {
+    width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
+    font-size: 15px;
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .card { background: #f4f8f7; border-radius: 10px; padding: 10px 12px; }
+  .card .label { font-size: 11px; color: #6b6b6b; margin-bottom: 3px; }
+  .card .value { font-size: 16px; font-weight: 600; color: #1a1a1a; font-family: 'SF Mono', 'Consolas', monospace; }
+
+  button {
+    width: 100%; border: none; background: #0E4D45; color: white;
+    font-size: 15px; font-weight: 600; padding: 14px; border-radius: 12px; margin-top: 4px;
+  }
+  button:active { opacity: 0.85; }
+  button:disabled { background: #b9c9c5; }
+
+  .note { font-size: 11.5px; color: #888; text-align: center; margin-top: 14px; line-height: 1.5; }
+
+  .log {
+    margin-top: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 10px;
+    padding: 10px 12px; max-height: 110px; overflow-y: auto;
+    font-family: 'SF Mono', 'Consolas', monospace; font-size: 10.5px; color: #555;
+  }
+  .log div { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TransApp &middot; Conductor (prueba)</h1>
+  <p>Esto envia tu ubicacion real a la base de datos</p>
+</header>
+
+<div class="panel">
+
+  <div class="field">
+    <label>ID del vehiculo</label>
+    <input type="text" id="vehicle-id" value="ruta07-carro1" />
+  </div>
+
+  <div id="status" class="st-waiting">
+    <span class="dot"></span>
+    <span id="status-text">Esperando permiso de ubicacion&hellip;</span>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Latitud</div>
+      <div class="value" id="lat">&mdash;</div>
+    </div>
+    <div class="card">
+      <div class="label">Longitud</div>
+      <div class="value" id="lng">&mdash;</div>
+    </div>
+    <div class="card">
+      <div class="label">Precision</div>
+      <div class="value" id="acc">&mdash;</div>
+    </div>
+    <div class="card">
+      <div class="label">Envios realizados</div>
+      <div class="value" id="count">0</div>
+    </div>
+  </div>
+
+  <button id="start-btn">Activar GPS y transmitir</button>
+
+  <div class="log" id="log">
+    <div>Listo. Presiona el boton para iniciar.</div>
+  </div>
+
+  <p class="note">
+    Cada vez que tu celular detecta un cambio de posicion, esto sube
+    lat/lng/hora a Firebase bajo el ID de vehiculo indicado arriba.
+  </p>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
+    authDomain: "transapp-prueba.firebaseapp.com",
+    databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
+    projectId: "transapp-prueba",
+    storageBucket: "transapp-prueba.firebasestorage.app",
+    messagingSenderId: "1020351679207",
+    appId: "1:1020351679207:web:75bff846e26cf60e263042"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let map = null;
+  let marker = null;
+  let sendCount = 0;
+
+  function log(msg) {
+    const el = document.getElementById('log');
+    const line = document.createElement('div');
+    const t = new Date().toLocaleTimeString();
+    line.textContent = '[' + t + '] ' + msg;
+    el.prepend(line);
+  }
+
+  function setStatus(cls, text) {
+    const el = document.getElementById('status');
+    el.className = cls;
+    document.getElementById('status-text').textContent = text;
+  }
+
+  function initMap(lat, lng) {
+    map = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    marker = L.circleMarker([lat, lng], {
+      radius: 9, color: '#0E4D45', fillColor: '#0E4D45', fillOpacity: 0.9, weight: 2
+    }).addTo(map);
+  }
+
+  async function onPosition(pos) {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const acc = Math.round(pos.coords.accuracy);
+    const vehicleId = document.getElementById('vehicle-id').value.trim() || 'vehiculo1';
+
+    document.getElementById('lat').textContent = lat.toFixed(6);
+    document.getElementById('lng').textContent = lng.toFixed(6);
+    document.getElementById('acc').textContent = '\u00b1' + acc + ' m';
+
+    if (!map) { initMap(lat, lng); }
+    else { marker.setLatLng([lat, lng]); map.panTo([lat, lng]); }
+
+    try {
+      await set(ref(db, 'vehiculos/' + vehicleId), {
+        lat: lat,
+        lng: lng,
+        accuracy: acc,
+        timestamp: Date.now()
+      });
+      sendCount++;
+      document.getElementById('count').textContent = sendCount;
+      setStatus('st-active', 'Transmitiendo a Firebase en vivo');
+      log('Enviado #' + sendCount + ' -> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ' (\u00b1' + acc + 'm)');
+    } catch (err) {
+      setStatus('st-error', 'Error subiendo a Firebase');
+      log('Error de Firebase: ' + err.message);
+    }
+  }
+
+  function onError(err) {
+    setStatus('st-error', 'Error de GPS: ' + err.message);
+    log('Error de geolocalizacion: ' + err.message);
+  }
+
+  document.getElementById('start-btn').addEventListener('click', function() {
