@@ -1,242 +1,1800 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TransApp &mdash; Conductor de prueba</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-    background: #0E4D45;
-    color: #222;
-    min-height: 100vh;
-  }
-  header { padding: 18px 16px 14px; text-align: center; color: #ffffff; }
-  header h1 { font-size: 18px; font-weight: 600; }
-  header p { font-size: 12.5px; color: #cfe6e0; margin-top: 2px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TransApp · Transporte en Tiempo Real</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  .panel {
-    background: #ffffff;
-    border-radius: 16px 16px 0 0;
-    min-height: calc(100vh - 70px);
-    padding: 18px 16px 28px;
-  }
+        :root {
+            --primary: #0d9488;
+            --primary-light: #14b8a6;
+            --primary-dark: #0f766e;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-2: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
 
-  #status {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px; font-weight: 600;
-    padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
-  }
-  .st-waiting { background: #fff4dd; color: #8a5a00; }
-  .st-active  { background: #e1f5ee; color: #0F6E56; }
-  .st-error   { background: #fbeded; color: #a32d2d; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-  .st-active .dot { animation: pulse 1.4s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+            padding: 16px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
 
-  #map { width: 100%; height: 240px; border-radius: 12px; margin-bottom: 14px; background: #eee; }
+        .app-header h1 {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
 
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; color: #6b6b6b; margin-bottom: 5px; }
-  .field input {
-    width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
-    font-size: 15px;
-  }
+        .app-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
 
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .card { background: #f4f8f7; border-radius: 10px; padding: 10px 12px; }
-  .card .label { font-size: 11px; color: #6b6b6b; margin-bottom: 3px; }
-  .card .value { font-size: 16px; font-weight: 600; color: #1a1a1a; font-family: 'SF Mono', 'Consolas', monospace; }
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 72px;
+            z-index: 999;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
 
-  button {
-    width: 100%; border: none; background: #0E4D45; color: white;
-    font-size: 15px; font-weight: 600; padding: 14px; border-radius: 12px; margin-top: 4px;
-  }
-  button:active { opacity: 0.85; }
-  button:disabled { background: #b9c9c5; }
+        .tab-nav::-webkit-scrollbar {
+            display: none;
+        }
 
-  .note { font-size: 11.5px; color: #888; text-align: center; margin-top: 14px; line-height: 1.5; }
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 14px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
 
-  .log {
-    margin-top: 14px; background: #fafafa; border: 1px solid #eee; border-radius: 10px;
-    padding: 10px 12px; max-height: 110px; overflow-y: auto;
-    font-family: 'SF Mono', 'Consolas', monospace; font-size: 10.5px; color: #555;
-  }
-  .log div { margin-bottom: 3px; }
-</style>
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: var(--surface-2);
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Passenger View */
+        .search-container {
+            padding: 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            background: var(--surface-2);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+            box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+        }
+
+        /* Company List */
+        .company-list {
+            padding: 12px 16px;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+
+        .company-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .company-card:active {
+            transform: scale(0.98);
+        }
+
+        .company-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(20, 184, 166, 0.02));
+            box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+        }
+
+        .company-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .company-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .company-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .company-route {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Map Container */
+        .map-wrapper {
+            position: relative;
+            height: calc(100vh - 280px);
+            min-height: 300px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Vehicle Panel */
+        .vehicle-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-radius: 24px 24px 0 0;
+            padding: 20px;
+            z-index: 999;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .vehicle-panel.show {
+            transform: translateY(0);
+        }
+
+        .vehicle-panel-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+
+        .vehicle-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .vehicle-panel-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .vehicle-panel-close {
+            background: var(--surface-2);
+            border: none;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .vehicle-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .vehicle-info-item {
+            background: var(--surface-2);
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .vehicle-info-item label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .vehicle-info-item value {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 4px;
+        }
+
+        /* Status indicators */
+        .status-moving {
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-stopped {
+            color: var(--warning);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot-small {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot-small.moving {
+            background: var(--success);
+        }
+
+        .status-dot-small.stopped {
+            background: var(--warning);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Driver View */
+        .driver-container {
+            padding: 20px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .driver-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .driver-card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .driver-card > p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--surface-2);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        /* Driver Active */
+        .driver-active {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .driver-active.show {
+            display: flex;
+        }
+
+        .gps-ring {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: ringPulse 2s infinite;
+        }
+
+        .gps-ring::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            border: 2px solid rgba(13, 148, 136, 0.3);
+        }
+
+        @keyframes ringPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.2); }
+            50% { box-shadow: 0 0 0 20px rgba(13, 148, 136, 0); }
+        }
+
+        .gps-ring .status-text {
+            font-size: 0.75rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .gps-ring .status-icon {
+            font-size: 2.5rem;
+            margin: 4px 0;
+        }
+
+        .gps-ring .gps-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .gps-info-grid {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 100%;
+            box-shadow: var(--shadow);
+        }
+
+        .gps-info-item {
+            text-align: center;
+        }
+
+        .gps-info-item label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .gps-info-item value {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 6px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .accuracy-good {
+            color: var(--success) !important;
+        }
+
+        .accuracy-medium {
+            color: var(--warning) !important;
+        }
+
+        .accuracy-bad {
+            color: var(--danger) !important;
+        }
+
+        /* Map Preview for Driver */
+        .map-preview {
+            height: 200px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        #driverMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Log Console */
+        .log-console {
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+
+        .log-entry:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Admin View */
+        .admin-container {
+            padding: 20px 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .admin-panel {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .admin-panel h3 {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .vehicle-list-admin {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .vehicle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: var(--surface-2);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .vehicle-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .vehicle-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .vehicle-item-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .vehicle-item-plate {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .vehicle-item-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .vehicle-item-status.online {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .vehicle-item-status.offline {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            box-shadow: var(--shadow-xl);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .toast-icon.success {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .toast-icon.info {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Leaflet Custom */
+        .vehicle-marker {
+            background: none;
+            border: none;
+        }
+
+        .vehicle-marker-inner {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            animation: markerBounce 2s infinite;
+        }
+
+        @keyframes markerBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border-radius: 16px !important;
+            box-shadow: var(--shadow-xl) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: var(--surface) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 12px 16px !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .popup-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .popup-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .popup-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .leaflet-control-zoom a {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+
+        .leaflet-control-attribution {
+            background: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.65rem !important;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .app-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .map-wrapper {
+                height: calc(100vh - 300px);
+            }
+
+            .vehicle-panel {
+                max-width: 500px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100%);
+            }
+
+            .vehicle-panel.show {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .gps-info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .vehicle-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Header -->
+    <header class="app-header">
+        <h1>TransApp</h1>
+        <p>Transporte público en tiempo real</p>
+    </header>
 
-<header>
-  <h1>TransApp &middot; Conductor (prueba)</h1>
-  <p>Esto envia tu ubicacion real a la base de datos</p>
-</header>
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchView('passenger', this)">
+            <span>🚌</span> Pasajero
+        </button>
+        <button class="tab-btn" onclick="switchView('driver', this)">
+            <span>📱</span> Conductor
+        </button>
+        <button class="tab-btn" onclick="switchView('admin', this)">
+            <span>⚙️</span> Admin
+        </button>
+    </nav>
 
-<div class="panel">
-
-  <div class="field">
-    <label>ID del vehiculo</label>
-    <input type="text" id="vehicle-id" value="ruta07-carro1" />
-  </div>
-
-  <div id="status" class="st-waiting">
-    <span class="dot"></span>
-    <span id="status-text">Esperando permiso de ubicacion&hellip;</span>
-  </div>
-
-  <div id="map"></div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="label">Latitud</div>
-      <div class="value" id="lat">&mdash;</div>
+    <!-- Passenger View -->
+    <div class="view active" id="view-passenger">
+        <div class="search-container">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Buscar empresa de transporte..." oninput="filterCompanies()">
+            </div>
+        </div>
+        <div class="company-list" id="companyList"></div>
+        <div class="map-wrapper">
+            <div id="map"></div>
+        </div>
+        <div class="vehicle-panel" id="vehiclePanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title" id="vehiclePanelTitle">Vehículo</span>
+                <button class="vehicle-panel-close" onclick="closeVehiclePanel()">×</button>
+            </div>
+            <div class="vehicle-info-grid">
+                <div class="vehicle-info-item">
+                    <label>Empresa</label>
+                    <value id="vpCompany">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Placa</label>
+                    <value id="vpPlate">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Velocidad</label>
+                    <value id="vpSpeed">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Estado</label>
+                    <value id="vpStatus">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Última actualización</label>
+                    <value id="vpUpdate">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Precisión GPS</label>
+                    <value id="vpAccuracy">-</value>
+                </div>
+            </div>
+            <div class="verified-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                Empresa Verificada
+            </div>
+        </div>
     </div>
-    <div class="card">
-      <div class="label">Longitud</div>
-      <div class="value" id="lng">&mdash;</div>
+
+    <!-- Driver View -->
+    <div class="view" id="view-driver">
+        <div class="driver-container">
+            <div class="driver-card" id="driverLogin">
+                <h2>🚐 Modo Conductor</h2>
+                <p>Transmite tu ubicación en tiempo real a los pasajeros</p>
+                <div class="form-group">
+                    <label>ID del vehículo (ej: empresa001-vehiculo01)</label>
+                    <input type="text" id="vehicleId" placeholder="empresa001-vehiculo01">
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <select id="driverCompany">
+                        <option value="">Seleccionar empresa...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del conductor</label>
+                    <input type="text" id="driverName" placeholder="Tu nombre">
+                </div>
+                <button class="btn btn-primary" onclick="startDriverMode()">
+                    🚀 Iniciar transmisión GPS
+                </button>
+            </div>
+
+            <div class="driver-active" id="driverActive">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    Transmitiendo a Firebase en vivo
+                </div>
+
+                <div class="map-preview">
+                    <div id="driverMap"></div>
+                </div>
+
+                <div class="gps-ring">
+                    <span class="status-text">EN VIVO</span>
+                    <span class="status-icon"></span>
+                    <span class="gps-text" id="gpsInterval">Cada 5s</span>
+                </div>
+
+                <div class="gps-info-grid">
+                    <div class="gps-info-item">
+                        <label>Latitud</label>
+                        <value id="driverLat">-11.9819</value>
+                    </div>
+                    <div class="gps-info-item">
+                        <label>Longitud</label>
+                        <value id="driverLng">-77.1032</value>
+                    </div>
+                    <div class="gps-info-item">
+                        <label>Velocidad</label>
+                        <value id="driverSpeed">0 km/h</value>
+                    </div>
+                    <div class="gps-info-item">
+                        <label>Precisión</label>
+                        <value id="driverAccuracy">±2000 m</value>
+                    </div>
+                    <div class="gps-info-item">
+                        <label>Estado</label>
+                        <value id="driverStatus">Detenido</value>
+                    </div>
+                    <div class="gps-info-item">
+                        <label>Envíos</label>
+                        <value id="driverSent">0</value>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger" onclick="stopDriverMode()">
+                    ⏹ Detener transmisión
+                </button>
+
+                <div class="log-console" id="logConsole">
+                    <div class="log-entry">Sistema listo. Esperando inicio...</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-      <div class="label">Precision</div>
-      <div class="value" id="acc">&mdash;</div>
+
+    <!-- Admin View -->
+    <div class="view" id="view-admin">
+        <div class="admin-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statCompanies">3</div>
+                    <div class="stat-label">Empresas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statVehicles">6</div>
+                    <div class="stat-label">Vehículos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statOnline">3</div>
+                    <div class="stat-label">En línea</div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                <h3>🏢 Registrar Nueva Empresa</h3>
+                <div class="form-group">
+                    <label>Nombre de la empresa</label>
+                    <input type="text" id="regCompanyName" placeholder="Ej: Transportes Lima Express">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>RUC</label>
+                        <input type="text" id="regCompanyRuc" placeholder="20XXXXXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="regCompanyPhone" placeholder="987654321">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ruta (origen → destino)</label>
+                    <input type="text" id="regCompanyRoute" placeholder="Ej: San Juan de Lurigancho → Centro de Lima">
+                </div>
+                <button class="btn btn-primary" onclick="registerCompany()">
+                    ✅ Registrar Empresa
+                </button>
+            </div>
+
+            <div class="admin-panel">
+                <h3>🚌 Vehículos Registrados</h3>
+                <div class="vehicle-list-admin" id="vehicleListAdmin"></div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-      <div class="label">Envios realizados</div>
-      <div class="value" id="count">0</div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-icon success" id="toastIcon">✓</div>
+        <span class="toast-message" id="toastMessage">Operación exitosa</span>
     </div>
-  </div>
 
-  <button id="start-btn">Activar GPS y transmitir</button>
+    <script>
+        // ==================== DATA STRUCTURE ====================
+        // Estructura jerárquica: empresa > vehículos
+        let companies = [
+            {
+                id: "empresa001",
+                name: "Empresa Los Incas",
+                ruc: "20512345678",
+                route: "San Juan de Lurigancho → Centro de Lima",
+                routeShort: "SJL → Centro",
+                phone: "987654321",
+                verified: true,
+                color: "#0d9488",
+                vehicles: [
+                    { id: "empresa001-vehiculo01", plate: "ABC-123", driver: "Carlos M.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
+                    { id: "empresa001-vehiculo02", plate: "DEF-456", driver: "Pedro L.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
+                ],
+                routePoints: [
+                    [-12.0200, -77.0100],
+                    [-12.0250, -77.0150],
+                    [-12.0300, -77.0200],
+                    [-12.0350, -77.0250],
+                    [-12.0400, -77.0300],
+                    [-12.0430, -77.0350],
+                    [-12.0464, -77.0428]
+                ]
+            },
+            {
+                id: "empresa002",
+                name: "Transportes El Sol",
+                ruc: "20598765432",
+                route: "Villa El Salvador → Miraflores",
+                routeShort: "VES → Miraflores",
+                phone: "912345678",
+                verified: true,
+                color: "#f59e0b",
+                vehicles: [
+                    { id: "empresa002-vehiculo01", plate: "GHI-789", driver: "Miguel R.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
+                    { id: "empresa002-vehiculo02", plate: "JKL-012", driver: "José T.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
+                ],
+                routePoints: [
+                    [-12.1900, -76.9500],
+                    [-12.1700, -76.9600],
+                    [-12.1500, -76.9700],
+                    [-12.1300, -76.9800],
+                    [-12.1100, -76.9900],
+                    [-12.0900, -77.0100],
+                    [-12.0750, -77.0270]
+                ]
+            },
+            {
+                id: "empresa003",
+                name: "Lima Express S.A.C.",
+                ruc: "20611223344",
+                route: "Comas → Barranco",
+                routeShort: "Comas → Barranco",
+                phone: "955667788",
+                verified: true,
+                color: "#6366f1",
+                vehicles: [
+                    { id: "empresa003-vehiculo01", plate: "MNO-345", driver: "Luis A.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
+                    { id: "empresa003-vehiculo02", plate: "PQR-678", driver: "Andrés G.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
+                ],
+                routePoints: [
+                    [-11.9200, -77.0600],
+                    [-11.9400, -77.0550],
+                    [-11.9600, -77.0500],
+                    [-11.9800, -77.0450],
+                    [-12.0000, -77.0400],
+                    [-12.0200, -77.0350],
+                    [-12.0400, -77.0300],
+                    [-12.0600, -77.0280],
+                    [-12.0800, -77.0250],
+                    [-12.1000, -77.0220]
+                ]
+            }
+        ];
 
-  <div class="log" id="log">
-    <div>Listo. Presiona el boton para iniciar.</div>
-  </div>
+        let selectedCompanyId = null;
+        let map = null;
+        let driverMap = null;
+        let vehicleMarkers = {};
+        let routePolylines = {};
+        let driverInterval = null;
+        let simulationInterval = null;
+        let vehiclePositions = {};
+        let vehicleProgress = {};
+        let packetsSent = 0;
+        let driverMarker = null;
+        let driverStartTime = null;
 
-  <p class="note">
-    Cada vez que tu celular detecta un cambio de posicion, esto sube
-    lat/lng/hora a Firebase bajo el ID de vehiculo indicado arriba.
-  </p>
+        // ==================== INITIALIZATION ====================
+        function init() {
+            initMap();
+            renderCompanyList();
+            renderAdminVehicleList();
+            populateDriverSelects();
+            startSimulation();
+            updateStats();
+            // Actualizar "última actualización" cada segundo
+            setInterval(updateLastUpdateLabels, 1000);
+        }
 
-</div>
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: true
+            }).setView([-12.0464, -77.0428], 12);
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
 
-<script>
-  let map = null;
-  let marker = null;
-  let sendCount = 0;
+            companies.forEach(company => showRoute(company));
+        }
 
-  function log(msg) {
-    var el = document.getElementById('log');
-    var line = document.createElement('div');
-    var t = new Date().toLocaleTimeString();
-    line.textContent = '[' + t + '] ' + msg;
-    el.prepend(line);
-  }
+        // ==================== MAP FUNCTIONS ====================
+        function showRoute(company) {
+            if (routePolylines[company.id]) {
+                map.removeLayer(routePolylines[company.id]);
+            }
 
-  function setStatus(cls, text) {
-    var el = document.getElementById('status');
-    el.className = cls;
-    document.getElementById('status-text').textContent = text;
-  }
+            const polyline = L.polyline(company.routePoints, {
+                color: company.color,
+                weight: 4,
+                opacity: 0.6,
+                dashArray: '10, 8',
+                smoothFactor: 1
+            }).addTo(map);
 
-  function initMap(lat, lng) {
-    map = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18, attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    marker = L.circleMarker([lat, lng], {
-      radius: 9, color: '#0E4D45', fillColor: '#0E4D45', fillOpacity: 0.9, weight: 2
-    }).addTo(map);
-  }
+            routePolylines[company.id] = polyline;
+        }
 
-  function onPosition(pos) {
-    var lat = pos.coords.latitude;
-    var lng = pos.coords.longitude;
-    var acc = Math.round(pos.coords.accuracy);
-    var vehicleId = document.getElementById('vehicle-id').value.trim() || 'vehiculo1';
+        function createVehicleIcon(color) {
+            return L.divIcon({
+                className: 'vehicle-marker',
+                html: `<div class="vehicle-marker-inner" style="background: linear-gradient(135deg, ${color}, ${color}dd);"></div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+        }
 
-    document.getElementById('lat').textContent = lat.toFixed(6);
-    document.getElementById('lng').textContent = lng.toFixed(6);
-    document.getElementById('acc').textContent = '\u00b1' + acc + ' m';
+        function placeVehicleOnMap(vehicle, company, lat, lng) {
+            const markerId = vehicle.id;
 
-    if (!map) { initMap(lat, lng); }
-    else { marker.setLatLng([lat, lng]); map.panTo([lat, lng]); }
+            if (vehicleMarkers[markerId]) {
+                vehicleMarkers[markerId].setLatLng([lat, lng]);
+            } else {
+                const marker = L.marker([lat, lng], {
+                    icon: createVehicleIcon(company.color)
+                }).addTo(map);
 
-    log('GPS leido -> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ' (\u00b1' + acc + 'm)');
+                marker.bindPopup(`
+                    <div class="popup-title">🚌 ${vehicle.plate}</div>
+                    <div class="popup-info">Conductor: ${vehicle.driver}</div>
+                    <div class="popup-info">Empresa: ${company.name}</div>
+                    <div class="popup-info">Velocidad: ${vehicle.speed} km/h</div>
+                    <div class="popup-badge">✓ Empresa Verificada</div>
+                `);
 
-    if (!window.firebaseReady) {
-      setStatus('st-error', 'GPS ok, pero Firebase no cargo todavia');
-      log('Aviso: Firebase no esta listo, no se pudo subir este dato.');
-      return;
-    }
+                marker.on('click', () => {
+                    showVehiclePanel(vehicle, company, lat, lng);
+                });
 
-    window.setFn(window.refFn(window.dbInstance, 'vehiculos/' + vehicleId), {
-      lat: lat, lng: lng, accuracy: acc, timestamp: Date.now()
-    }).then(function () {
-      sendCount++;
-      document.getElementById('count').textContent = sendCount;
-      setStatus('st-active', 'Transmitiendo a Firebase en vivo');
-      log('Enviado #' + sendCount + ' a Firebase.');
-    }).catch(function (err) {
-      setStatus('st-error', 'Error subiendo a Firebase');
-      log('Error de Firebase: ' + err.message);
-    });
-  }
+                vehicleMarkers[markerId] = marker;
+            }
+        }
 
-  function onError(err) {
-    setStatus('st-error', 'Error de GPS: ' + err.message);
-    log('Error de geolocalizacion (codigo ' + err.code + '): ' + err.message);
-  }
+        function removeVehicleMarker(vehicleId) {
+            if (vehicleMarkers[vehicleId]) {
+                map.removeLayer(vehicleMarkers[vehicleId]);
+                delete vehicleMarkers[vehicleId];
+            }
+        }
 
-  document.getElementById('start-btn').addEventListener('click', function () {
-    log('Boton presionado.');
-    if (!navigator.geolocation) {
-      setStatus('st-error', 'Este navegador no soporta geolocalizacion');
-      log('navigator.geolocation no existe en este navegador.');
-      return;
-    }
-    this.disabled = true;
-    this.textContent = 'Transmitiendo...';
-    setStatus('st-waiting', 'Solicitando permiso al sistema...');
-    log('Solicitando permiso de ubicacion...');
+        // ==================== SIMULATION ====================
+        function startSimulation() {
+            companies.forEach(company => {
+                company.vehicles.forEach(vehicle => {
+                    if (vehicle.online) {
+                        vehicleProgress[vehicle.id] = Math.random() * 0.8;
+                        const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicle.id]);
+                        vehiclePositions[vehicle.id] = pos;
+                        placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
+                    }
+                });
+            });
 
-    navigator.geolocation.watchPosition(onPosition, onError, {
-      enableHighAccuracy: false,
-      maximumAge: 5000,
-      timeout: 20000
-    });
-  });
+            simulationInterval = setInterval(() => {
+                companies.forEach(company => {
+                    company.vehicles.forEach(vehicle => {
+                        if (vehicle.online) {
+                            vehicleProgress[vehicle.id] += 0.008 + Math.random() * 0.005;
+                            if (vehicleProgress[vehicle.id] >= 1) {
+                                vehicleProgress[vehicle.id] = 0;
+                            }
+                            const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicle.id]);
+                            vehiclePositions[vehicle.id] = pos;
+                            
+                            // Simular velocidad realista (0-60 km/h)
+                            vehicle.speed = Math.floor(15 + Math.random() * 35);
+                            vehicle.lastUpdate = Date.now();
+                            
+                            // Simular precisión GPS que mejora con el tiempo
+                            const timeSinceStart = (Date.now() - (vehicle.startTime || Date.now())) / 1000;
+                            if (timeSinceStart < 10) {
+                                vehicle.accuracy = Math.max(100, 2000 - timeSinceStart * 180);
+                            } else if (timeSinceStart < 30) {
+                                vehicle.accuracy = Math.max(20, 100 - (timeSinceStart - 10) * 4);
+                            } else {
+                                vehicle.accuracy = Math.max(5, 20 - (timeSinceStart - 30) * 0.5);
+                            }
+                            
+                            placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
+                        }
+                    });
+                });
+            }, 3000);
+        }
 
-  log('Pagina cargada. Esperando Firebase...');
-</script>
+        function interpolateRoute(points, progress) {
+            const totalSegments = points.length - 1;
+            const segment = Math.floor(progress * totalSegments);
+            const segmentProgress = (progress * totalSegments) - segment;
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+            const idx = Math.min(segment, totalSegments - 1);
+            const p1 = points[idx];
+            const p2 = points[Math.min(idx + 1, points.length - 1)];
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
-    authDomain: "transapp-prueba.firebaseapp.com",
-    databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
-    projectId: "transapp-prueba",
-    storageBucket: "transapp-prueba.firebasestorage.app",
-    messagingSenderId: "1020351679207",
-    appId: "1:1020351679207:web:75bff846e26cf60e263042"
-  };
+            return {
+                lat: p1[0] + (p2[0] - p1[0]) * segmentProgress,
+                lng: p1[1] + (p2[1] - p1[1]) * segmentProgress
+            };
+        }
 
-  try {
-    const app = initializeApp(firebaseConfig);
-    window.dbInstance = getDatabase(app);
-    window.refFn = ref;
-    window.setFn = set;
-    window.firebaseReady = true;
-    log('Firebase listo.');
-  } catch (e) {
-    log('Error inicializando Firebase: ' + e.message);
-  }
-</script>
+        // ==================== PASSENGER VIEW ====================
+        function renderCompanyList() {
+            const list = document.getElementById('companyList');
+            list.innerHTML = '';
+
+            companies.forEach(company => {
+                const onlineCount = company.vehicles.filter(v => v.online).length;
+                const card = document.createElement('div');
+                card.className = `company-card ${selectedCompanyId === company.id ? 'selected' : ''}`;
+                card.onclick = () => selectCompany(company.id);
+                card.innerHTML = `
+                    <div class="company-card-header">
+                        <span class="company-name">${company.name}</span>
+                        ${company.verified ? `
+                        <span class="verified-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M9 12l2 2 4-4"/>
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                            Verificada
+                        </span>` : ''}
+                    </div>
+                    <div class="company-meta">
+                        <span>🚌 ${onlineCount}/${company.vehicles.length} en ruta</span>
+                        <span>📋 RUC: ${company.ruc}</span>
+                    </div>
+                    <div class="company-route">
+                        <span> ${company.routeShort}</span>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectCompany(companyId) {
+            selectedCompanyId = companyId;
+            const company = companies.find(c => c.id === companyId);
+
+            companies.forEach(c => {
+                if (c.id === companyId) {
+                    showRoute(c);
+                    if (routePolylines[c.id]) {
+                        routePolylines[c.id].setStyle({ weight: 6, opacity: 1, dashArray: null });
+                    }
+                    if (routePolylines[c.id]) {
+                        map.fitBounds(routePolylines[c.id].getBounds(), { padding: [50, 50] });
+                    }
+                } else {
+                    showRoute(c);
+                }
+            });
+
+            renderCompanyList();
+            showToast(`Mostrando ruta de ${company.name}`, 'info');
+        }
+
+        function filterCompanies() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.company-card');
+
+            companies.forEach((company, idx) => {
+                if (cards[idx]) {
+                    const match = company.name.toLowerCase().includes(query) ||
+                                  company.route.toLowerCase().includes(query);
+                    cards[idx].style.display = match ? 'block' : 'none';
+                }
+            });
+        }
+
+        function showVehiclePanel(vehicle, company, lat, lng) {
+            const panel = document.getElementById('vehiclePanel');
+            document.getElementById('vehiclePanelTitle').textContent = `Vehículo ${vehicle.plate}`;
+            document.getElementById('vpCompany').textContent = company.name;
+            document.getElementById('vpPlate').textContent = vehicle.plate;
+            document.getElementById('vpSpeed').textContent = `${vehicle.speed} km/h`;
+            
+            // Estado basado en velocidad
+            const statusEl = document.getElementById('vpStatus');
+            if (vehicle.speed < 3) {
+                statusEl.innerHTML = '<span class="status-stopped"><span class="status-dot-small stopped"></span>Detenido</span>';
+            } else {
+                statusEl.innerHTML = '<span class="status-moving"><span class="status-dot-small moving"></span>En movimiento</span>';
+            }
+            
+            // Última actualización
+            updateLastUpdateLabel(vehicle.lastUpdate, 'vpUpdate');
+            
+            // Precisión GPS
+            const accuracyEl = document.getElementById('vpAccuracy');
+            accuracyEl.textContent = `±${Math.round(vehicle.accuracy)} m`;
+            accuracyEl.className = vehicle.accuracy < 20 ? 'accuracy-good' : vehicle.accuracy < 100 ? 'accuracy-medium' : 'accuracy-bad';
+            
+            panel.classList.add('show');
+        }
+
+        function closeVehiclePanel() {
+            document.getElementById('vehiclePanel').classList.remove('show');
+        }
+
+        function formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 5) return 'Hace 5s';
+            if (seconds < 60) return `Hace ${seconds}s`;
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `Hace ${minutes}min`;
+            const hours = Math.floor(minutes / 60);
+            return `Hace ${hours}h`;
+        }
+
+        function updateLastUpdateLabel(timestamp, elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = formatTimeAgo(timestamp);
+            }
+        }
+
+        function updateLastUpdateLabels() {
+            companies.forEach(company => {
+                company.vehicles.forEach(vehicle => {
+                    if (vehicle.online) {
+                        vehicle.lastUpdate = Date.now();
+                    }
+                });
+            });
+        }
+
+        // ==================== DRIVER VIEW ====================
+        function populateDriverSelects() {
+            const companySelect = document.getElementById('driverCompany');
+            companies.forEach(company => {
+                const opt = document.createElement('option');
+                opt.value = company.id;
+                opt.textContent = `${company.name} (${company.id})`;
+                companySelect.appendChild(opt);
+            });
+        }
+
+        function startDriverMode() {
+            const vehicleId = document.getElementById('vehicleId').value;
+            const companyId = document.getElementById('driverCompany').value;
+            const driverName = document.getElementById('driverName').value;
+
+            if (!vehicleId || !companyId || !driverName) {
+                showToast('Completa todos los campos', 'info');
+                return;
+            }
+
+            const company = companies.find(c => c.id === companyId);
+            let vehicle = company.vehicles.find(v => v.id === vehicleId);
+            
+            if (!vehicle) {
+                // Crear nuevo vehículo si no existe
+                vehicle = {
+                    id: vehicleId,
+                    plate: vehicleId.split('-').pop() || vehicleId,
+                    driver: driverName,
+                    online: true,
+                    speed: 0,
+                    lastUpdate: Date.now(),
+                    accuracy: 2000,
+                    startTime: Date.now()
+                };
+                company.vehicles.push(vehicle);
+            }
+
+            vehicle.online = true;
+            vehicle.driver = driverName;
+            vehicle.startTime = Date.now();
+            vehicleProgress[vehicleId] = 0.1;
+
+            document.getElementById('driverLogin').style.display = 'none';
+            document.getElementById('driverActive').classList.add('show');
+
+            packetsSent = 0;
+            driverStartTime = Date.now();
+            addLog('Botón presionado. Iniciando transmisión...');
+            addLog('Solicitando permiso de ubicación...');
+
+            // Init driver map
+            setTimeout(() => {
+                if (!driverMap) {
+                    driverMap = L.map('driverMap').setView([-11.9819, -77.1032], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap'
+                    }).addTo(driverMap);
+                    
+                    // Mostrar ruta en el mapa del conductor
+                    const routeLine = L.polyline(company.routePoints, {
+                        color: company.color,
+                        weight: 4,
+                        opacity: 0.6,
+                        dashArray: '10, 8'
+                    }).addTo(driverMap);
+                }
+            }, 100);
+
+            driverInterval = setInterval(() => {
+                vehicleProgress[vehicleId] += 0.01;
+                if (vehicleProgress[vehicleId] >= 1) vehicleProgress[vehicleId] = 0;
+
+                const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicleId]);
+                vehiclePositions[vehicleId] = pos;
+                placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
+
+                // Simular velocidad realista
+                vehicle.speed = Math.floor(20 + Math.random() * 30);
+                vehicle.lastUpdate = Date.now();
+                
+                // Precisión GPS mejora con el tiempo
+                const timeSinceStart = (Date.now() - driverStartTime) / 1000;
+                if (timeSinceStart < 10) {
+                    vehicle.accuracy = Math.max(100, 2000 - timeSinceStart * 180);
+                } else if (timeSinceStart < 30) {
+                    vehicle.accuracy = Math.max(20, 100 - (timeSinceStart - 10) * 4);
+                } else {
+                    vehicle.accuracy = Math.max(5, 20 - (timeSinceStart - 30) * 0.5);
+                }
+
+                // Update driver map
+                if (driverMap) {
+                    if (driverMarker) {
+                        driverMarker.setLatLng([pos.lat, pos.lng]);
+                    } else {
+                        driverMarker = L.marker([pos.lat, pos.lng], {
+                            icon: createVehicleIcon(company.color)
+                        }).addTo(driverMap);
+                    }
+                    driverMap.setView([pos.lat, pos.lng], 16);
+                }
+
+                // Update UI
+                document.getElementById('driverLat').textContent = pos.lat.toFixed(6);
+                document.getElementById('driverLng').textContent = pos.lng.toFixed(6);
+                document.getElementById('driverSpeed').textContent = `${vehicle.speed} km/h`;
+                
+                const accuracyEl = document.getElementById('driverAccuracy');
+                accuracyEl.textContent = `±${Math.round(vehicle.accuracy)} m`;
+                accuracyEl.className = vehicle.accuracy < 20 ? 'accuracy-good' : vehicle.accuracy < 100 ? 'accuracy-medium' : 'accuracy-bad';
+                
+                const statusEl = document.getElementById('driverStatus');
+                if (vehicle.speed < 3) {
+                    statusEl.textContent = 'Detenido';
+                    statusEl.style.color = 'var(--warning)';
+                } else {
+                    statusEl.textContent = 'En movimiento';
+                    statusEl.style.color = 'var(--success)';
+                }
+                
+                packetsSent++;
+                document.getElementById('driverSent').textContent = packetsSent;
+
+                addLog(`GPS leído -> ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)} (±${Math.round(vehicle.accuracy)}m)`);
+                addLog(`Enviado #${packetsSent} a Firebase. Velocidad: ${vehicle.speed} km/h`);
+
+                updateStats();
+                renderAdminVehicleList();
+            }, 5000);
+
+            showToast(`GPS activo para ${vehicle.plate}`, 'success');
+            updateStats();
+            renderCompanyList();
+            renderAdminVehicleList();
+        }
+
+        function stopDriverMode() {
+            const vehicleId = document.getElementById('vehicleId').value;
+            const companyId = document.getElementById('driverCompany').value;
+            const company = companies.find(c => c.id === companyId);
+            const vehicle = company.vehicles.find(v => v.id === vehicleId);
+
+            if (vehicle) vehicle.online = false;
+            clearInterval(driverInterval);
+            removeVehicleMarker(vehicleId);
+
+            document.getElementById('driverLogin').style.display = 'block';
+            document.getElementById('driverActive').classList.remove('show');
+
+            addLog('Transmisión detenida.');
+            showToast(`Transmisión detenida`, 'info');
+            updateStats();
+            renderCompanyList();
+            renderAdminVehicleList();
+        }
+
+        function addLog(message) {
+            const console = document.getElementById('logConsole');
+            const time = new Date().toLocaleTimeString('es-PE');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${time}] ${message}`;
+            console.insertBefore(entry, console.firstChild);
+        }
+
+        // ==================== ADMIN VIEW ====================
+        function registerCompany() {
+            const name = document.getElementById('regCompanyName').value;
+            const ruc = document.getElementById('regCompanyRuc').value;
+            const phone = document.getElementById('regCompanyPhone').value;
+            const route = document.getElementById('regCompanyRoute').value;
+
+            if (!name || !ruc || !route) {
+                showToast('Completa los campos obligatorios', 'info');
+                return;
+            }
+
+            const colors = ['#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'];
+            const newId = `empresa${String(companies.length + 1).padStart(3, '0')}`;
+
+            const baseLat = -12.0464 + (Math.random() - 0.5) * 0.1;
+            const baseLng = -77.0428 + (Math.random() - 0.5) * 0.1;
+            const routePoints = [];
+            for (let i = 0; i < 6; i++) {
+                routePoints.push([
+                    baseLat + (Math.random() - 0.5) * 0.05,
+                    baseLng + (Math.random() - 0.5) * 0.05
+                ]);
+            }
+
+            const newCompany = {
+                id: newId,
+                name: name,
+                ruc: ruc,
+                route: route,
+                routeShort: route.split('→').map(s => s.trim().substring(0, 10)).join(' → '),
+                phone: phone,
+                verified: true,
+                color: colors[companies.length % colors.length],
+                vehicles: [
+                    { 
+                        id: `${newId}-vehiculo01`, 
+                        plate: `${String.fromCharCode(65+Math.floor(Math.random()*26))}${String.fromCharCode(65+Math.floor(Math.random()*26))}${String.fromCharCode(65+Math.floor(Math.random()*26))}-${Math.floor(100+Math.random()*900)}`, 
+                        driver: "Sin asignar", 
+                        online: false,
+                        speed: 0,
+                        lastUpdate: Date.now(),
+                        accuracy: 2000
+                    }
+                ],
+                routePoints: routePoints
+            };
+
+            companies.push(newCompany);
+            showRoute(newCompany);
+
+            document.getElementById('regCompanyName').value = '';
+            document.getElementById('regCompanyRuc').value = '';
+            document.getElementById('regCompanyPhone').value = '';
+            document.getElementById('regCompanyRoute').value = '';
+
+            renderCompanyList();
+            renderAdminVehicleList();
+            populateDriverSelects();
+            updateStats();
+
+            showToast(`Empresa "${name}" registrada como ${newId}`, 'success');
+        }
+
+        function renderAdminVehicleList() {
+            const list = document.getElementById('vehicleListAdmin');
+            list.innerHTML = '';
+
+            companies.forEach(company => {
+                company.vehicles.forEach(vehicle => {
+                    const item = document.createElement('div');
+                    item.className = 'vehicle-item';
+                    item.innerHTML = `
+                        <div class="vehicle-item-info">
+                            <div class="vehicle-icon">🚌</div>
+                            <div>
+                                <div class="vehicle-item-name">${vehicle.plate}</div>
+                                <div class="vehicle-item-plate">${company.name} · ${vehicle.id}</div>
+                            </div>
+                        </div>
+                        <span class="vehicle-item-status ${vehicle.online ? 'online' : 'offline'}">
+                            ${vehicle.online ? '● En línea' : '○ Offline'}
+                        </span>
+                    `;
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        function updateStats() {
+            const totalVehicles = companies.reduce((sum, c) => sum + c.vehicles.length, 0);
+            const onlineVehicles = companies.reduce((sum, c) => sum + c.vehicles.filter(v => v.online).length, 0);
+
+            document.getElementById('statCompanies').textContent = companies.length;
+            document.getElementById('statVehicles').textContent = totalVehicles;
+            document.getElementById('statOnline').textContent = onlineVehicles;
+        }
+
+        // ==================== NAVIGATION ====================
+        function switchView(view, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(`view-${view}`).classList.add('active');
+            btn.classList.add('active');
+
+            if (view === 'passenger' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+            if (view === 'driver' && driverMap) {
+                setTimeout(() => driverMap.invalidateSize(), 100);
+            }
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+
+            icon.textContent = type === 'success' ? '✓' : 'ℹ';
+            icon.className = `toast-icon ${type}`;
+            msg.textContent = message;
+
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ==================== START ====================
+        window.addEventListener('load', init);
+    </script>
 </body>
 </html>
+
