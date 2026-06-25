@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TransApp · Transporte en Tiempo Real</title>
+    <meta name="theme-color" content="#0d9488">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -43,7 +46,6 @@
             overflow-x: hidden;
         }
 
-        /* Header */
         .app-header {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
             padding: 16px 20px;
@@ -67,7 +69,6 @@
             margin-top: 4px;
         }
 
-        /* Tab Navigation */
         .tab-nav {
             display: flex;
             background: var(--surface);
@@ -79,9 +80,7 @@
             scrollbar-width: none;
         }
 
-        .tab-nav::-webkit-scrollbar {
-            display: none;
-        }
+        .tab-nav::-webkit-scrollbar { display: none; }
 
         .tab-btn {
             flex: 1;
@@ -102,9 +101,7 @@
             gap: 6px;
         }
 
-        .tab-btn.active {
-            color: var(--primary);
-        }
+        .tab-btn.active { color: var(--primary); }
 
         .tab-btn.active::after {
             content: '';
@@ -117,35 +114,23 @@
             border-radius: 3px 3px 0 0;
         }
 
-        .tab-btn:hover:not(.active) {
-            background: var(--surface-2);
-        }
+        .tab-btn:hover:not(.active) { background: var(--surface-2); }
 
-        /* Views */
-        .view {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .view.active {
-            display: block;
-        }
+        .view { display: none; animation: fadeIn 0.3s ease; }
+        .view.active { display: block; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Passenger View */
         .search-container {
             padding: 16px;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
         }
 
-        .search-box {
-            position: relative;
-        }
+        .search-box { position: relative; }
 
         .search-box input {
             width: 100%;
@@ -166,9 +151,7 @@
             box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
         }
 
-        .search-box input::placeholder {
-            color: var(--text-muted);
-        }
+        .search-box input::placeholder { color: var(--text-muted); }
 
         .search-box svg {
             position: absolute;
@@ -180,7 +163,6 @@
             color: var(--text-muted);
         }
 
-        /* Company List */
         .company-list {
             padding: 12px 16px;
             max-height: calc(100vh - 280px);
@@ -197,9 +179,7 @@
             transition: all 0.3s ease;
         }
 
-        .company-card:active {
-            transform: scale(0.98);
-        }
+        .company-card:active { transform: scale(0.98); }
 
         .company-card.selected {
             border-color: var(--primary);
@@ -214,11 +194,7 @@
             margin-bottom: 10px;
         }
 
-        .company-name {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--text);
-        }
+        .company-name { font-weight: 700; font-size: 1rem; color: var(--text); }
 
         .verified-badge {
             display: inline-flex;
@@ -241,11 +217,7 @@
             margin-bottom: 8px;
         }
 
-        .company-meta span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .company-meta span { display: flex; align-items: center; gap: 4px; }
 
         .company-route {
             font-size: 0.8rem;
@@ -255,19 +227,14 @@
             gap: 6px;
         }
 
-        /* Map Container */
         .map-wrapper {
             position: relative;
             height: calc(100vh - 280px);
             min-height: 300px;
         }
 
-        #map {
-            width: 100%;
-            height: 100%;
-        }
+        #map { width: 100%; height: 100%; }
 
-        /* Vehicle Panel */
         .vehicle-panel {
             position: fixed;
             bottom: 0;
@@ -284,9 +251,7 @@
             overflow-y: auto;
         }
 
-        .vehicle-panel.show {
-            transform: translateY(0);
-        }
+        .vehicle-panel.show { transform: translateY(0); }
 
         .vehicle-panel-handle {
             width: 40px;
@@ -303,10 +268,7 @@
             margin-bottom: 16px;
         }
 
-        .vehicle-panel-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
+        .vehicle-panel-title { font-weight: 700; font-size: 1.1rem; }
 
         .vehicle-panel-close {
             background: var(--surface-2);
@@ -329,11 +291,7 @@
             margin-bottom: 16px;
         }
 
-        .vehicle-info-item {
-            background: var(--surface-2);
-            padding: 12px;
-            border-radius: 12px;
-        }
+        .vehicle-info-item { background: var(--surface-2); padding: 12px; border-radius: 12px; }
 
         .vehicle-info-item label {
             font-size: 0.7rem;
@@ -351,20 +309,9 @@
             margin-top: 4px;
         }
 
-        /* Status indicators */
-        .status-moving {
-            color: var(--success);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-stopped {
-            color: var(--warning);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .status-moving { color: var(--success); display: flex; align-items: center; gap: 6px; }
+        .status-stopped { color: var(--warning); display: flex; align-items: center; gap: 6px; }
+        .status-offline { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
 
         .status-dot-small {
             width: 8px;
@@ -373,49 +320,22 @@
             animation: pulse 2s infinite;
         }
 
-        .status-dot-small.moving {
-            background: var(--success);
-        }
-
-        .status-dot-small.stopped {
-            background: var(--warning);
-            animation: none;
-        }
+        .status-dot-small.moving { background: var(--success); }
+        .status-dot-small.stopped { background: var(--warning); animation: none; }
+        .status-dot-small.offline { background: var(--text-muted); animation: none; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        /* Driver View */
-        .driver-container {
-            padding: 20px 16px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .driver-container { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
 
-        .driver-card {
-            background: var(--surface);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-        }
+        .driver-card { background: var(--surface); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); }
+        .driver-card h2 { font-size: 1.3rem; margin-bottom: 8px; color: var(--text); }
+        .driver-card > p { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; }
 
-        .driver-card h2 {
-            font-size: 1.3rem;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-
-        .driver-card > p {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
+        .form-group { margin-bottom: 16px; }
 
         .form-group label {
             display: block;
@@ -461,49 +381,53 @@
             box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
         }
 
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.6; transform: none; }
 
         .btn-danger {
             background: linear-gradient(135deg, var(--danger), #dc2626);
             color: white;
         }
 
-        /* Status Badge */
         .status-badge {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
             padding: 12px 16px;
             border-radius: 12px;
             margin-bottom: 20px;
             font-size: 0.9rem;
             font-weight: 600;
+        }
+
+        .status-badge.ok {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
             color: var(--success);
+        }
+
+        .status-badge.wait {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+        }
+
+        .status-badge.err {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
         }
 
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: var(--success);
+            background: currentColor;
             animation: pulse 2s infinite;
         }
 
-        /* Driver Active */
-        .driver-active {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .driver-active.show {
-            display: flex;
-        }
+        .driver-active { display: none; flex-direction: column; align-items: center; gap: 20px; }
+        .driver-active.show { display: flex; }
 
         .gps-ring {
             width: 160px;
@@ -539,15 +463,8 @@
             font-weight: 700;
         }
 
-        .gps-ring .status-icon {
-            font-size: 2.5rem;
-            margin: 4px 0;
-        }
-
-        .gps-ring .gps-text {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
+        .gps-ring .status-icon { font-size: 2.5rem; margin: 4px 0; }
+        .gps-ring .gps-text { font-size: 0.7rem; color: var(--text-muted); }
 
         .gps-info-grid {
             background: var(--surface);
@@ -560,9 +477,7 @@
             box-shadow: var(--shadow);
         }
 
-        .gps-info-item {
-            text-align: center;
-        }
+        .gps-info-item { text-align: center; }
 
         .gps-info-item label {
             font-size: 0.7rem;
@@ -581,19 +496,10 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .accuracy-good {
-            color: var(--success) !important;
-        }
+        .accuracy-good { color: var(--success) !important; }
+        .accuracy-medium { color: var(--warning) !important; }
+        .accuracy-bad { color: var(--danger) !important; }
 
-        .accuracy-medium {
-            color: var(--warning) !important;
-        }
-
-        .accuracy-bad {
-            color: var(--danger) !important;
-        }
-
-        /* Map Preview for Driver */
         .map-preview {
             height: 200px;
             border-radius: 16px;
@@ -602,38 +508,24 @@
             box-shadow: var(--shadow);
         }
 
-        #driverMap {
-            width: 100%;
-            height: 100%;
-        }
+        #driverMap { width: 100%; height: 100%; }
 
-        /* Log Console */
         .log-console {
             background: var(--surface-2);
             border-radius: 12px;
             padding: 16px;
             margin-top: 20px;
-            max-height: 200px;
+            max-height: 160px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
+            width: 100%;
         }
 
-        .log-entry {
-            margin-bottom: 6px;
-            color: var(--text-secondary);
-        }
+        .log-entry { margin-bottom: 6px; color: var(--text-secondary); }
+        .log-entry:last-child { margin-bottom: 0; }
 
-        .log-entry:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Admin View */
-        .admin-container {
-            padding: 20px 16px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
+        .admin-container { padding: 20px 16px; max-width: 800px; margin: 0 auto; }
 
         .stats-grid {
             display: grid;
@@ -659,12 +551,7 @@
             line-height: 1;
         }
 
-        .stat-card .stat-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-            font-weight: 600;
-        }
+        .stat-card .stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; font-weight: 600; }
 
         .admin-panel {
             background: var(--surface);
@@ -683,16 +570,9 @@
             gap: 8px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        .vehicle-list-admin {
-            max-height: 300px;
-            overflow-y: auto;
-        }
+        .vehicle-list-admin { max-height: 300px; overflow-y: auto; }
 
         .vehicle-item {
             display: flex;
@@ -704,11 +584,7 @@
             margin-bottom: 10px;
         }
 
-        .vehicle-item-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .vehicle-item-info { display: flex; align-items: center; gap: 12px; }
 
         .vehicle-icon {
             width: 40px;
@@ -721,15 +597,8 @@
             font-size: 1.2rem;
         }
 
-        .vehicle-item-name {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .vehicle-item-plate {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
+        .vehicle-item-name { font-weight: 600; font-size: 0.9rem; }
+        .vehicle-item-plate { font-size: 0.75rem; color: var(--text-muted); }
 
         .vehicle-item-status {
             padding: 6px 12px;
@@ -738,17 +607,9 @@
             font-weight: 600;
         }
 
-        .vehicle-item-status.online {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--success);
-        }
+        .vehicle-item-status.online { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .vehicle-item-status.offline { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
 
-        .vehicle-item-status.offline {
-            background: rgba(100, 116, 139, 0.1);
-            color: var(--text-muted);
-        }
-
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -767,10 +628,7 @@
             max-width: 90%;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         .toast-icon {
             width: 36px;
@@ -783,25 +641,13 @@
             flex-shrink: 0;
         }
 
-        .toast-icon.success {
-            background: rgba(34, 197, 94, 0.1);
-        }
+        .toast-icon.success { background: rgba(34, 197, 94, 0.1); }
+        .toast-icon.info { background: rgba(99, 102, 241, 0.1); }
+        .toast-icon.error { background: rgba(239, 68, 68, 0.1); }
 
-        .toast-icon.info {
-            background: rgba(99, 102, 241, 0.1);
-        }
+        .toast-message { font-size: 0.9rem; color: var(--text); font-weight: 500; }
 
-        .toast-message {
-            font-size: 0.9rem;
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        /* Leaflet Custom */
-        .vehicle-marker {
-            background: none;
-            border: none;
-        }
+        .vehicle-marker { background: none; border: none; }
 
         .vehicle-marker-inner {
             width: 40px;
@@ -814,8 +660,9 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            animation: markerBounce 2s infinite;
         }
+
+        .vehicle-marker-inner.moving { animation: markerBounce 2s infinite; }
 
         @keyframes markerBounce {
             0%, 100% { transform: translateY(0); }
@@ -829,26 +676,15 @@
             box-shadow: var(--shadow-xl) !important;
         }
 
-        .leaflet-popup-tip {
-            background: var(--surface) !important;
-        }
+        .leaflet-popup-tip { background: var(--surface) !important; }
 
         .leaflet-popup-content {
             margin: 12px 16px !important;
             font-family: 'Inter', sans-serif !important;
         }
 
-        .popup-title {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 6px;
-        }
-
-        .popup-info {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
+        .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+        .popup-info { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px; }
 
         .popup-badge {
             display: inline-flex;
@@ -875,62 +711,59 @@
             font-size: 0.65rem !important;
         }
 
-        /* Responsive */
+        .install-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-top: 10px;
+        }
+
+        .install-banner.show { display: flex; }
+
+        .install-banner span { color: white; font-size: 0.78rem; font-weight: 500; text-align: left; }
+
+        .install-banner button {
+            background: white;
+            color: var(--primary-dark);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
         @media (min-width: 768px) {
-            .app-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .map-wrapper {
-                height: calc(100vh - 300px);
-            }
-
-            .vehicle-panel {
-                max-width: 500px;
-                left: 50%;
-                transform: translateX(-50%) translateY(100%);
-            }
-
-            .vehicle-panel.show {
-                transform: translateX(-50%) translateY(0);
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .form-row {
-                grid-template-columns: 1fr 1fr;
-            }
+            .app-header h1 { font-size: 1.5rem; }
+            .map-wrapper { height: calc(100vh - 300px); }
+            .vehicle-panel { max-width: 500px; left: 50%; transform: translateX(-50%) translateY(100%); }
+            .vehicle-panel.show { transform: translateX(-50%) translateY(0); }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .form-row { grid-template-columns: 1fr 1fr; }
         }
 
         @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .gps-info-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .vehicle-info-grid {
-                grid-template-columns: 1fr;
-            }
+            .stats-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .gps-info-grid { grid-template-columns: 1fr 1fr; }
+            .vehicle-info-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="app-header">
         <h1>TransApp</h1>
         <p>Transporte público en tiempo real</p>
+        <div class="install-banner" id="installBanner">
+            <span>Instala TransApp en tu pantalla de inicio</span>
+            <button onclick="installApp()">Instalar</button>
+        </div>
     </header>
 
-    <!-- Tab Navigation -->
     <nav class="tab-nav">
         <button class="tab-btn active" onclick="switchView('passenger', this)">
             <span>🚌</span> Pasajero
@@ -970,7 +803,7 @@
                     <value id="vpCompany">-</value>
                 </div>
                 <div class="vehicle-info-item">
-                    <label>Placa</label>
+                    <label>Vehículo</label>
                     <value id="vpPlate">-</value>
                 </div>
                 <div class="vehicle-info-item">
@@ -1005,30 +838,28 @@
         <div class="driver-container">
             <div class="driver-card" id="driverLogin">
                 <h2>🚐 Modo Conductor</h2>
-                <p>Transmite tu ubicación en tiempo real a los pasajeros</p>
-                <div class="form-group">
-                    <label>ID del vehículo (ej: empresa001-vehiculo01)</label>
-                    <input type="text" id="vehicleId" placeholder="empresa001-vehiculo01">
-                </div>
+                <p>Transmite tu ubicación real en vivo a los pasajeros</p>
                 <div class="form-group">
                     <label>Empresa</label>
-                    <select id="driverCompany">
-                        <option value="">Seleccionar empresa...</option>
-                    </select>
+                    <select id="driverCompany"></select>
+                </div>
+                <div class="form-group">
+                    <label>Vehículo</label>
+                    <select id="driverVehicle"></select>
                 </div>
                 <div class="form-group">
                     <label>Nombre del conductor</label>
                     <input type="text" id="driverName" placeholder="Tu nombre">
                 </div>
-                <button class="btn btn-primary" onclick="startDriverMode()">
+                <button class="btn btn-primary" id="startBtn" onclick="startDriverMode()">
                     🚀 Iniciar transmisión GPS
                 </button>
             </div>
 
             <div class="driver-active" id="driverActive">
-                <div class="status-badge">
+                <div class="status-badge wait" id="driverStatusBadge">
                     <div class="status-dot"></div>
-                    Transmitiendo a Firebase en vivo
+                    <span id="driverStatusText">Solicitando permiso de ubicación...</span>
                 </div>
 
                 <div class="map-preview">
@@ -1037,18 +868,18 @@
 
                 <div class="gps-ring">
                     <span class="status-text">EN VIVO</span>
-                    <span class="status-icon"></span>
-                    <span class="gps-text" id="gpsInterval">Cada 5s</span>
+                    <span class="status-icon">📍</span>
+                    <span class="gps-text">GPS real del celular</span>
                 </div>
 
                 <div class="gps-info-grid">
                     <div class="gps-info-item">
                         <label>Latitud</label>
-                        <value id="driverLat">-11.9819</value>
+                        <value id="driverLat">—</value>
                     </div>
                     <div class="gps-info-item">
                         <label>Longitud</label>
-                        <value id="driverLng">-77.1032</value>
+                        <value id="driverLng">—</value>
                     </div>
                     <div class="gps-info-item">
                         <label>Velocidad</label>
@@ -1056,11 +887,11 @@
                     </div>
                     <div class="gps-info-item">
                         <label>Precisión</label>
-                        <value id="driverAccuracy">±2000 m</value>
+                        <value id="driverAccuracy">—</value>
                     </div>
                     <div class="gps-info-item">
                         <label>Estado</label>
-                        <value id="driverStatus">Detenido</value>
+                        <value id="driverMoveStatus">Detenido</value>
                     </div>
                     <div class="gps-info-item">
                         <label>Envíos</label>
@@ -1084,15 +915,15 @@
         <div class="admin-container">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value" id="statCompanies">3</div>
+                    <div class="stat-value" id="statCompanies">0</div>
                     <div class="stat-label">Empresas</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="statVehicles">6</div>
+                    <div class="stat-value" id="statVehicles">0</div>
                     <div class="stat-label">Vehículos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="statOnline">3</div>
+                    <div class="stat-value" id="statOnline">0</div>
                     <div class="stat-label">En línea</div>
                 </div>
             </div>
@@ -1123,264 +954,276 @@
             </div>
 
             <div class="admin-panel">
+                <h3>🚌 Agregar Vehículo a una Empresa</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Empresa</label>
+                        <select id="addVehicleCompany"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre / placa del vehículo</label>
+                        <input type="text" id="addVehiclePlate" placeholder="Ej: ABC-123">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addVehicleToCompany()">
+                    ➕ Agregar Vehículo
+                </button>
+            </div>
+
+            <div class="admin-panel">
                 <h3>🚌 Vehículos Registrados</h3>
                 <div class="vehicle-list-admin" id="vehicleListAdmin"></div>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast">
         <div class="toast-icon success" id="toastIcon">✓</div>
         <span class="toast-message" id="toastMessage">Operación exitosa</span>
     </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
+            authDomain: "transapp-prueba.firebaseapp.com",
+            databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
+            projectId: "transapp-prueba",
+            storageBucket: "transapp-prueba.firebasestorage.app",
+            messagingSenderId: "1020351679207",
+            appId: "1:1020351679207:web:75bff846e26cf60e263042"
+        };
+
+        const fbApp = initializeApp(firebaseConfig);
+        const db = getDatabase(fbApp);
+
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+        window.fbPush = push;
+        window.fbGet = get;
+        window.fbDb = db;
+        window.firebaseReady = true;
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+
     <script>
-        // ==================== DATA STRUCTURE ====================
-        // Estructura jerárquica: empresa > vehículos
-        let companies = [
-            {
-                id: "empresa001",
+        // ==================== SEED DATA (solo si Firebase esta vacio) ====================
+        const seedCompanies = {
+            empresa001: {
                 name: "Empresa Los Incas",
                 ruc: "20512345678",
                 route: "San Juan de Lurigancho → Centro de Lima",
-                routeShort: "SJL → Centro",
                 phone: "987654321",
                 verified: true,
                 color: "#0d9488",
-                vehicles: [
-                    { id: "empresa001-vehiculo01", plate: "ABC-123", driver: "Carlos M.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
-                    { id: "empresa001-vehiculo02", plate: "DEF-456", driver: "Pedro L.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
-                ],
                 routePoints: [
-                    [-12.0200, -77.0100],
-                    [-12.0250, -77.0150],
-                    [-12.0300, -77.0200],
-                    [-12.0350, -77.0250],
-                    [-12.0400, -77.0300],
-                    [-12.0430, -77.0350],
+                    [-12.0200, -77.0100], [-12.0250, -77.0150], [-12.0300, -77.0200],
+                    [-12.0350, -77.0250], [-12.0400, -77.0300], [-12.0430, -77.0350],
                     [-12.0464, -77.0428]
-                ]
+                ],
+                vehicles: {
+                    vehiculo01: { plate: "ABC-123", driver: "Sin asignar" },
+                    vehiculo02: { plate: "DEF-456", driver: "Sin asignar" }
+                }
             },
-            {
-                id: "empresa002",
+            empresa002: {
                 name: "Transportes El Sol",
                 ruc: "20598765432",
                 route: "Villa El Salvador → Miraflores",
-                routeShort: "VES → Miraflores",
                 phone: "912345678",
                 verified: true,
                 color: "#f59e0b",
-                vehicles: [
-                    { id: "empresa002-vehiculo01", plate: "GHI-789", driver: "Miguel R.", online: true, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
-                    { id: "empresa002-vehiculo02", plate: "JKL-012", driver: "José T.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
-                ],
                 routePoints: [
-                    [-12.1900, -76.9500],
-                    [-12.1700, -76.9600],
-                    [-12.1500, -76.9700],
-                    [-12.1300, -76.9800],
-                    [-12.1100, -76.9900],
-                    [-12.0900, -77.0100],
+                    [-12.1900, -76.9500], [-12.1700, -76.9600], [-12.1500, -76.9700],
+                    [-12.1300, -76.9800], [-12.1100, -76.9900], [-12.0900, -77.0100],
                     [-12.0750, -77.0270]
-                ]
+                ],
+                vehicles: {
+                    vehiculo01: { plate: "GHI-789", driver: "Sin asignar" },
+                    vehiculo02: { plate: "JKL-012", driver: "Sin asignar" }
+                }
             },
-            {
-                id: "empresa003",
+            empresa003: {
                 name: "Lima Express S.A.C.",
                 ruc: "20611223344",
                 route: "Comas → Barranco",
-                routeShort: "Comas → Barranco",
                 phone: "955667788",
                 verified: true,
                 color: "#6366f1",
-                vehicles: [
-                    { id: "empresa003-vehiculo01", plate: "MNO-345", driver: "Luis A.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 },
-                    { id: "empresa003-vehiculo02", plate: "PQR-678", driver: "Andrés G.", online: false, speed: 0, lastUpdate: Date.now(), accuracy: 2000 }
-                ],
                 routePoints: [
-                    [-11.9200, -77.0600],
-                    [-11.9400, -77.0550],
-                    [-11.9600, -77.0500],
-                    [-11.9800, -77.0450],
-                    [-12.0000, -77.0400],
-                    [-12.0200, -77.0350],
-                    [-12.0400, -77.0300],
-                    [-12.0600, -77.0280],
-                    [-12.0800, -77.0250],
+                    [-11.9200, -77.0600], [-11.9400, -77.0550], [-11.9600, -77.0500],
+                    [-11.9800, -77.0450], [-12.0000, -77.0400], [-12.0200, -77.0350],
+                    [-12.0400, -77.0300], [-12.0600, -77.0280], [-12.0800, -77.0250],
                     [-12.1000, -77.0220]
-                ]
+                ],
+                vehicles: {
+                    vehiculo01: { plate: "MNO-345", driver: "Sin asignar" },
+                    vehiculo02: { plate: "PQR-678", driver: "Sin asignar" }
+                }
             }
-        ];
+        };
 
+        // ==================== STATE ====================
+        let companies = {};
+        let liveVehicles = {};
         let selectedCompanyId = null;
         let map = null;
         let driverMap = null;
         let vehicleMarkers = {};
         let routePolylines = {};
-        let driverInterval = null;
-        let simulationInterval = null;
-        let vehiclePositions = {};
-        let vehicleProgress = {};
-        let packetsSent = 0;
         let driverMarker = null;
-        let driverStartTime = null;
+        let watchId = null;
+        let packetsSent = 0;
+        let activeDriverPath = null;
 
-        // ==================== INITIALIZATION ====================
-        function init() {
-            initMap();
-            renderCompanyList();
-            renderAdminVehicleList();
-            populateDriverSelects();
-            startSimulation();
-            updateStats();
-            // Actualizar "última actualización" cada segundo
-            setInterval(updateLastUpdateLabels, 1000);
+        // ==================== FIREBASE BOOTSTRAP ====================
+        function onFirebaseReady(fn) {
+            if (window.firebaseReady) fn();
+            else window.addEventListener('firebase-ready', fn, { once: true });
         }
 
-        function initMap() {
-            map = L.map('map', {
-                zoomControl: true,
-                attributionControl: true
-            }).setView([-12.0464, -77.0428], 12);
+        function seedIfEmpty() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbGet(companiesRef).then((snap) => {
+                if (!snap.exists()) {
+                    window.fbSet(companiesRef, seedCompanies);
+                }
+            });
+        }
 
+        function listenCompanies() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbOnValue(companiesRef, (snap) => {
+                companies = snap.val() || {};
+                renderCompanyList();
+                renderAdminVehicleList();
+                populateDriverSelects();
+                populateAddVehicleSelect();
+                updateStats();
+                if (map) {
+                    Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
+                }
+            });
+        }
+
+        function listenLiveVehicles() {
+            const liveRef = window.fbRef(window.fbDb, 'vehiculos_live');
+            window.fbOnValue(liveRef, (snap) => {
+                liveVehicles = snap.val() || {};
+                updateMapFromLiveData();
+                renderAdminVehicleList();
+                updateStats();
+                if (document.getElementById('vehiclePanel').classList.contains('show')) {
+                    refreshOpenPanel();
+                }
+            });
+        }
+
+        // ==================== MAP (PASSENGER) ====================
+        function initMap() {
+            map = L.map('map', { zoomControl: true, attributionControl: true }).setView([-12.0464, -77.0428], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
                 maxZoom: 19
             }).addTo(map);
-
-            companies.forEach(company => showRoute(company));
         }
 
-        // ==================== MAP FUNCTIONS ====================
-        function showRoute(company) {
-            if (routePolylines[company.id]) {
-                map.removeLayer(routePolylines[company.id]);
+        function showRoute(companyId, company) {
+            if (!company || !company.routePoints) return;
+            if (routePolylines[companyId]) {
+                map.removeLayer(routePolylines[companyId]);
             }
-
+            const isSelected = selectedCompanyId === companyId;
             const polyline = L.polyline(company.routePoints, {
-                color: company.color,
-                weight: 4,
-                opacity: 0.6,
-                dashArray: '10, 8',
+                color: company.color || '#0d9488',
+                weight: isSelected ? 6 : 4,
+                opacity: isSelected ? 1 : 0.5,
+                dashArray: isSelected ? null : '10, 8',
                 smoothFactor: 1
             }).addTo(map);
-
-            routePolylines[company.id] = polyline;
+            routePolylines[companyId] = polyline;
         }
 
-        function createVehicleIcon(color) {
+        function createVehicleIcon(color, moving) {
             return L.divIcon({
                 className: 'vehicle-marker',
-                html: `<div class="vehicle-marker-inner" style="background: linear-gradient(135deg, ${color}, ${color}dd);"></div>`,
+                html: `<div class="vehicle-marker-inner ${moving ? 'moving' : ''}" style="background: linear-gradient(135deg, ${color}, ${color}dd);">🚌</div>`,
                 iconSize: [40, 40],
                 iconAnchor: [20, 20]
             });
         }
 
-        function placeVehicleOnMap(vehicle, company, lat, lng) {
-            const markerId = vehicle.id;
+        function vehicleKey(companyId, vehicleId) { return companyId + '__' + vehicleId; }
 
-            if (vehicleMarkers[markerId]) {
-                vehicleMarkers[markerId].setLatLng([lat, lng]);
-            } else {
-                const marker = L.marker([lat, lng], {
-                    icon: createVehicleIcon(company.color)
-                }).addTo(map);
+        function updateMapFromLiveData() {
+            if (!map) return;
+            Object.keys(companies).forEach(companyId => {
+                const company = companies[companyId];
+                if (!company.vehicles) return;
+                Object.keys(company.vehicles).forEach(vehicleId => {
+                    const vehicle = company.vehicles[vehicleId];
+                    const live = (liveVehicles[companyId] || {})[vehicleId];
+                    const markerId = vehicleKey(companyId, vehicleId);
 
-                marker.bindPopup(`
-                    <div class="popup-title">🚌 ${vehicle.plate}</div>
-                    <div class="popup-info">Conductor: ${vehicle.driver}</div>
-                    <div class="popup-info">Empresa: ${company.name}</div>
-                    <div class="popup-info">Velocidad: ${vehicle.speed} km/h</div>
-                    <div class="popup-badge">✓ Empresa Verificada</div>
-                `);
+                    if (!live || !isOnline(live)) {
+                        removeVehicleMarker(markerId);
+                        return;
+                    }
 
-                marker.on('click', () => {
-                    showVehiclePanel(vehicle, company, lat, lng);
-                });
+                    const moving = (live.speed || 0) >= 3;
+                    if (vehicleMarkers[markerId]) {
+                        vehicleMarkers[markerId].setLatLng([live.lat, live.lng]);
+                        vehicleMarkers[markerId].setIcon(createVehicleIcon(company.color || '#0d9488', moving));
+                    } else {
+                        const marker = L.marker([live.lat, live.lng], {
+                            icon: createVehicleIcon(company.color || '#0d9488', moving)
+                        }).addTo(map);
 
-                vehicleMarkers[markerId] = marker;
-            }
-        }
+                        marker.bindPopup(`
+                            <div class="popup-title">🚌 ${vehicle.plate || vehicleId}</div>
+                            <div class="popup-info">Empresa: ${company.name}</div>
+                            <div class="popup-info">Velocidad: ${Math.round(live.speed || 0)} km/h</div>
+                            <div class="popup-badge">✓ Empresa Verificada</div>
+                        `);
 
-        function removeVehicleMarker(vehicleId) {
-            if (vehicleMarkers[vehicleId]) {
-                map.removeLayer(vehicleMarkers[vehicleId]);
-                delete vehicleMarkers[vehicleId];
-            }
-        }
-
-        // ==================== SIMULATION ====================
-        function startSimulation() {
-            companies.forEach(company => {
-                company.vehicles.forEach(vehicle => {
-                    if (vehicle.online) {
-                        vehicleProgress[vehicle.id] = Math.random() * 0.8;
-                        const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicle.id]);
-                        vehiclePositions[vehicle.id] = pos;
-                        placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
+                        marker.on('click', () => showVehiclePanel(companyId, vehicleId));
+                        vehicleMarkers[markerId] = marker;
                     }
                 });
             });
-
-            simulationInterval = setInterval(() => {
-                companies.forEach(company => {
-                    company.vehicles.forEach(vehicle => {
-                        if (vehicle.online) {
-                            vehicleProgress[vehicle.id] += 0.008 + Math.random() * 0.005;
-                            if (vehicleProgress[vehicle.id] >= 1) {
-                                vehicleProgress[vehicle.id] = 0;
-                            }
-                            const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicle.id]);
-                            vehiclePositions[vehicle.id] = pos;
-                            
-                            // Simular velocidad realista (0-60 km/h)
-                            vehicle.speed = Math.floor(15 + Math.random() * 35);
-                            vehicle.lastUpdate = Date.now();
-                            
-                            // Simular precisión GPS que mejora con el tiempo
-                            const timeSinceStart = (Date.now() - (vehicle.startTime || Date.now())) / 1000;
-                            if (timeSinceStart < 10) {
-                                vehicle.accuracy = Math.max(100, 2000 - timeSinceStart * 180);
-                            } else if (timeSinceStart < 30) {
-                                vehicle.accuracy = Math.max(20, 100 - (timeSinceStart - 10) * 4);
-                            } else {
-                                vehicle.accuracy = Math.max(5, 20 - (timeSinceStart - 30) * 0.5);
-                            }
-                            
-                            placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
-                        }
-                    });
-                });
-            }, 3000);
         }
 
-        function interpolateRoute(points, progress) {
-            const totalSegments = points.length - 1;
-            const segment = Math.floor(progress * totalSegments);
-            const segmentProgress = (progress * totalSegments) - segment;
+        function removeVehicleMarker(markerId) {
+            if (vehicleMarkers[markerId]) {
+                map.removeLayer(vehicleMarkers[markerId]);
+                delete vehicleMarkers[markerId];
+            }
+        }
 
-            const idx = Math.min(segment, totalSegments - 1);
-            const p1 = points[idx];
-            const p2 = points[Math.min(idx + 1, points.length - 1)];
-
-            return {
-                lat: p1[0] + (p2[0] - p1[0]) * segmentProgress,
-                lng: p1[1] + (p2[1] - p1[1]) * segmentProgress
-            };
+        function isOnline(live) {
+            if (!live || !live.timestamp) return false;
+            return (Date.now() - live.timestamp) < 60000;
         }
 
         // ==================== PASSENGER VIEW ====================
         function renderCompanyList() {
             const list = document.getElementById('companyList');
+            if (!list) return;
             list.innerHTML = '';
 
-            companies.forEach(company => {
-                const onlineCount = company.vehicles.filter(v => v.online).length;
+            Object.keys(companies).forEach(companyId => {
+                const company = companies[companyId];
+                const vehicles = company.vehicles || {};
+                const onlineCount = Object.keys(vehicles).filter(vid =>
+                    isOnline((liveVehicles[companyId] || {})[vid])
+                ).length;
+
                 const card = document.createElement('div');
-                card.className = `company-card ${selectedCompanyId === company.id ? 'selected' : ''}`;
-                card.onclick = () => selectCompany(company.id);
+                card.className = `company-card ${selectedCompanyId === companyId ? 'selected' : ''}`;
+                card.onclick = () => selectCompany(companyId);
                 card.innerHTML = `
                     <div class="company-card-header">
                         <span class="company-name">${company.name}</span>
@@ -1394,11 +1237,11 @@
                         </span>` : ''}
                     </div>
                     <div class="company-meta">
-                        <span>🚌 ${onlineCount}/${company.vehicles.length} en ruta</span>
-                        <span>📋 RUC: ${company.ruc}</span>
+                        <span>🚌 ${onlineCount}/${Object.keys(vehicles).length} en ruta</span>
+                        <span>📋 RUC: ${company.ruc || '—'}</span>
                     </div>
                     <div class="company-route">
-                        <span> ${company.routeShort}</span>
+                        <span>${company.route || ''}</span>
                     </div>
                 `;
                 list.appendChild(card);
@@ -1407,21 +1250,12 @@
 
         function selectCompany(companyId) {
             selectedCompanyId = companyId;
-            const company = companies.find(c => c.id === companyId);
+            const company = companies[companyId];
 
-            companies.forEach(c => {
-                if (c.id === companyId) {
-                    showRoute(c);
-                    if (routePolylines[c.id]) {
-                        routePolylines[c.id].setStyle({ weight: 6, opacity: 1, dashArray: null });
-                    }
-                    if (routePolylines[c.id]) {
-                        map.fitBounds(routePolylines[c.id].getBounds(), { padding: [50, 50] });
-                    }
-                } else {
-                    showRoute(c);
-                }
-            });
+            Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
+            if (routePolylines[companyId]) {
+                map.fitBounds(routePolylines[companyId].getBounds(), { padding: [50, 50] });
+            }
 
             renderCompanyList();
             showToast(`Mostrando ruta de ${company.name}`, 'info');
@@ -1429,50 +1263,65 @@
 
         function filterCompanies() {
             const query = document.getElementById('searchInput').value.toLowerCase();
+            const ids = Object.keys(companies);
             const cards = document.querySelectorAll('.company-card');
-
-            companies.forEach((company, idx) => {
+            ids.forEach((companyId, idx) => {
                 if (cards[idx]) {
-                    const match = company.name.toLowerCase().includes(query) ||
-                                  company.route.toLowerCase().includes(query);
+                    const company = companies[companyId];
+                    const match = (company.name || '').toLowerCase().includes(query) ||
+                                  (company.route || '').toLowerCase().includes(query);
                     cards[idx].style.display = match ? 'block' : 'none';
                 }
             });
         }
 
-        function showVehiclePanel(vehicle, company, lat, lng) {
-            const panel = document.getElementById('vehiclePanel');
-            document.getElementById('vehiclePanelTitle').textContent = `Vehículo ${vehicle.plate}`;
+        function showVehiclePanel(companyId, vehicleId) {
+            window._openPanel = { companyId, vehicleId };
+            refreshOpenPanel();
+            document.getElementById('vehiclePanel').classList.add('show');
+        }
+
+        function refreshOpenPanel() {
+            if (!window._openPanel) return;
+            const { companyId, vehicleId } = window._openPanel;
+            const company = companies[companyId];
+            const vehicle = company && company.vehicles && company.vehicles[vehicleId];
+            const live = (liveVehicles[companyId] || {})[vehicleId];
+            if (!company || !vehicle) return;
+
+            document.getElementById('vehiclePanelTitle').textContent = `Vehículo ${vehicle.plate || vehicleId}`;
             document.getElementById('vpCompany').textContent = company.name;
-            document.getElementById('vpPlate').textContent = vehicle.plate;
-            document.getElementById('vpSpeed').textContent = `${vehicle.speed} km/h`;
-            
-            // Estado basado en velocidad
+            document.getElementById('vpPlate').textContent = vehicle.plate || vehicleId;
+
+            const speed = live ? Math.round(live.speed || 0) : 0;
+            document.getElementById('vpSpeed').textContent = `${speed} km/h`;
+
             const statusEl = document.getElementById('vpStatus');
-            if (vehicle.speed < 3) {
+            if (!live || !isOnline(live)) {
+                statusEl.innerHTML = '<span class="status-offline"><span class="status-dot-small offline"></span>Sin conexión</span>';
+            } else if (speed < 3) {
                 statusEl.innerHTML = '<span class="status-stopped"><span class="status-dot-small stopped"></span>Detenido</span>';
             } else {
                 statusEl.innerHTML = '<span class="status-moving"><span class="status-dot-small moving"></span>En movimiento</span>';
             }
-            
-            // Última actualización
-            updateLastUpdateLabel(vehicle.lastUpdate, 'vpUpdate');
-            
-            // Precisión GPS
+
+            document.getElementById('vpUpdate').textContent = live ? formatTimeAgo(live.timestamp) : '—';
+
             const accuracyEl = document.getElementById('vpAccuracy');
-            accuracyEl.textContent = `±${Math.round(vehicle.accuracy)} m`;
-            accuracyEl.className = vehicle.accuracy < 20 ? 'accuracy-good' : vehicle.accuracy < 100 ? 'accuracy-medium' : 'accuracy-bad';
-            
-            panel.classList.add('show');
+            const acc = live ? Math.round(live.accuracy || 0) : null;
+            accuracyEl.textContent = acc ? `±${acc} m` : '—';
+            accuracyEl.className = !acc ? '' : acc < 20 ? 'accuracy-good' : acc < 100 ? 'accuracy-medium' : 'accuracy-bad';
         }
 
         function closeVehiclePanel() {
             document.getElementById('vehiclePanel').classList.remove('show');
+            window._openPanel = null;
         }
 
         function formatTimeAgo(timestamp) {
+            if (!timestamp) return '—';
             const seconds = Math.floor((Date.now() - timestamp) / 1000);
-            if (seconds < 5) return 'Hace 5s';
+            if (seconds < 5) return 'Hace instantes';
             if (seconds < 60) return `Hace ${seconds}s`;
             const minutes = Math.floor(seconds / 60);
             if (minutes < 60) return `Hace ${minutes}min`;
@@ -1480,204 +1329,232 @@
             return `Hace ${hours}h`;
         }
 
-        function updateLastUpdateLabel(timestamp, elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.textContent = formatTimeAgo(timestamp);
-            }
-        }
-
-        function updateLastUpdateLabels() {
-            companies.forEach(company => {
-                company.vehicles.forEach(vehicle => {
-                    if (vehicle.online) {
-                        vehicle.lastUpdate = Date.now();
-                    }
-                });
-            });
-        }
-
-        // ==================== DRIVER VIEW ====================
+        // ==================== DRIVER VIEW (GPS REAL) ====================
         function populateDriverSelects() {
             const companySelect = document.getElementById('driverCompany');
-            companies.forEach(company => {
+            const prevCompany = companySelect.value;
+            companySelect.innerHTML = '';
+            Object.keys(companies).forEach(companyId => {
                 const opt = document.createElement('option');
-                opt.value = company.id;
-                opt.textContent = `${company.name} (${company.id})`;
+                opt.value = companyId;
+                opt.textContent = companies[companyId].name;
                 companySelect.appendChild(opt);
+            });
+            if (prevCompany && companies[prevCompany]) companySelect.value = prevCompany;
+            populateDriverVehicleSelect();
+        }
+
+        function populateDriverVehicleSelect() {
+            const companyId = document.getElementById('driverCompany').value;
+            const vehicleSelect = document.getElementById('driverVehicle');
+            vehicleSelect.innerHTML = '';
+            const company = companies[companyId];
+            if (!company || !company.vehicles) return;
+            Object.keys(company.vehicles).forEach(vehicleId => {
+                const opt = document.createElement('option');
+                opt.value = vehicleId;
+                opt.textContent = company.vehicles[vehicleId].plate || vehicleId;
+                vehicleSelect.appendChild(opt);
             });
         }
 
-        function startDriverMode() {
-            const vehicleId = document.getElementById('vehicleId').value;
-            const companyId = document.getElementById('driverCompany').value;
-            const driverName = document.getElementById('driverName').value;
-
-            if (!vehicleId || !companyId || !driverName) {
-                showToast('Completa todos los campos', 'info');
-                return;
-            }
-
-            const company = companies.find(c => c.id === companyId);
-            let vehicle = company.vehicles.find(v => v.id === vehicleId);
-            
-            if (!vehicle) {
-                // Crear nuevo vehículo si no existe
-                vehicle = {
-                    id: vehicleId,
-                    plate: vehicleId.split('-').pop() || vehicleId,
-                    driver: driverName,
-                    online: true,
-                    speed: 0,
-                    lastUpdate: Date.now(),
-                    accuracy: 2000,
-                    startTime: Date.now()
-                };
-                company.vehicles.push(vehicle);
-            }
-
-            vehicle.online = true;
-            vehicle.driver = driverName;
-            vehicle.startTime = Date.now();
-            vehicleProgress[vehicleId] = 0.1;
-
-            document.getElementById('driverLogin').style.display = 'none';
-            document.getElementById('driverActive').classList.add('show');
-
-            packetsSent = 0;
-            driverStartTime = Date.now();
-            addLog('Botón presionado. Iniciando transmisión...');
-            addLog('Solicitando permiso de ubicación...');
-
-            // Init driver map
-            setTimeout(() => {
-                if (!driverMap) {
-                    driverMap = L.map('driverMap').setView([-11.9819, -77.1032], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap'
-                    }).addTo(driverMap);
-                    
-                    // Mostrar ruta en el mapa del conductor
-                    const routeLine = L.polyline(company.routePoints, {
-                        color: company.color,
-                        weight: 4,
-                        opacity: 0.6,
-                        dashArray: '10, 8'
-                    }).addTo(driverMap);
-                }
-            }, 100);
-
-            driverInterval = setInterval(() => {
-                vehicleProgress[vehicleId] += 0.01;
-                if (vehicleProgress[vehicleId] >= 1) vehicleProgress[vehicleId] = 0;
-
-                const pos = interpolateRoute(company.routePoints, vehicleProgress[vehicleId]);
-                vehiclePositions[vehicleId] = pos;
-                placeVehicleOnMap(vehicle, company, pos.lat, pos.lng);
-
-                // Simular velocidad realista
-                vehicle.speed = Math.floor(20 + Math.random() * 30);
-                vehicle.lastUpdate = Date.now();
-                
-                // Precisión GPS mejora con el tiempo
-                const timeSinceStart = (Date.now() - driverStartTime) / 1000;
-                if (timeSinceStart < 10) {
-                    vehicle.accuracy = Math.max(100, 2000 - timeSinceStart * 180);
-                } else if (timeSinceStart < 30) {
-                    vehicle.accuracy = Math.max(20, 100 - (timeSinceStart - 10) * 4);
-                } else {
-                    vehicle.accuracy = Math.max(5, 20 - (timeSinceStart - 30) * 0.5);
-                }
-
-                // Update driver map
-                if (driverMap) {
-                    if (driverMarker) {
-                        driverMarker.setLatLng([pos.lat, pos.lng]);
-                    } else {
-                        driverMarker = L.marker([pos.lat, pos.lng], {
-                            icon: createVehicleIcon(company.color)
-                        }).addTo(driverMap);
-                    }
-                    driverMap.setView([pos.lat, pos.lng], 16);
-                }
-
-                // Update UI
-                document.getElementById('driverLat').textContent = pos.lat.toFixed(6);
-                document.getElementById('driverLng').textContent = pos.lng.toFixed(6);
-                document.getElementById('driverSpeed').textContent = `${vehicle.speed} km/h`;
-                
-                const accuracyEl = document.getElementById('driverAccuracy');
-                accuracyEl.textContent = `±${Math.round(vehicle.accuracy)} m`;
-                accuracyEl.className = vehicle.accuracy < 20 ? 'accuracy-good' : vehicle.accuracy < 100 ? 'accuracy-medium' : 'accuracy-bad';
-                
-                const statusEl = document.getElementById('driverStatus');
-                if (vehicle.speed < 3) {
-                    statusEl.textContent = 'Detenido';
-                    statusEl.style.color = 'var(--warning)';
-                } else {
-                    statusEl.textContent = 'En movimiento';
-                    statusEl.style.color = 'var(--success)';
-                }
-                
-                packetsSent++;
-                document.getElementById('driverSent').textContent = packetsSent;
-
-                addLog(`GPS leído -> ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)} (±${Math.round(vehicle.accuracy)}m)`);
-                addLog(`Enviado #${packetsSent} a Firebase. Velocidad: ${vehicle.speed} km/h`);
-
-                updateStats();
-                renderAdminVehicleList();
-            }, 5000);
-
-            showToast(`GPS activo para ${vehicle.plate}`, 'success');
-            updateStats();
-            renderCompanyList();
-            renderAdminVehicleList();
-        }
-
-        function stopDriverMode() {
-            const vehicleId = document.getElementById('vehicleId').value;
-            const companyId = document.getElementById('driverCompany').value;
-            const company = companies.find(c => c.id === companyId);
-            const vehicle = company.vehicles.find(v => v.id === vehicleId);
-
-            if (vehicle) vehicle.online = false;
-            clearInterval(driverInterval);
-            removeVehicleMarker(vehicleId);
-
-            document.getElementById('driverLogin').style.display = 'block';
-            document.getElementById('driverActive').classList.remove('show');
-
-            addLog('Transmisión detenida.');
-            showToast(`Transmisión detenida`, 'info');
-            updateStats();
-            renderCompanyList();
-            renderAdminVehicleList();
-        }
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'driverCompany') populateDriverVehicleSelect();
+        });
 
         function addLog(message) {
-            const console = document.getElementById('logConsole');
+            const consoleEl = document.getElementById('logConsole');
             const time = new Date().toLocaleTimeString('es-PE');
             const entry = document.createElement('div');
             entry.className = 'log-entry';
             entry.textContent = `[${time}] ${message}`;
-            console.insertBefore(entry, console.firstChild);
+            consoleEl.insertBefore(entry, consoleEl.firstChild);
+        }
+
+        function setDriverStatus(cls, text) {
+            const badge = document.getElementById('driverStatusBadge');
+            badge.className = 'status-badge ' + cls;
+            document.getElementById('driverStatusText').textContent = text;
+        }
+
+        function startDriverMode() {
+            const companyId = document.getElementById('driverCompany').value;
+            const vehicleId = document.getElementById('driverVehicle').value;
+            const driverName = document.getElementById('driverName').value.trim();
+
+            if (!companyId || !vehicleId || !driverName) {
+                showToast('Completa todos los campos', 'info');
+                return;
+            }
+            if (!navigator.geolocation) {
+                showToast('Tu navegador no soporta GPS', 'error');
+                return;
+            }
+
+            activeDriverPath = { companyId, vehicleId };
+            const company = companies[companyId];
+
+            document.getElementById('driverLogin').style.display = 'none';
+            document.getElementById('driverActive').classList.add('show');
+            document.getElementById('startBtn').disabled = true;
+
+            packetsSent = 0;
+            addLog('Iniciando transmisión real de GPS...');
+            setDriverStatus('wait', 'Solicitando permiso de ubicación...');
+
+            setTimeout(() => {
+                if (!driverMap) {
+                    driverMap = L.map('driverMap').setView([-12.04, -77.03], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap'
+                    }).addTo(driverMap);
+                }
+                if (company && company.routePoints) {
+                    L.polyline(company.routePoints, {
+                        color: company.color || '#0d9488', weight: 4, opacity: 0.6, dashArray: '10, 8'
+                    }).addTo(driverMap);
+                }
+            }, 50);
+
+            watchId = navigator.geolocation.watchPosition(onDriverPosition, onDriverError, {
+                enableHighAccuracy: false,
+                maximumAge: 5000,
+                timeout: 20000
+            });
+        }
+
+        let lastSpeedSampleTime = null;
+        let lastSpeedSamplePos = null;
+
+        function estimateSpeedKmh(pos) {
+            if (typeof pos.coords.speed === 'number' && pos.coords.speed !== null && pos.coords.speed >= 0) {
+                return pos.coords.speed * 3.6;
+            }
+            const now = Date.now();
+            if (lastSpeedSamplePos && lastSpeedSampleTime) {
+                const dtSec = (now - lastSpeedSampleTime) / 1000;
+                if (dtSec > 0) {
+                    const distM = haversine(lastSpeedSamplePos.lat, lastSpeedSamplePos.lng, pos.coords.latitude, pos.coords.longitude);
+                    const kmh = (distM / dtSec) * 3.6;
+                    lastSpeedSampleTime = now;
+                    lastSpeedSamplePos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    return kmh;
+                }
+            }
+            lastSpeedSampleTime = now;
+            lastSpeedSamplePos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            return 0;
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = d => d * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function onDriverPosition(pos) {
+            if (!activeDriverPath) return;
+            const { companyId, vehicleId } = activeDriverPath;
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const acc = Math.round(pos.coords.accuracy);
+            const speedKmh = Math.max(0, estimateSpeedKmh(pos));
+
+            document.getElementById('driverLat').textContent = lat.toFixed(6);
+            document.getElementById('driverLng').textContent = lng.toFixed(6);
+            document.getElementById('driverSpeed').textContent = `${Math.round(speedKmh)} km/h`;
+
+            const accuracyEl = document.getElementById('driverAccuracy');
+            accuracyEl.textContent = `±${acc} m`;
+            accuracyEl.className = acc < 20 ? 'accuracy-good' : acc < 100 ? 'accuracy-medium' : 'accuracy-bad';
+
+            const moveStatusEl = document.getElementById('driverMoveStatus');
+            if (speedKmh < 3) {
+                moveStatusEl.textContent = 'Detenido';
+                moveStatusEl.style.color = 'var(--warning)';
+            } else {
+                moveStatusEl.textContent = 'En movimiento';
+                moveStatusEl.style.color = 'var(--success)';
+            }
+
+            if (driverMap) {
+                if (driverMarker) {
+                    driverMarker.setLatLng([lat, lng]);
+                } else {
+                    driverMarker = L.marker([lat, lng], {
+                        icon: createVehicleIcon((companies[companyId] || {}).color || '#0d9488', speedKmh >= 3)
+                    }).addTo(driverMap);
+                }
+                driverMap.setView([lat, lng], 16);
+            }
+
+            addLog(`GPS leído → ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${acc}m, ${Math.round(speedKmh)} km/h)`);
+
+            if (!window.firebaseReady) {
+                setDriverStatus('err', 'GPS ok, pero Firebase no está listo');
+                addLog('Aviso: Firebase no listo, dato no enviado.');
+                return;
+            }
+
+            const liveRef = window.fbRef(window.fbDb, `vehiculos_live/${companyId}/${vehicleId}`);
+            window.fbSet(liveRef, {
+                lat, lng, accuracy: acc, speed: speedKmh,
+                driver: document.getElementById('driverName').value.trim(),
+                timestamp: Date.now()
+            }).then(() => {
+                packetsSent++;
+                document.getElementById('driverSent').textContent = packetsSent;
+                setDriverStatus('ok', 'Transmitiendo a Firebase en vivo');
+                addLog(`Enviado #${packetsSent} a Firebase.`);
+            }).catch(err => {
+                setDriverStatus('err', 'Error subiendo a Firebase');
+                addLog('Error de Firebase: ' + err.message);
+            });
+        }
+
+        function onDriverError(err) {
+            setDriverStatus('err', 'Error de GPS: ' + err.message);
+            addLog(`Error de geolocalización (código ${err.code}): ${err.message}`);
+        }
+
+        function stopDriverMode() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (activeDriverPath && window.firebaseReady) {
+                const { companyId, vehicleId } = activeDriverPath;
+                const liveRef = window.fbRef(window.fbDb, `vehiculos_live/${companyId}/${vehicleId}`);
+                window.fbSet(liveRef, null);
+            }
+            activeDriverPath = null;
+            driverMarker = null;
+
+            document.getElementById('driverLogin').style.display = 'block';
+            document.getElementById('driverActive').classList.remove('show');
+            document.getElementById('startBtn').disabled = false;
+
+            addLog('Transmisión detenida.');
+            showToast('Transmisión detenida', 'info');
         }
 
         // ==================== ADMIN VIEW ====================
         function registerCompany() {
-            const name = document.getElementById('regCompanyName').value;
-            const ruc = document.getElementById('regCompanyRuc').value;
-            const phone = document.getElementById('regCompanyPhone').value;
-            const route = document.getElementById('regCompanyRoute').value;
+            const name = document.getElementById('regCompanyName').value.trim();
+            const ruc = document.getElementById('regCompanyRuc').value.trim();
+            const phone = document.getElementById('regCompanyPhone').value.trim();
+            const route = document.getElementById('regCompanyRoute').value.trim();
 
             if (!name || !ruc || !route) {
                 showToast('Completa los campos obligatorios', 'info');
                 return;
             }
 
-            const colors = ['#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'];
-            const newId = `empresa${String(companies.length + 1).padStart(3, '0')}`;
+            const colors = ['#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#8b5cf6'];
+            const newId = 'empresa' + Date.now().toString().slice(-6);
 
             const baseLat = -12.0464 + (Math.random() - 0.5) * 0.1;
             const baseLng = -77.0428 + (Math.random() - 0.5) * 0.1;
@@ -1690,62 +1567,78 @@
             }
 
             const newCompany = {
-                id: newId,
-                name: name,
-                ruc: ruc,
-                route: route,
-                routeShort: route.split('→').map(s => s.trim().substring(0, 10)).join(' → '),
-                phone: phone,
+                name, ruc, route, phone,
                 verified: true,
-                color: colors[companies.length % colors.length],
-                vehicles: [
-                    { 
-                        id: `${newId}-vehiculo01`, 
-                        plate: `${String.fromCharCode(65+Math.floor(Math.random()*26))}${String.fromCharCode(65+Math.floor(Math.random()*26))}${String.fromCharCode(65+Math.floor(Math.random()*26))}-${Math.floor(100+Math.random()*900)}`, 
-                        driver: "Sin asignar", 
-                        online: false,
-                        speed: 0,
-                        lastUpdate: Date.now(),
-                        accuracy: 2000
-                    }
-                ],
-                routePoints: routePoints
+                color: colors[Object.keys(companies).length % colors.length],
+                routePoints,
+                vehicles: {}
             };
 
-            companies.push(newCompany);
-            showRoute(newCompany);
+            window.fbSet(window.fbRef(window.fbDb, 'empresas/' + newId), newCompany).then(() => {
+                document.getElementById('regCompanyName').value = '';
+                document.getElementById('regCompanyRuc').value = '';
+                document.getElementById('regCompanyPhone').value = '';
+                document.getElementById('regCompanyRoute').value = '';
+                showToast(`Empresa "${name}" registrada`, 'success');
+            }).catch(err => showToast('Error: ' + err.message, 'error'));
+        }
 
-            document.getElementById('regCompanyName').value = '';
-            document.getElementById('regCompanyRuc').value = '';
-            document.getElementById('regCompanyPhone').value = '';
-            document.getElementById('regCompanyRoute').value = '';
+        function populateAddVehicleSelect() {
+            const select = document.getElementById('addVehicleCompany');
+            const prev = select.value;
+            select.innerHTML = '';
+            Object.keys(companies).forEach(companyId => {
+                const opt = document.createElement('option');
+                opt.value = companyId;
+                opt.textContent = companies[companyId].name;
+                select.appendChild(opt);
+            });
+            if (prev && companies[prev]) select.value = prev;
+        }
 
-            renderCompanyList();
-            renderAdminVehicleList();
-            populateDriverSelects();
-            updateStats();
+        function addVehicleToCompany() {
+            const companyId = document.getElementById('addVehicleCompany').value;
+            const plate = document.getElementById('addVehiclePlate').value.trim();
 
-            showToast(`Empresa "${name}" registrada como ${newId}`, 'success');
+            if (!companyId || !plate) {
+                showToast('Completa los campos', 'info');
+                return;
+            }
+
+            const newVehicleId = 'vehiculo' + Date.now().toString().slice(-6);
+            window.fbSet(window.fbRef(window.fbDb, `empresas/${companyId}/vehicles/${newVehicleId}`), {
+                plate, driver: 'Sin asignar'
+            }).then(() => {
+                document.getElementById('addVehiclePlate').value = '';
+                showToast(`Vehículo "${plate}" agregado`, 'success');
+            }).catch(err => showToast('Error: ' + err.message, 'error'));
         }
 
         function renderAdminVehicleList() {
             const list = document.getElementById('vehicleListAdmin');
+            if (!list) return;
             list.innerHTML = '';
 
-            companies.forEach(company => {
-                company.vehicles.forEach(vehicle => {
+            Object.keys(companies).forEach(companyId => {
+                const company = companies[companyId];
+                const vehicles = company.vehicles || {};
+                Object.keys(vehicles).forEach(vehicleId => {
+                    const vehicle = vehicles[vehicleId];
+                    const live = (liveVehicles[companyId] || {})[vehicleId];
+                    const online = isOnline(live);
+
                     const item = document.createElement('div');
                     item.className = 'vehicle-item';
                     item.innerHTML = `
                         <div class="vehicle-item-info">
                             <div class="vehicle-icon">🚌</div>
                             <div>
-                                <div class="vehicle-item-name">${vehicle.plate}</div>
-                                <div class="vehicle-item-plate">${company.name} · ${vehicle.id}</div>
+                                <div class="vehicle-item-name">${vehicle.plate || vehicleId}</div>
+                                <div class="vehicle-item-plate">${company.name} · ${vehicleId}</div>
                             </div>
                         </div>
-                        <span class="vehicle-item-status ${vehicle.online ? 'online' : 'offline'}">
-                            ${vehicle.online ? '● En línea' : '○ Offline'}
+                        <span class="vehicle-item-status ${online ? 'online' : 'offline'}">
+                            ${online ? '● En línea' : '○ Offline'}
                         </span>
                     `;
                     list.appendChild(item);
@@ -1754,10 +1647,16 @@
         }
 
         function updateStats() {
-            const totalVehicles = companies.reduce((sum, c) => sum + c.vehicles.length, 0);
-            const onlineVehicles = companies.reduce((sum, c) => sum + c.vehicles.filter(v => v.online).length, 0);
-
-            document.getElementById('statCompanies').textContent = companies.length;
+            let totalVehicles = 0;
+            let onlineVehicles = 0;
+            Object.keys(companies).forEach(companyId => {
+                const vehicles = (companies[companyId] || {}).vehicles || {};
+                totalVehicles += Object.keys(vehicles).length;
+                Object.keys(vehicles).forEach(vid => {
+                    if (isOnline((liveVehicles[companyId] || {})[vid])) onlineVehicles++;
+                });
+            });
+            document.getElementById('statCompanies').textContent = Object.keys(companies).length;
             document.getElementById('statVehicles').textContent = totalVehicles;
             document.getElementById('statOnline').textContent = onlineVehicles;
         }
@@ -1766,16 +1665,11 @@
         function switchView(view, btn) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-
             document.getElementById(`view-${view}`).classList.add('active');
             btn.classList.add('active');
 
-            if (view === 'passenger' && map) {
-                setTimeout(() => map.invalidateSize(), 100);
-            }
-            if (view === 'driver' && driverMap) {
-                setTimeout(() => driverMap.invalidateSize(), 100);
-            }
+            if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
+            if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
         }
 
         // ==================== TOAST ====================
@@ -1783,18 +1677,61 @@
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
-
-            icon.textContent = type === 'success' ? '✓' : 'ℹ';
+            icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
             icon.className = `toast-icon ${type}`;
             msg.textContent = message;
-
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ==================== START ====================
+        // ==================== PWA INSTALL ====================
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.getElementById('installBanner').classList.add('show');
+        });
+
+        window.installApp = function () {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(() => {
+                document.getElementById('installBanner').classList.remove('show');
+                deferredInstallPrompt = null;
+            });
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        window.switchView = switchView;
+        window.filterCompanies = filterCompanies;
+        window.closeVehiclePanel = closeVehiclePanel;
+        window.startDriverMode = startDriverMode;
+        window.stopDriverMode = stopDriverMode;
+        window.registerCompany = registerCompany;
+        window.addVehicleToCompany = addVehicleToCompany;
+
+        // ==================== INIT ====================
+        function init() {
+            initMap();
+            onFirebaseReady(() => {
+                seedIfEmpty();
+                setTimeout(() => {
+                    listenCompanies();
+                    listenLiveVehicles();
+                }, 400);
+            });
+            setInterval(() => {
+                if (window._openPanel) refreshOpenPanel();
+                renderCompanyList();
+            }, 1000);
+        }
+
         window.addEventListener('load', init);
     </script>
 </body>
 </html>
-
