@@ -79,10 +79,10 @@
 
             const sentidoEl = document.getElementById('vpSentido');
             if (live && live.sentido === 'retorno') {
-                sentidoEl.textContent = '🔴 Retorno';
+                sentidoEl.textContent = ' Retorno';
                 sentidoEl.style.color = '#dc2626';
             } else if (live) {
-                sentidoEl.textContent = '🔵 Ida';
+                sentidoEl.textContent = ' Ida';
                 sentidoEl.style.color = '#2563eb';
             } else {
                 sentidoEl.textContent = '—';
