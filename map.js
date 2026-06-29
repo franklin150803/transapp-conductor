@@ -91,14 +91,15 @@
             const start = performance.now();
             const fromLat = fromLatLng.lat, fromLng = fromLatLng.lng;
             const toLat = toLatLng[0], toLng = toLatLng[1];
+            const latDiff = toLat - fromLat;
+            const lngDiff = toLng - fromLng;
 
             function step(now) {
                 const elapsed = now - start;
                 const t = Math.min(1, elapsed / durationMs);
-                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; // ease-in-out suave
-                const lat = fromLat + (toLat - fromLat) * ease;
-                const lng = fromLng + (toLng - fromLng) * ease;
-                marker.setLatLng([lat, lng]);
+                // Inline ease-in-out: evita llamada a Math.pow
+                const ease = t < 0.5 ? 2*t*t : 1 - ((-2*t+2)*(-2*t+2))/2;
+                marker.setLatLng([fromLat + latDiff * ease, fromLng + lngDiff * ease]);
                 if (t < 1) {
                     marker._animFrame = requestAnimationFrame(step);
                 } else {
@@ -110,17 +111,21 @@
 
         function updateMapFromLiveData() {
             if (!map) return;
-            Object.keys(companies).forEach(companyId => {
+            const companyIds = Object.keys(companies);
+            for (let i = 0; i < companyIds.length; i++) {
+                const companyId = companyIds[i];
                 const company = companies[companyId];
-                if (!company.vehicles) return;
-                Object.keys(company.vehicles).forEach(vehicleId => {
+                if (!company.vehicles) continue;
+                const vehicleIds = Object.keys(company.vehicles);
+                for (let j = 0; j < vehicleIds.length; j++) {
+                    const vehicleId = vehicleIds[j];
                     const vehicle = company.vehicles[vehicleId];
                     const live = (liveVehicles[companyId] || {})[vehicleId];
                     const markerId = vehicleKey(companyId, vehicleId);
 
                     if (!live || !isOnline(live)) {
                         removeVehicleMarker(markerId);
-                        return;
+                        continue;
                     }
 
                     const moving = (live.speed || 0) >= 3;
@@ -135,7 +140,7 @@
                     const prevPos = vehicleLastKnownPos[markerId];
                     if (prevPos && prevPos.lat === live.lat && prevPos.lng === live.lng &&
                         prevPos.timestamp === live.timestamp) {
-                        return;
+                        continue;
                     }
 
                     // Si el conductor no envio heading nativo, lo calculamos
@@ -169,8 +174,8 @@
                     }
 
                     vehicleLastKnownPos[markerId] = { lat: live.lat, lng: live.lng, heading, timestamp: live.timestamp };
-                });
-            });
+                }
+            }
         }
 
         function removeVehicleMarker(markerId) {

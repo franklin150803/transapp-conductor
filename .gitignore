@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since only a JavaScript source file (utils.js) was modified and no build artifacts, dependencies, or temporary files were detected in the changes.
+(driver.js, map.js, passenger.js, utils.js are all source files, and there are no build artifacts, dependencies, or temp files in the changes)

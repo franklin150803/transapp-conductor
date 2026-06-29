@@ -17,16 +17,25 @@
             const wrap = document.getElementById('fleetSummary');
             wrap.innerHTML = '';
             const vehicles = (company && company.vehicles) || {};
-            const onlineIds = Object.keys(vehicles).filter(vid => isOnline((liveVehicles[companyId] || {})[vid]));
+            // Reemplaza filter + forEach con un solo bucle for
+            const vehicleIds = Object.keys(vehicles);
+            let onlineCount = 0;
+            for (let i = 0; i < vehicleIds.length; i++) {
+                const vid = vehicleIds[i];
+                if (!isOnline((liveVehicles[companyId] || {})[vid])) continue;
+                onlineCount++;
+            }
 
-            if (onlineIds.length === 0) {
+            if (onlineCount === 0) {
                 wrap.innerHTML = '<div class="fleet-empty">Ningún vehículo de esta empresa está en ruta ahora mismo.</div>';
                 return;
             }
 
-            onlineIds.forEach(vid => {
+            for (let i = 0; i < vehicleIds.length; i++) {
+                const vid = vehicleIds[i];
+                const live = (liveVehicles[companyId] || {})[vid];
+                if (!isOnline(live)) continue;
                 const vehicle = vehicles[vid];
-                const live = liveVehicles[companyId][vid];
                 const eta = estimateEtaMinutes(company, live);
                 const sentidoColor = live.sentido === 'retorno' ? '#ff5252' : '#22d3ee';
                 const chip = document.createElement('div');
@@ -43,21 +52,22 @@
                     <div class="fleet-chip-speed">${Math.round(live.speed || 0)} km/h</div>
                 `;
                 wrap.appendChild(chip);
-            });
+            }
         }
 
         function filterCompanies() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const ids = Object.keys(companies);
             const cards = document.querySelectorAll('.company-card');
-            ids.forEach((companyId, idx) => {
-                if (cards[idx]) {
+            for (let i = 0; i < ids.length; i++) {
+                const companyId = ids[i];
+                if (cards[i]) {
                     const company = companies[companyId];
                     const match = (company.name || '').toLowerCase().includes(query) ||
                                   (company.route || '').toLowerCase().includes(query);
-                    cards[idx].style.display = match ? 'block' : 'none';
+                    cards[i].style.display = match ? 'block' : 'none';
                 }
-            });
+            }
         }
 
         function showVehiclePanel(companyId, vehicleId) {
@@ -243,18 +253,23 @@
             if (!list) return;
             list.innerHTML = '';
 
+            // Ordena favoritos primero sin crear array intermedio
             const orderedIds = Object.keys(companies).sort((a, b) => {
                 const favA = favoriteCompanyIds[a] ? 1 : 0;
                 const favB = favoriteCompanyIds[b] ? 1 : 0;
                 return favB - favA;
             });
 
-            orderedIds.forEach(companyId => {
+            for (let i = 0; i < orderedIds.length; i++) {
+                const companyId = orderedIds[i];
                 const company = companies[companyId];
                 const vehicles = company.vehicles || {};
-                const onlineCount = Object.keys(vehicles).filter(vid =>
-                    isOnline((liveVehicles[companyId] || {})[vid])
-                ).length;
+                // Cuenta online sin filter
+                let onlineCount = 0;
+                const vehicleIds = Object.keys(vehicles);
+                for (let j = 0; j < vehicleIds.length; j++) {
+                    if (isOnline((liveVehicles[companyId] || {})[vehicleIds[j]])) onlineCount++;
+                }
                 const isFav = !!favoriteCompanyIds[companyId];
 
                 const card = document.createElement('div');
@@ -284,7 +299,7 @@
                         </div>
                     </div>
                     <div class="company-meta">
-                        <span class="company-online-count">${appIcon('bus', 13)} <span class="count-text">${onlineCount}/${Object.keys(vehicles).length}</span> en ruta</span>
+                        <span class="company-online-count">${appIcon('bus', 13)} <span class="count-text">${onlineCount}/${vehicleIds.length}</span> en ruta</span>
                         <span>${appIcon('building', 13)} RUC: ${escapeHtml(company.ruc) || '—'}</span>
                     </div>
                     ${company.schedule ? `
@@ -301,7 +316,7 @@
                     toggleFavorite(companyId);
                 };
                 list.appendChild(card);
-            });
+            }
         }
 
         // Actualiza solo el texto "X/Y en ruta" de cada tarjeta ya existente,
@@ -311,17 +326,22 @@
         function updateCompanyListCounts() {
             const list = document.getElementById('companyList');
             if (!list) return;
-            Object.keys(companies).forEach(companyId => {
+            const companyIds = Object.keys(companies);
+            for (let i = 0; i < companyIds.length; i++) {
+                const companyId = companyIds[i];
                 const card = list.querySelector(`[data-company-id="${companyId}"]`);
-                if (!card) return;
+                if (!card) continue;
                 const company = companies[companyId];
                 const vehicles = company.vehicles || {};
-                const onlineCount = Object.keys(vehicles).filter(vid =>
-                    isOnline((liveVehicles[companyId] || {})[vid])
-                ).length;
+                // Cuenta online sin filter
+                let onlineCount = 0;
+                const vehicleIds = Object.keys(vehicles);
+                for (let j = 0; j < vehicleIds.length; j++) {
+                    if (isOnline((liveVehicles[companyId] || {})[vehicleIds[j]])) onlineCount++;
+                }
                 const countEl = card.querySelector('.count-text');
-                if (countEl) countEl.textContent = `${onlineCount}/${Object.keys(vehicles).length}`;
-            });
+                if (countEl) countEl.textContent = `${onlineCount}/${vehicleIds.length}`;
+            }
         }
 
         function selectCompany(companyId) {
@@ -338,7 +358,10 @@
             setTimeout(() => {
                 if (!map) initMap();
                 map.invalidateSize();
-                Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
+                const cids = Object.keys(companies);
+                for (let i = 0; i < cids.length; i++) {
+                    showRoute(cids[i], companies[cids[i]]);
+                }
                 const bounds = getRouteBoundsForCompany(companyId);
                 if (bounds) {
                     map.fitBounds(bounds, { padding: [40, 40] });

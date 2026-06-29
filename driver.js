@@ -30,12 +30,14 @@
             const companySelect = document.getElementById('driverCompany');
             const prevCompany = companySelect.value;
             companySelect.innerHTML = '';
-            Object.keys(companies).forEach(companyId => {
+            const companyIds = Object.keys(companies);
+            for (let i = 0; i < companyIds.length; i++) {
+                const companyId = companyIds[i];
                 const opt = document.createElement('option');
                 opt.value = companyId;
                 opt.textContent = companies[companyId].name;
                 companySelect.appendChild(opt);
-            });
+            }
             if (prevCompany && companies[prevCompany]) companySelect.value = prevCompany;
             populateDriverVehicleSelect();
         }
@@ -46,12 +48,14 @@
             vehicleSelect.innerHTML = '';
             const company = companies[companyId];
             if (!company || !company.vehicles) return;
-            Object.keys(company.vehicles).forEach(vehicleId => {
+            const vehicleIds = Object.keys(company.vehicles);
+            for (let i = 0; i < vehicleIds.length; i++) {
+                const vehicleId = vehicleIds[i];
                 const opt = document.createElement('option');
                 opt.value = vehicleId;
                 opt.textContent = company.vehicles[vehicleId].plate || vehicleId;
                 vehicleSelect.appendChild(opt);
-            });
+            }
         }
 
         document.addEventListener('change', (e) => {
@@ -347,25 +351,39 @@
 
             const others = [];
             const companyLive = liveVehicles[companyId] || {};
-            Object.keys(companyLive).forEach(vid => {
-                if (vid === vehicleId) return;
+            const liveVehicleIds = Object.keys(companyLive);
+            for (let i = 0; i < liveVehicleIds.length; i++) {
+                const vid = liveVehicleIds[i];
+                if (vid === vehicleId) continue;
                 const live = companyLive[vid];
-                if (!live || !isOnline(live) || live.sentido !== currentDriverSentido) return;
+                if (!live || !isOnline(live) || live.sentido !== currentDriverSentido) continue;
                 const remaining = distanceAlongRoute(points, live.lat, live.lng);
-                if (remaining === null) return;
+                if (remaining === null) continue;
                 const vehicleData = (company.vehicles || {})[vid] || {};
                 others.push({ plate: vehicleData.plate || vid, remaining });
-            });
+            }
 
             // El mas cercano "adelante" es el que tiene menos distancia
             // restante que yo, pero la mayor de ese grupo (el inmediato
             // siguiente en la ruta, no el mas lejano).
-            const ahead = others.filter(o => o.remaining < ownRemaining)
-                .sort((a, b) => b.remaining - a.remaining)[0];
+            let ahead = null;
+            let maxAheadRemaining = -Infinity;
+            for (let i = 0; i < others.length; i++) {
+                if (others[i].remaining < ownRemaining && others[i].remaining > maxAheadRemaining) {
+                    maxAheadRemaining = others[i].remaining;
+                    ahead = others[i];
+                }
+            }
             // El mas cercano "atras" es el que tiene mas distancia restante
             // que yo, pero la menor de ese grupo.
-            const behind = others.filter(o => o.remaining > ownRemaining)
-                .sort((a, b) => a.remaining - b.remaining)[0];
+            let behind = null;
+            let minBehindRemaining = Infinity;
+            for (let i = 0; i < others.length; i++) {
+                if (others[i].remaining > ownRemaining && others[i].remaining < minBehindRemaining) {
+                    minBehindRemaining = others[i].remaining;
+                    behind = others[i];
+                }
+            }
 
             // Para convertir la brecha de distancia en un estimado de
             // minutos, usamos la velocidad propia actual (con un piso de
