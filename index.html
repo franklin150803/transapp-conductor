@@ -654,9 +654,39 @@
                     <label>Ruta (origen → destino)</label>
                     <input type="text" id="regCompanyRoute" placeholder="Ej: San Juan de Lurigancho → Centro de Lima">
                 </div>
+
+                <!-- Parte 51: editor visual de rutas. Antes, al registrar
+                     una empresa, las coordenadas de la ruta se generaban al
+                     azar alrededor de Lima — quedaba bonito en el mapa pero
+                     no correspondia a ninguna calle real. Ahora el admin
+                     dibuja la ruta de verdad, tocando el mapa punto por
+                     punto. -->
+                <div class="form-group">
+                    <label>Dibuja la ruta en el mapa</label>
+                    <p class="form-hint" id="routeEditorHint">Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.</p>
+                    <div class="route-editor-toolbar">
+                        <button type="button" class="route-editor-mode-btn active" id="routeEditorModeIda" onclick="setRouteEditorMode('ida')">🔵 Ida</button>
+                        <button type="button" class="route-editor-mode-btn" id="routeEditorModeRetorno" onclick="setRouteEditorMode('retorno')">🔴 Retorno</button>
+                        <span class="route-editor-count" id="routeEditorCount">0 puntos</span>
+                    </div>
+                    <div class="route-editor-map-wrapper">
+                        <div id="routeEditorMap"></div>
+                    </div>
+                    <div class="route-editor-actions">
+                        <button type="button" class="route-editor-action-btn" onclick="undoRouteEditorPoint()">↩️ Deshacer último punto</button>
+                        <button type="button" class="route-editor-action-btn" onclick="mirrorRouteEditorRetorno()">🔁 Copiar Ida como Retorno</button>
+                        <button type="button" class="route-editor-action-btn danger" onclick="clearRouteEditor()">🗑 Borrar todo</button>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Horario de operación</label>
                     <input type="text" id="regCompanySchedule" placeholder="Ej: 5:00 AM - 10:00 PM">
+                </div>
+                <div class="form-group">
+                    <label>Lugares de paso (separados por coma)</label>
+                    <input type="text" id="regCompanyDestinos" placeholder="Ej: Universidad Nacional, Plaza Norte, Hospital Rebagliati">
+                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino, no solo el nombre de tu empresa.</p>
                 </div>
                 <button class="btn btn-primary" onclick="registerCompany()">
                     <span class="tab-icon-img" data-icon-key="shieldCheck" data-icon-size="18"></span> Registrar Empresa
@@ -817,7 +847,7 @@
 
             if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
             if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
-            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); }
+            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); initRouteEditorMapIfNeeded(); }
         }
 
 
