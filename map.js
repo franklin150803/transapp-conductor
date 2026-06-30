@@ -9,28 +9,16 @@
 
         // ==================== MAP (PASSENGER) ====================
         function initMap() {
-            // minZoom evita problemas de sincronizacion Leaflet/MapLibre en
-            // niveles de zoom muy bajos (recomendado por la documentacion
-            // oficial del plugin); Lima nunca se ve en zoom tan alejado.
-            map = L.map('map', { zoomControl: true, attributionControl: true, minZoom: 3 }).setView([-12.0464, -77.0428], 12);
+            map = L.map('map', { 
+                zoomControl: true, 
+                attributionControl: true, 
+                minZoom: 3,
+                zoomSnap: 0.5, // Permite zoom en mitades (ej: 14.5) - Experiencia premium
+                zoomDelta: 0.5, // Cuánto zoom hace cada scroll
+                markerZoomAnimation: true // Anima los marcadores al hacer zoom
+            }).setView([-12.0464, -77.0428], 12);
 
-            // Parte 38: tiles vectoriales (MapLibre GL via el plugin
-            // maplibre-gl-leaflet) en vez de imagenes PNG con filtro CSS.
-            // El estilo en vura-map-style.json define colores, jerarquia de
-            // vias y categorias (hospital, parque, etc) por separado, algo
-            // que un filtro CSS sobre una imagen no puede lograr. Viene de
-            // OpenFreeMap (datos de OpenStreetMap), sin cuenta ni API key.
-            // Todo lo de abajo (marcadores, polylines, popups) sigue siendo
-            // Leaflet normal: el plugin solo agrega esta capa base al mapa.
-            //
-            // Nota tecnica: el propio plugin deja el mapa de MapLibre sin
-            // rotacion/inclinacion mientras esta dentro de Leaflet (Leaflet
-            // maneja los gestos y sincroniza MapLibre por detras), asi que
-            // no hace falta deshabilitarlas a mano. Esto tambien significa
-            // que los edificios 3D con inclinacion de camara que se
-            // planeaban para mas adelante no se ven "inclinados" aqui (se
-            // ven en planta, como una sombra con volumen) — se ajusta el
-            // plan de esa parte cuando se llegue.
+            // Mapa vectorial MapLibre GL con estilo propio de Vura
             L.maplibreGL({
                 style: 'vura-map-style.json',
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -101,8 +89,6 @@
         function vehicleKey(companyId, vehicleId) { return companyId + '__' + vehicleId; }
 
         function animateMarkerTo(marker, fromLatLng, toLatLng, durationMs) {
-            // Cancela cualquier animacion previa de este marcador para evitar
-            // que se acumulen varias animaciones compitiendo entre si.
             if (marker._animFrame) {
                 cancelAnimationFrame(marker._animFrame);
                 marker._animFrame = null;
@@ -115,7 +101,7 @@
             function step(now) {
                 const elapsed = now - start;
                 const t = Math.min(1, elapsed / durationMs);
-                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; // ease-in-out suave
+                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
                 const lat = fromLat + (toLat - fromLat) * ease;
                 const lng = fromLng + (toLng - fromLng) * ease;
                 marker.setLatLng([lat, lng]);
@@ -148,18 +134,12 @@
                     const sentidoLabel = live.sentido === 'retorno' ? 'Retorno' : 'Ida';
                     const plateLabel = vehicle.plate || vehicleId;
 
-                    // Si nada relevante cambio desde la ultima actualizacion de
-                    // este vehiculo en particular, no recreamos su icono ni
-                    // reiniciamos su animacion. Esto evita trabajo innecesario
-                    // cuando hay muchos vehiculos y solo unos pocos se movieron.
                     const prevPos = vehicleLastKnownPos[markerId];
                     if (prevPos && prevPos.lat === live.lat && prevPos.lng === live.lng &&
                         prevPos.timestamp === live.timestamp) {
                         return;
                     }
 
-                    // Si el conductor no envio heading nativo, lo calculamos
-                    // comparando con la posicion previa que ya teniamos guardada.
                     let heading = (typeof live.heading === 'number') ? live.heading : null;
                     if (heading === null && prevPos) {
                         const distM = haversine(prevPos.lat, prevPos.lng, live.lat, live.lng);
@@ -209,10 +189,6 @@
             return (Date.now() - live.timestamp) < 60000;
         }
 
-
-        // Estima minutos de llegada al destino de la ruta correspondiente
-        // (ida o retorno, segun el sentido reportado por el conductor),
-        // usando velocidad real si hay, o un promedio conservador de 18 km/h.
         function getActiveRoutePoints(company, live) {
             const sentido = (live && live.sentido) || 'ida';
             if (sentido === 'retorno' && company.routePointsRetorno && company.routePointsRetorno.length) {
@@ -221,13 +197,7 @@
             return company.routePointsIda;
         }
 
-        // Proyecta un punto (lat,lng) sobre un segmento de recta A-B y devuelve
-        // el punto mas cercano sobre ese segmento, junto con que fraccion (0-1)
-        // del segmento representa. Se usa para "pegar" la posicion del vehiculo
-        // a la ruta real en vez de medir en linea recta hacia el destino.
         function projectPointOnSegment(lat, lng, aLat, aLng, bLat, bLng) {
-            // Conversion simple a un plano local en metros, suficiente para
-            // distancias cortas como las de una ruta urbana.
             const toXY = (la, ln) => ({
                 x: (ln - aLng) * 111320 * Math.cos(aLat * Math.PI / 180),
                 y: (la - aLat) * 110540
@@ -248,10 +218,6 @@
             return { lat: projLat, lng: projLng, t, distToSegment };
         }
 
-        // Calcula la distancia restante siguiendo la ruta real (no en linea
-        // recta): encuentra el segmento de la polyline mas cercano al vehiculo,
-        // se "pega" a ese punto, y suma la longitud de todos los segmentos
-        // que quedan hasta el final de la ruta.
         function distanceAlongRoute(points, lat, lng) {
             if (!points || points.length < 2) return null;
 
@@ -270,9 +236,6 @@
                 }
             }
 
-            // Si el vehiculo esta muy lejos de toda la ruta (>800m), el
-            // "snapping" ya no es confiable; usamos linea recta al destino
-            // como respaldo en vez de un numero engañosamente preciso.
             if (bestDist > 800) return null;
 
             let remaining = haversine(
@@ -291,8 +254,6 @@
 
             let distM = distanceAlongRoute(points, live.lat, live.lng);
             if (distM === null) {
-                // Respaldo: linea recta al destino si el vehiculo esta
-                // demasiado lejos de la ruta dibujada como para "pegarlo" a ella.
                 const dest = points[points.length - 1];
                 distM = haversine(live.lat, live.lng, dest[0], dest[1]);
             }
