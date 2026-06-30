@@ -30,6 +30,76 @@
         let waitingListenerUnsub = null;
         let knownWaitingIds = {};
 
+        // ==================== SOS (Parte 48) ====================
+        let selectedSosType = null;
+        let lastSosSentAt = 0;
+
+        function openSosPanel() {
+            if (!activeDriverPath) {
+                showToast('Inicia un recorrido antes de usar el SOS', 'info');
+                return;
+            }
+            selectedSosType = null;
+            document.querySelectorAll('#sosTypeGrid .incident-type-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('sosPanel').classList.add('show');
+            document.getElementById('driverPanelBackdrop').classList.add('show');
+        }
+
+        function closeSosPanel() {
+            document.getElementById('sosPanel').classList.remove('show');
+            document.getElementById('driverPanelBackdrop').classList.remove('show');
+        }
+
+        function selectSosType(type) {
+            selectedSosType = type;
+            document.querySelectorAll('#sosTypeGrid .incident-type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+        }
+
+        function submitSos() {
+            if (!activeDriverPath) return;
+            if (!selectedSosType) {
+                showToast('Elige qué tipo de emergencia es', 'info');
+                return;
+            }
+            if (!window.firebaseReady) {
+                showToast('Sin conexión: si puedes, llama directamente a la empresa', 'error');
+                return;
+            }
+            const now = Date.now();
+            // Enfriamiento corto (15s) solo para evitar doble-toque accidental
+            // sobre el mismo aviso; una emergencia real no deberia esperar mas.
+            if (now - lastSosSentAt < 15000) {
+                showToast('Ya se envió el aviso, dale un momento', 'info');
+                return;
+            }
+            const ok = window.confirm('¿Confirmas que quieres enviar una alerta de emergencia a la empresa?');
+            if (!ok) return;
+
+            const { companyId, vehicleId } = activeDriverPath;
+            const sosRef = window.fbRef(window.fbDb, `emergencias/${companyId}/${vehicleId}`);
+            const payload = { type: selectedSosType, timestamp: now };
+            if (currentTripLastPos) {
+                payload.lat = currentTripLastPos.lat;
+                payload.lng = currentTripLastPos.lng;
+            }
+            window.fbPush(sosRef, payload).then(() => {
+                lastSosSentAt = now;
+                showToast('🆘 Alerta enviada a la empresa', 'success');
+                addLog('🆘 Enviaste una alerta de emergencia.');
+                closeSosPanel();
+            }).catch(err => {
+                showToast('No se pudo enviar la alerta', 'error');
+                console.error('Error enviando SOS:', err);
+            });
+        }
+
+        window.openSosPanel = openSosPanel;
+        window.closeSosPanel = closeSosPanel;
+        window.selectSosType = selectSosType;
+        window.submitSos = submitSos;
+
         // ==================== DRIVER VIEW (GPS REAL) ====================
         function populateDriverSelects() {
             const companySelect = document.getElementById('driverCompany');
