@@ -328,6 +328,10 @@
 
             <div class="map-wrapper">
                 <div id="map"></div>
+                <div class="focus-mode-banner" id="focusModeBanner">
+                    <span id="focusModeBannerText">🎯 Modo enfoque activo</span>
+                    <button onclick="deactivateFocusMode()">Salir</button>
+                </div>
                 <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos">
                     📍
                 </button>
@@ -437,6 +441,9 @@
                     📤 Compartir
                 </button>
             </div>
+            <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()">
+                🎯 Modo enfoque
+            </button>
             <button class="wait-signal-btn" id="waitSignalBtn" onclick="signalWaiting()">
                 🙋 Estoy esperando este bus
             </button>
