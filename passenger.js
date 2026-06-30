@@ -77,6 +77,7 @@
             window._openPanel = { companyId, vehicleId };
             refreshOpenPanel();
             document.getElementById('vehiclePanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function toggleFollowVehicle() {
@@ -201,6 +202,7 @@
         function closeVehiclePanel() {
             document.getElementById('vehiclePanel').classList.remove('show');
             window._openPanel = null;
+            setPanelBackdrop(false);
         }
 
         // ==================== AVISO "PASAJERO ESPERANDO" (Parte 26) ====================
@@ -357,7 +359,7 @@
                 Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
                 const bounds = getRouteBoundsForCompany(companyId);
                 if (bounds) {
-                    map.fitBounds(bounds, { padding: [40, 40] });
+                    map.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 1.1, easeLinearity: 0.25 });
                 }
                 updateMapFromLiveData();
                 renderStopsList(cachedFavoriteStops);
@@ -464,10 +466,12 @@
             document.querySelectorAll('.incident-type-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('incidentComment').value = '';
             document.getElementById('incidentPanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function closeIncidentPanel() {
             document.getElementById('incidentPanel').classList.remove('show');
+            setPanelBackdrop(false);
         }
 
         function selectIncidentType(type) {
@@ -619,10 +623,12 @@
 
         function openStopsPanel() {
             document.getElementById('stopsPanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function closeStopsPanel() {
             document.getElementById('stopsPanel').classList.remove('show');
+            setPanelBackdrop(false);
         }
 
         function saveCurrentMapCenterAsStop() {
@@ -683,7 +689,10 @@
                 const s = stops[id];
                 const marker = L.marker([s.lat, s.lng], {
                     icon: L.divIcon({ className: 'stop-marker-icon', html: '📍', iconSize: [24, 24], iconAnchor: [12, 22] })
-                }).addTo(map).bindPopup(escapeHtml(s.name));
+                }).addTo(map).bindPopup(`
+                    <div class="popup-title">📍 ${escapeHtml(s.name)}</div>
+                    <div class="popup-info">Tu paradero favorito</div>
+                `);
                 stopMarkers[id] = marker;
             });
         }
@@ -691,8 +700,8 @@
         function focusFavoriteStop(id) {
             const marker = stopMarkers[id];
             if (marker && map) {
-                map.setView(marker.getLatLng(), 16);
-                marker.openPopup();
+                map.flyTo(marker.getLatLng(), 16, { duration: 1, easeLinearity: 0.25 });
+                setTimeout(() => marker.openPopup(), 350);
             }
             closeStopsPanel();
         }
@@ -759,5 +768,23 @@
         }
 
         fetchLimaWeather();
+
+        // ==================== BACKDROP COMPARTIDO (Parte 43) ====================
+        // Un solo telon de fondo para los tres paneles deslizables
+        // (vehiculo, incidente, paraderos). Tocar fuera del panel lo
+        // cierra — closeAnyOpenPanel() detecta cual está abierto y llama
+        // a su función de cierre correspondiente.
+        function setPanelBackdrop(show) {
+            const backdrop = document.getElementById('panelBackdrop');
+            if (backdrop) backdrop.classList.toggle('show', show);
+        }
+
+        function closeAnyOpenPanel() {
+            if (document.getElementById('vehiclePanel').classList.contains('show')) closeVehiclePanel();
+            if (document.getElementById('incidentPanel').classList.contains('show')) closeIncidentPanel();
+            if (document.getElementById('stopsPanel').classList.contains('show')) closeStopsPanel();
+        }
+
+        window.closeAnyOpenPanel = closeAnyOpenPanel;
         window.selectCompany = selectCompany;
         window.backToCompanyList = backToCompanyList;
