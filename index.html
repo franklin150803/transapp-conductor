@@ -473,10 +473,24 @@
                     📤 Compartir
                 </button>
             </div>
+            <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()">
+                🎯 Modo enfoque
+            </button>
             <button class="wait-signal-btn" id="waitSignalBtn" onclick="signalWaiting()">
                 🙋 Estoy esperando este bus
             </button>
         </div>
+
+        <!-- Parte 46: aviso flotante de Modo enfoque. Vive fuera del panel
+             de vehiculo (a nivel del mapa) porque el Modo enfoque sigue
+             activo aunque el pasajero cierre el panel para revisar otra
+             tarjeta; este aviso es la unica forma de notar/cancelar el
+             modo en ese momento. -->
+        <div class="focus-mode-banner" id="focusModeBanner">
+            <span id="focusModeBannerText">🎯 Enfocando bus</span>
+            <button onclick="deactivateFocusMode()">Cancelar</button>
+        </div>
+    </div>
     </div>
 
     <!-- Driver View -->
