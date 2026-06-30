@@ -259,6 +259,10 @@
                 Buscar empresa de transporte
             </button>
 
+            <button class="ph-radar-cta" onclick="openRadarPanel()">
+                📡 Radar Vura — los 5 buses más cercanos a ti
+            </button>
+
             <div class="ph-stats-row">
                 <div class="ph-stat">
                     <div class="ph-stat-value" id="phStatCompanies">0</div>
@@ -338,6 +342,18 @@
                 <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente">
                     ⚠️
                 </button>
+            </div>
+        </div>
+
+        <div class="incident-panel" id="radarPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title">📡 Radar Vura</span>
+                <button class="vehicle-panel-close" onclick="closeRadarPanel()">×</button>
+            </div>
+            <p class="incident-panel-hint">Los buses en línea más cercanos a tu ubicación, sin importar la empresa.</p>
+            <div id="radarList">
+                <p class="fleet-empty">Buscando tu ubicación...</p>
             </div>
         </div>
 
