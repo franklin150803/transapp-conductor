@@ -14,6 +14,12 @@
             const phone = document.getElementById('regCompanyPhone').value.trim();
             const route = document.getElementById('regCompanyRoute').value.trim();
             const schedule = document.getElementById('regCompanySchedule').value.trim();
+            // Parte 45: lugares de paso, en texto libre separado por coma.
+            // Se guardan como array para poder buscarlos uno por uno (y
+            // resaltar exactamente cual coincidio con la busqueda del
+            // pasajero), no como un solo bloque de texto.
+            const destinosRaw = document.getElementById('regCompanyDestinos').value.trim();
+            const destinos = destinosRaw ? destinosRaw.split(',').map(d => d.trim()).filter(Boolean) : [];
 
             if (!name || !ruc || !route) {
                 showToast('Completa los campos obligatorios', 'info');
@@ -42,6 +48,7 @@
             const newCompany = {
                 name, ruc, route, phone,
                 schedule: schedule || null,
+                destinos,
                 verified: true,
                 color: colors[Object.keys(companies).length % colors.length],
                 routePointsIda,
@@ -55,6 +62,7 @@
                 document.getElementById('regCompanyPhone').value = '';
                 document.getElementById('regCompanyRoute').value = '';
                 document.getElementById('regCompanySchedule').value = '';
+                document.getElementById('regCompanyDestinos').value = '';
                 showToast(`Empresa "${name}" registrada`, 'success');
             }).catch(err => showToast('Error: ' + err.message, 'error'));
         }
