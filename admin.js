@@ -151,6 +151,119 @@
             document.getElementById('statOnline').textContent = onlineVehicles;
         }
 
+        // ==================== EMERGENCIAS SOS (Parte 48) ====================
+        // Escucha emergencias/{companyId}/{vehicleId}/{id}, escrito por el
+        // boton SOS del conductor (driver.js). A diferencia del aviso de
+        // "pasajero esperando" (que solo ve el conductor de ESE vehiculo),
+        // esto lo escucha el admin para TODAS las empresas a la vez, porque
+        // el admin representa a la empresa en este modelo (un solo admin
+        // global, sin roles granulares todavia). El listener queda activo
+        // desde que arranca la app, no solo cuando el admin tiene esa
+        // pestaña abierta, para no perder el sonido/vibracion de aviso.
+        let knownEmergencyIds = {};
+        const SOS_TYPE_LABELS = { accidente: 'Accidente', robo: 'Robo / asalto', averia: 'Avería', otro: 'Emergencia' };
+
+        function listenForEmergencies() {
+            if (!window.firebaseReady) return;
+            const ref = window.fbRef(window.fbDb, 'emergencias');
+            window.fbOnValue(ref, (snap) => {
+                const data = snap.val() || {};
+                const active = [];
+                Object.keys(data).forEach(companyId => {
+                    const vehiclesData = data[companyId] || {};
+                    Object.keys(vehiclesData).forEach(vehicleId => {
+                        const entries = vehiclesData[vehicleId] || {};
+                        Object.keys(entries).forEach(id => {
+                            const entry = entries[id] || {};
+                            const fullId = companyId + '__' + vehicleId + '__' + id;
+                            active.push({ id, companyId, vehicleId, type: entry.type, timestamp: entry.timestamp, lat: entry.lat, lng: entry.lng });
+
+                            if (!knownEmergencyIds[fullId]) {
+                                knownEmergencyIds[fullId] = true;
+                                const company = companies[companyId];
+                                const vehicle = company && company.vehicles && company.vehicles[vehicleId];
+                                const plate = vehicle ? (vehicle.plate || vehicleId) : vehicleId;
+                                const typeLabel = SOS_TYPE_LABELS[entry.type] || 'Emergencia';
+                                playEmergencyAlertSound();
+                                if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 300]);
+                                showToast(`🆘 ${typeLabel}: bus ${plate}${company ? ' · ' + company.name : ''}`, 'error');
+                            }
+                        });
+                    });
+                });
+                // Orden mas reciente primero, para que la emergencia mas
+                // nueva (probablemente la mas urgente) quede arriba.
+                active.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderEmergencyBanner(active);
+            });
+        }
+
+        function renderEmergencyBanner(active) {
+            const banner = document.getElementById('emergencyBanner');
+            const list = document.getElementById('emergencyList');
+            if (!banner || !list) return;
+
+            if (active.length === 0) {
+                banner.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            banner.style.display = 'block';
+            list.innerHTML = active.map(e => {
+                const company = companies[e.companyId];
+                const vehicle = company && company.vehicles && company.vehicles[e.vehicleId];
+                const plate = vehicle ? (vehicle.plate || e.vehicleId) : e.vehicleId;
+                const typeLabel = SOS_TYPE_LABELS[e.type] || 'Emergencia';
+                const mapsLink = (e.lat && e.lng)
+                    ? ` · <a href="https://maps.google.com/?q=${e.lat},${e.lng}" target="_blank" rel="noopener">Ver ubicación</a>`
+                    : '';
+                return `
+                    <div class="emergency-item">
+                        <div>
+                            <div class="emergency-item-title">🆘 ${escapeHtml(typeLabel)} — ${escapeHtml(plate)}</div>
+                            <div class="emergency-item-sub">${company ? escapeHtml(company.name) : ''} · ${formatTimeAgo(e.timestamp)}${mapsLink}</div>
+                        </div>
+                        <button class="emergency-resolve-btn" onclick="resolveEmergency('${e.companyId}','${e.vehicleId}','${e.id}')">Marcar atendida</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resolveEmergency(companyId, vehicleId, id) {
+            window.fbSet(window.fbRef(window.fbDb, `emergencias/${companyId}/${vehicleId}/${id}`), null);
+        }
+
+        // Mismo patron de pitido que playWaitingAlertSound (driver.js), pero
+        // con onda cuadrada y 3 tonos en vez de 2 para que se distinga al
+        // oido de un aviso normal de "pasajero esperando".
+        function playEmergencyAlertSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const beep = (freq, delay) => {
+                    setTimeout(() => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.value = freq;
+                        gain.gain.value = 0.16;
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.16);
+                    }, delay);
+                };
+                beep(880, 0);
+                beep(660, 220);
+                beep(880, 440);
+            } catch (e) {
+                console.warn('No se pudo reproducir el sonido de emergencia:', e);
+            }
+        }
+
+        window.resolveEmergency = resolveEmergency;
+        window.listenForEmergencies = listenForEmergencies;
+
         // Lee el historial de recorridos de TODAS las empresas (cada una
         // vive en historial/{companyId}) y muestra los mas recientes
         // primero, con cuantos se completaron hoy.
@@ -173,6 +286,11 @@
                 });
 
                 records.sort((a, b) => (b.endTime || 0) - (a.endTime || 0));
+                // Parte 49: guardamos el listado completo (sin el slice de
+                // 30 que se usa solo para no saturar la pantalla), para que
+                // exportar CSV/PDF incluya TODO el historial, no solo lo
+                // que se ve en el panel.
+                lastHistoryRecords = records;
 
                 const startOfToday = new Date();
                 startOfToday.setHours(0, 0, 0, 0);
@@ -233,3 +351,111 @@
         window.registerCompany = registerCompany;
         window.addVehicleToCompany = addVehicleToCompany;
         window.loadAndRenderHistory = loadAndRenderHistory;
+
+        // ==================== EXPORTAR HISTORIAL (Parte 49) ====================
+        // Reutiliza lastHistoryRecords, que ya guarda loadAndRenderHistory()
+        // cada vez que se entra a la pestaña Admin — asi exportar no vuelve
+        // a pedir nada a Firebase, solo formatea lo que ya esta en memoria.
+        let lastHistoryRecords = [];
+
+        function formatHistoryDateTime(ts) {
+            if (!ts) return '—';
+            return new Date(ts).toLocaleString('es-PE', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // Escapa un valor para que sea seguro dentro de un campo CSV: si
+        // contiene coma, comilla o salto de linea, lo envuelve en comillas
+        // dobles (duplicando las comillas internas, regla estandar de CSV).
+        function csvEscape(value) {
+            const str = String(value === null || value === undefined ? '' : value);
+            if (/[",\n]/.test(str)) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
+        function downloadBlob(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            // Pequeño delay antes de liberar el objeto URL: en algunos
+            // navegadores moviles, revocarlo de inmediato corta la
+            // descarga a medio camino.
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function exportHistoryCsv() {
+            if (!lastHistoryRecords.length) {
+                showToast('Todavía no hay historial para exportar', 'info');
+                return;
+            }
+            const headers = ['Empresa', 'Placa', 'Conductor', 'Sentido', 'Inicio', 'Fin', 'Duración (min)', 'Distancia (km)'];
+            const rows = lastHistoryRecords.map(r => [
+                r.companyName || '',
+                r.plate || r.vehicleId || '',
+                r.driver || '',
+                r.sentido === 'retorno' ? 'Retorno' : 'Ida',
+                formatHistoryDateTime(r.startTime),
+                formatHistoryDateTime(r.endTime),
+                r.durationMin || 0,
+                r.distanceKm || 0
+            ]);
+            // BOM (\ufeff) al inicio: sin esto, Excel en Windows interpreta
+            // las tildes/ñ del CSV como caracteres raros al abrirlo.
+            const csv = '\ufeff' + [headers, ...rows].map(row => row.map(csvEscape).join(',')).join('\r\n');
+            const today = new Date().toISOString().slice(0, 10);
+            downloadBlob(csv, `vura-historial-${today}.csv`, 'text/csv;charset=utf-8');
+            showToast('CSV descargado', 'success');
+        }
+
+        function exportHistoryPdf() {
+            if (!lastHistoryRecords.length) {
+                showToast('Todavía no hay historial para exportar', 'info');
+                return;
+            }
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                showToast('No se pudo cargar el generador de PDF, revisa tu conexión', 'error');
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            doc.setFontSize(16);
+            doc.setTextColor(13, 148, 136); // var(--primary), en RGB
+            doc.text('Vura · Historial de recorridos', 14, 16);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generado el ${formatHistoryDateTime(Date.now())} · ${lastHistoryRecords.length} recorridos`, 14, 22);
+
+            doc.autoTable({
+                startY: 28,
+                head: [['Empresa', 'Placa', 'Conductor', 'Sentido', 'Inicio', 'Fin', 'Duración', 'Distancia']],
+                body: lastHistoryRecords.map(r => [
+                    r.companyName || '',
+                    r.plate || r.vehicleId || '',
+                    r.driver || '—',
+                    r.sentido === 'retorno' ? 'Retorno' : 'Ida',
+                    formatHistoryDateTime(r.startTime),
+                    formatHistoryDateTime(r.endTime),
+                    `${r.durationMin || 0} min`,
+                    `${r.distanceKm || 0} km`
+                ]),
+                headStyles: { fillColor: [13, 148, 136] },
+                styles: { fontSize: 8, cellPadding: 3 },
+                alternateRowStyles: { fillColor: [240, 248, 247] }
+            });
+
+            const today = new Date().toISOString().slice(0, 10);
+            doc.save(`vura-historial-${today}.pdf`);
+            showToast('PDF descargado', 'success');
+        }
+
+        window.exportHistoryCsv = exportHistoryCsv;
+        window.exportHistoryPdf = exportHistoryPdf;
