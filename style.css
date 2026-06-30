@@ -766,6 +766,37 @@
             gap: 6px;
         }
 
+        /* Parte 45: cuando una tarjeta aparece en resultados de busqueda
+           porque coincidio con un "destino" cargado por la empresa (no por
+           su nombre), se lo mostramos para que el pasajero entienda el
+           porque del resultado. */
+        .company-destino-match {
+            font-size: 0.74rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* Parte 45: chips de "lugares de paso" en la tarjeta de empresa,
+           visibles siempre (no solo en busqueda) para que el pasajero
+           pueda descubrir que empresas cubren su zona sin tener que
+           escribir nada. */
+        .company-destinos-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .company-destino-chip {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            padding: 3px 8px;
+            white-space: nowrap;
+        }
+
         .company-schedule {
             font-size: 0.78rem;
             color: var(--text-secondary);
@@ -1176,6 +1207,12 @@
         }
 
         .form-group { margin-bottom: 16px; }
+
+        .form-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
 
         .form-group label {
             display: block;
