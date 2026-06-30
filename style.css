@@ -222,199 +222,9 @@
            nuevo a Firebase. */
         #passengerHomeScreen { padding: 20px 16px; }
 
-        /* Parte 48: accesibilidad. "Texto grande" escala el font-size base
-           del documento — como casi todo el tipografico de la app esta en
-           rem, esto agranda letra en todos lados de forma proporcional sin
-           tener que tocar cada regla una por una. "Alto contraste"
-           redefine las variables de color sobre <html>, asi que cualquier
-           elemento que ya usa var(--text)/var(--surface)/etc. se actualiza
-           solo, sin necesidad de una regla CSS por componente. */
-        html.a11y-large-text {
-            font-size: 118%;
-        }
-
-        html.a11y-high-contrast {
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --surface-2: #161616;
-            --border: #ffffff;
-            --text: #ffffff;
-            --text-secondary: #f0f0f0;
-            --text-muted: #d9d9d9;
-            --primary: #2dd4bf;
-            --primary-light: #5eead4;
-        }
-
-        .a11y-option-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            padding: 14px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .a11y-option-row:last-child { border-bottom: none; }
-
-        .a11y-option-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
-
-        .a11y-option-desc { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
-
-        /* Switch simple sobre un checkbox nativo (accesible con teclado y
-           lectores de pantalla), sin librerias externas. */
-        .a11y-switch {
-            position: relative;
-            flex-shrink: 0;
-            width: 46px;
-            height: 26px;
-        }
-
-        .a11y-switch input {
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            margin: 0;
-            cursor: pointer;
-            z-index: 1;
-        }
-
-        .a11y-switch-track {
-            position: absolute;
-            inset: 0;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            transition: background 0.2s ease;
-        }
-
-        .a11y-switch-thumb {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-
-        .a11y-switch input:checked + .a11y-switch-track {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .a11y-switch input:checked + .a11y-switch-track .a11y-switch-thumb {
-            transform: translateX(20px);
-            background: white;
-        }
-
         .ph-greeting { margin-bottom: 18px; }
         .ph-greeting h2 { font-size: 1.4rem; font-weight: 800; color: var(--text); }
         .ph-greeting p { font-size: 0.88rem; color: var(--text-secondary); margin-top: 2px; }
-
-        /* Parte 47: fila del saludo ahora tiene la campana de
-           notificaciones al lado, sin reacomodar el resto del home. */
-        .ph-greeting-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .notif-bell-btn {
-            position: relative;
-            flex-shrink: 0;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .notif-bell-btn:active { transform: scale(0.93); }
-
-        .notif-bell-badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            min-width: 17px;
-            height: 17px;
-            padding: 0 4px;
-            border-radius: 999px;
-            background: var(--danger, #ff5252);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid var(--bg, #0d0d14);
-        }
-
-        /* Panel de historial: reutiliza .incident-panel (mismo deslizamiento
-           desde abajo que stopsPanel/incidentPanel), solo agrega la lista. */
-        .notif-clear-btn {
-            width: 100%;
-            margin-bottom: 14px;
-            padding: 10px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 700;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-        }
-
-        .notif-item {
-            display: flex;
-            gap: 10px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .notif-item:last-child { border-bottom: none; }
-
-        .notif-item-icon { font-size: 1.1rem; flex-shrink: 0; }
-
-        .notif-item-msg { font-size: 0.85rem; color: var(--text); line-height: 1.4; }
-
-        .notif-item-time { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; }
-
-        .notif-empty {
-            text-align: center;
-            padding: 30px 10px;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-
-        /* Parte 47: indicador de confianza del ETA (distinto del indicador
-           de precision GPS que ya existe: ese mide la señal del telefono,
-           este mide que tan confiable es el CALCULO del tiempo estimado,
-           combinando frescura del dato + precision GPS + si se uso
-           velocidad real o el promedio de respaldo). */
-        .eta-confidence {
-            display: block;
-            font-size: 0.68rem;
-            font-weight: 700;
-            margin-top: 2px;
-        }
-        .eta-confidence.conf-high { color: var(--success); }
-        .eta-confidence.conf-medium { color: var(--warning); }
-        .eta-confidence.conf-low { color: var(--text-secondary); }
-
-        .fleet-chip-eta-confidence {
-            font-size: 0.62rem;
-            margin-top: 1px;
-        }
 
         /* Parte 38: clima de Lima (Open-Meteo, gratis, sin API key). */
         .ph-weather-chip {
@@ -676,156 +486,6 @@
             background: var(--warning);
             color: white;
             cursor: default;
-        }
-
-        /* Parte 46: boton de Modo enfoque, mismo patron visual que los
-           demas botones del panel pero con su propio acento para no
-           confundirse con "Seguir vehiculo" (centra la camara) ni con
-           "Estoy esperando este bus" (avisa al conductor): este solo
-           atenua visualmente el resto del mapa. */
-        .focus-mode-btn {
-            width: 100%;
-            margin-top: 10px;
-            padding: 12px;
-            border: 2px solid #a78bfa;
-            background: var(--surface);
-            color: #a78bfa;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .focus-mode-btn.active {
-            background: #a78bfa;
-            color: white;
-        }
-
-        /* Aviso flotante sobre el mapa: visible aunque el panel del
-           vehiculo este cerrado, porque el Modo enfoque sigue activo y
-           esta es la unica forma de notar que sigue prendido (y de
-           cancelarlo) mientras se explora otra tarjeta. */
-        .focus-mode-banner {
-            position: fixed;
-            left: 50%;
-            bottom: 100px;
-            transform: translateX(-50%) translateY(20px);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            background: rgba(20, 20, 30, 0.92);
-            border: 1px solid #a78bfa;
-            border-radius: var(--radius-md);
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: 600;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-            z-index: 850;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-
-        .focus-mode-banner.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            pointer-events: auto;
-        }
-
-        .focus-mode-banner button {
-            border: 1px solid rgba(255,255,255,0.4);
-            background: transparent;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        /* Parte 46: marcadores de vehiculos que NO son el bus enfocado, y
-           el bus enfocado mismo (para que resalte un poco mas que su
-           estado normal). Se aplican sobre .vehicle-marker-wrap, ya
-           generado por createVehicleIcon en map.js. */
-        .vehicle-marker-wrap.vura-dimmed {
-            opacity: 0.22;
-            filter: grayscale(0.6);
-            transition: opacity 0.3s ease, filter 0.3s ease;
-        }
-
-        .vehicle-marker-wrap.vura-waiting-target {
-            filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.7));
-        }
-
-        /* Parte 48: boton de emergencia del conductor. Rojo solido y
-           ancho completo a proposito — debe ser imposible de confundir
-           con cualquier otro boton del drawer. */
-        .sos-btn {
-            width: 100%;
-            margin-top: 14px;
-            padding: 14px;
-            border: none;
-            background: var(--danger);
-            color: white;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 800;
-            letter-spacing: 0.3px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
-        }
-
-        .sos-btn:active { transform: scale(0.97); }
-
-        /* Banner de emergencias activas, arriba del todo del panel admin. */
-        .emergency-banner {
-            background: rgba(239, 68, 68, 0.12);
-            border: 1.5px solid var(--danger);
-            border-radius: var(--radius-lg);
-            padding: 14px;
-            margin-bottom: 16px;
-        }
-
-        .emergency-banner-title {
-            font-weight: 800;
-            color: var(--danger);
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .emergency-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 10px 0;
-            border-top: 1px solid rgba(239, 68, 68, 0.25);
-        }
-
-        .emergency-item:first-child { border-top: none; }
-
-        .emergency-item-title { font-weight: 700; font-size: 0.85rem; color: var(--text); }
-
-        .emergency-item-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
-
-        .emergency-item-sub a { color: var(--ida-color); }
-
-        .emergency-resolve-btn {
-            flex-shrink: 0;
-            padding: 8px 12px;
-            border: 1px solid var(--danger);
-            background: transparent;
-            color: var(--danger);
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
         }
 
         /* Parte 26 (conductor): banner que aparece cuando hay uno o mas
@@ -1106,37 +766,6 @@
             gap: 6px;
         }
 
-        /* Parte 45: cuando una tarjeta aparece en resultados de busqueda
-           porque coincidio con un "destino" cargado por la empresa (no por
-           su nombre), se lo mostramos para que el pasajero entienda el
-           porque del resultado. */
-        .company-destino-match {
-            font-size: 0.74rem;
-            color: var(--primary);
-            font-weight: 600;
-            margin-top: 6px;
-        }
-
-        /* Parte 45: chips de "lugares de paso" en la tarjeta de empresa,
-           visibles siempre (no solo en busqueda) para que el pasajero
-           pueda descubrir que empresas cubren su zona sin tener que
-           escribir nada. */
-        .company-destinos-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .company-destino-chip {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            background: var(--surface-2);
-            border-radius: var(--radius-sm);
-            padding: 3px 8px;
-            white-space: nowrap;
-        }
-
         .company-schedule {
             font-size: 0.78rem;
             color: var(--text-secondary);
@@ -1381,27 +1010,6 @@
             filter: drop-shadow(0 0 4px rgba(255, 82, 82, 0.85)) drop-shadow(0 0 9px rgba(255, 82, 82, 0.45));
         }
 
-        /* Parte 43: telon de fondo compartido para los paneles deslizables
-           (vehicle-panel, incident-panel, stops-panel) — le da sensacion
-           de "modal" moderno en vez de una hoja que simplemente sube sin
-           afectar el resto de la pantalla. Un toque fuera del panel lo
-           cierra. */
-        .panel-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 998;
-        }
-
-        .panel-backdrop.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
         .vehicle-panel {
             position: fixed;
             bottom: 0;
@@ -1547,12 +1155,6 @@
         }
 
         .form-group { margin-bottom: 16px; }
-
-        .form-hint {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
 
         .form-group label {
             display: block;
@@ -1700,137 +1302,136 @@
             animation: pulse 2s infinite;
         }
 
-        /* Parte 42: el conductor ya no tiene una columna de datos con el
-           mapa en la mitad — ahora el mapa ocupa el 100% de la pantalla y
-           los datos van en un drawer colapsable que el conductor abre solo
-           cuando quiere, sin distraerse mientras maneja. */
+        /* ==================== PARTE 42: MAPA DEL CONDUCTOR PANTALLA COMPLETA ==================== */
         .driver-active {
             display: none;
             position: fixed;
-            inset: 0;
-            z-index: 800;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 500;
         }
-
         .driver-active.show { display: block; }
 
-        /* Mapa a pantalla completa como fondo del layout */
-        .driver-fullmap {
+        .driver-map-full {
             position: absolute;
             inset: 0;
-            z-index: 0;
         }
+        #driverMap { width: 100%; height: 100%; }
 
-        /* HUD flotante: velocidad grande + estado. Siempre visible.
-           Parte superior izquierda, lejos del área donde apoya el pulgar. */
-        .driver-hud {
+        .driver-floating-top {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            background: rgba(10, 14, 22, 0.82);
-            border: 1px solid rgba(34, 211, 238, 0.25);
-            border-radius: var(--radius-lg);
-            padding: 10px 16px;
-            z-index: 10;
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            backdrop-filter: blur(8px);
-        }
-
-        .driver-hud-speed {
-            font-size: 2.8rem;
-            font-weight: 900;
-            color: var(--text);
-            line-height: 1;
-        }
-
-        .driver-hud-unit {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-right: 8px;
-        }
-
-        .driver-hud-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        /* Banner de pasajero esperando: flota arriba del mapa */
-        .driver-active .waiting-alert {
-            position: absolute;
-            top: 90px;
+            top: calc(12px + env(safe-area-inset-top, 0px));
             left: 12px;
             right: 12px;
             z-index: 10;
-        }
-
-        /* Botón para abrir/cerrar el drawer, en la esquina inferior derecha */
-        .driver-drawer-toggle {
-            position: absolute;
-            bottom: calc(var(--bottom-nav-h) + 16px);
-            right: 16px;
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-full);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            background: rgba(10, 14, 22, 0.88);
-            color: var(--text);
-            font-size: 1rem;
-            cursor: pointer;
-            z-index: 10;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
+            gap: 8px;
+            pointer-events: none;
         }
+        .driver-floating-top > * { pointer-events: auto; }
 
-        .driver-drawer-toggle:active { transform: scale(0.93); }
-
-        /* Drawer colapsable: panel que sube desde abajo con los datos.
-           Por defecto cerrado (translate 100%), abierto con clase .open. */
         .driver-drawer {
             position: absolute;
-            bottom: var(--bottom-nav-h);
-            left: 0;
-            right: 0;
-            max-height: 70vh;
-            overflow-y: auto;
-            background: rgba(13, 26, 38, 0.96);
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            border-top: 1px solid rgba(34, 211, 238, 0.2);
-            padding: 10px 20px 24px;
-            z-index: 9;
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(12px);
+            left: 0; right: 0;
+            bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+            z-index: 20;
+            background: var(--surface);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.45);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
         }
-
-        .driver-drawer.open { transform: translateY(0); }
 
         .driver-drawer-handle {
-            width: 36px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 10px 0 6px;
+            display: flex;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .driver-drawer-grip {
+            width: 40px;
             height: 4px;
-            border-radius: 2px;
+            border-radius: 3px;
             background: var(--border);
-            margin: 0 auto 14px;
         }
 
-        .driver-drawer-row {
+        .driver-drawer-summary {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
+            justify-content: space-around;
+            padding: 4px 16px 14px;
+            gap: 8px;
+        }
+        .driver-drawer-summary-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 0;
+        }
+        .driver-drawer-summary-value {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+        .driver-drawer-summary-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .driver-drawer-summary-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border);
+            flex-shrink: 0;
         }
 
-        /* El gps-ring ya no se usa en el nuevo layout — se reemplazó por
-           el HUD flotante que es más legible de un vistazo. */
-        .gps-ring { display: none; }
+        /* Contenido completo: oculto (altura 0) mientras el drawer esta
+           colapsado, visible y scrolleable cuando esta expandido. Se anima
+           con max-height en vez de display para que la transicion se sienta
+           fluida, como pidio Franklin para todo el mapa. */
+        .driver-drawer-content {
+            overflow-y: auto;
+            max-height: 0;
+            opacity: 0;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+        }
+
+        .driver-drawer.expanded .driver-drawer-content {
+            max-height: 65vh;
+            opacity: 1;
+            padding: 4px 16px 24px;
+        }
+
+        .driver-drawer.expanded .driver-drawer-handle .driver-drawer-grip {
+            background: var(--primary);
+        }
+
+        .gps-ring {
+            width: 160px;
+            height: 160px;
+            border-radius: var(--radius-full);
+            border: 4px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: ringPulse 2s infinite;
+        }
 
         .gps-ring::before {
             content: '';
@@ -1922,7 +1523,9 @@
             background: var(--text-muted);
         }
 
-        #driverMap { width: 100%; height: 100%; }
+        /* Parte 42: .map-preview y la regla #driverMap de aqui quedaron
+           obsoletas (el mapa del conductor ahora es pantalla completa, ver
+           .driver-map-full y #driverMap mas arriba en este archivo). */
 
         .log-console {
             background: var(--surface-2);
@@ -1997,31 +1600,6 @@
         .vehicle-list-admin { max-height: 300px; overflow-y: auto; }
 
         .history-list { max-height: 320px; overflow-y: auto; }
-
-        /* Parte 49: fila de botones de exportacion, justo arriba de la
-           lista (que solo muestra los 30 mas recientes; estos botones
-           exportan TODO el historial cargado). */
-        .history-export-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .history-export-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 700;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .history-export-btn:active { transform: scale(0.97); }
 
         .history-empty {
             font-size: 0.85rem;
@@ -2213,47 +1791,21 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.6);
         }
 
-        /* Parte 43: popups rediseñados como tarjetas modernas — esquinas
-           más redondeadas, sombra propia de la identidad Vura, borde sutil
-           con el color de acento, y una pequeña animación de entrada en
-           vez de aparecer de golpe. Solo queda en uso para los paraderos
-           favoritos (el popup del vehiculo se quitó: el panel de detalle
-           ya cubre esa información, ver map.js). */
-        .leaflet-popup {
-            animation: popupPop 0.22s cubic-bezier(.34, 1.4, .64, 1);
-        }
-
-        @keyframes popupPop {
-            from { opacity: 0; transform: translateY(6px) scale(0.92); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
         .leaflet-popup-content-wrapper {
             background: var(--surface) !important;
             color: var(--text) !important;
             border-radius: var(--radius-lg) !important;
-            border: 1px solid rgba(34, 211, 238, 0.18) !important;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(34, 211, 238, 0.06) !important;
+            box-shadow: var(--shadow-xl) !important;
         }
 
-        .leaflet-popup-tip {
-            background: var(--surface) !important;
-            box-shadow: none !important;
-        }
+        .leaflet-popup-tip { background: var(--surface) !important; }
 
         .leaflet-popup-content {
-            margin: 14px 18px !important;
+            margin: 12px 16px !important;
             font-family: 'Inter', sans-serif !important;
-            line-height: 1.5 !important;
         }
 
-        .leaflet-popup-close-button {
-            color: var(--text-secondary) !important;
-            font-size: 1.1rem !important;
-            padding: 6px 8px 0 0 !important;
-        }
-
-        .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
         .popup-info { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px; }
 
         .popup-badge {
@@ -2381,124 +1933,6 @@
         .splash-status {
             color: rgba(255, 255, 255, 0.85);
             font-size: 0.85rem;
-        }
-
-        /* Parte 44: onboarding de bienvenida, solo primera vez. Mismo
-           z-index alto que el splash (queda justo arriba en la secuencia
-           de arranque), pero con la paleta oscura normal de la app en vez
-           del degradado de marca, para que se sienta parte de la app y no
-           una pantalla de carga mas. */
-        .onboarding-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 2900;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-        }
-
-        .onboarding-slides {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .onboarding-slide {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 0 24px;
-            opacity: 0;
-            transform: translateX(40px);
-            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-
-        .onboarding-slide.active {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: auto;
-        }
-
-        .onboarding-slide.prev { transform: translateX(-40px); }
-
-        .onboarding-icon {
-            font-size: 4.5rem;
-            margin-bottom: 24px;
-            filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.35));
-        }
-
-        .onboarding-slide h2 {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: 12px;
-        }
-
-        .onboarding-slide p {
-            font-size: 0.92rem;
-            color: var(--text-secondary);
-            max-width: 320px;
-            line-height: 1.5;
-        }
-
-        .onboarding-dots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
-        .onboarding-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: var(--radius-full);
-            background: var(--border);
-            transition: all 0.3s ease;
-        }
-
-        .onboarding-dot.active {
-            width: 22px;
-            background: var(--primary);
-        }
-
-        .onboarding-actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .onboarding-skip {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 12px;
-        }
-
-        .onboarding-next {
-            flex: 1;
-            max-width: 220px;
-            padding: 14px;
-            border: none;
-            border-radius: var(--radius-md);
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            font-family: inherit;
-            font-size: 0.92rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
         }
 
         .landing-screen {
