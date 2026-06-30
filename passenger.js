@@ -132,6 +132,89 @@
             }
         }
 
+        // ==================== MODO ENFOQUE (Parte 46) ====================
+        // Variacion sobre "Seguir vehiculo": ademas de centrar la camara,
+        // atenua todo lo demas en el mapa (otros buses, otras rutas) para
+        // que sea obvio cual es el bus que se esta esperando. A diferencia
+        // de "Seguir vehiculo", el Modo enfoque sobrevive a que el pasajero
+        // cierre el panel (sigue activo, con un aviso flotante en el mapa
+        // y un boton para cancelarlo desde ahi), porque la idea es que
+        // pueda seguir explorando otras tarjetas sin perder de vista cual
+        // bus esta esperando.
+        let waitingFocusVehicle = null;
+        // Si Modo enfoque tuvo que forzar "Seguir vehiculo" porque no
+        // estaba activo, recordamos eso para apagarlo de nuevo al salir
+        // del Modo enfoque (y no dejar un "Seguir vehiculo" fantasma).
+        let focusForcedFollow = false;
+
+        function toggleFocusMode() {
+            if (!window._openPanel) return;
+            const { companyId, vehicleId } = window._openPanel;
+            const key = companyId + '__' + vehicleId;
+
+            if (waitingFocusVehicle && waitingFocusVehicle.companyId === companyId &&
+                waitingFocusVehicle.vehicleId === vehicleId) {
+                deactivateFocusMode();
+                return;
+            }
+
+            waitingFocusVehicle = { companyId, vehicleId };
+            focusForcedFollow = false;
+            if (!followingVehicle || followingVehicle.companyId !== companyId || followingVehicle.vehicleId !== vehicleId) {
+                focusForcedFollow = true;
+                followingVehicle = { companyId, vehicleId };
+                const live = (liveVehicles[companyId] || {})[vehicleId];
+                if (live && map) map.panTo([live.lat, live.lng]);
+            }
+
+            setWaitingTarget(key);
+            updateFocusModeUi();
+            showToast('Modo enfoque activado: el resto del mapa se atenuó', 'info');
+        }
+
+        function deactivateFocusMode() {
+            waitingFocusVehicle = null;
+            setWaitingTarget(null);
+            if (focusForcedFollow) {
+                followingVehicle = null;
+                focusForcedFollow = false;
+                const followBtn = document.getElementById('followVehicleBtn');
+                if (followBtn) {
+                    followBtn.classList.remove('active');
+                    followBtn.textContent = 'Seguir vehículo';
+                }
+            }
+            updateFocusModeUi();
+        }
+
+        // Sincroniza el boton dentro del panel (si esta abierto, y es el
+        // vehiculo enfocado) y el aviso flotante sobre el mapa (que se ve
+        // incluso con el panel cerrado, para poder cancelar desde ahi).
+        function updateFocusModeUi() {
+            const isActive = !!waitingFocusVehicle;
+            const open = window._openPanel;
+            const isThisOne = isActive && open &&
+                waitingFocusVehicle.companyId === open.companyId && waitingFocusVehicle.vehicleId === open.vehicleId;
+
+            const btn = document.getElementById('focusModeBtn');
+            if (btn) {
+                btn.classList.toggle('active', isThisOne);
+                btn.textContent = isThisOne ? '✓ Enfocando este bus' : '🎯 Modo enfoque';
+            }
+
+            const banner = document.getElementById('focusModeBanner');
+            if (banner) {
+                banner.classList.toggle('show', isActive);
+                if (isActive) {
+                    const company = companies[waitingFocusVehicle.companyId];
+                    const vehicle = company && company.vehicles && company.vehicles[waitingFocusVehicle.vehicleId];
+                    const label = vehicle ? (vehicle.plate || waitingFocusVehicle.vehicleId) : '';
+                    const textEl = document.getElementById('focusModeBannerText');
+                    if (textEl) textEl.textContent = `🎯 Enfocando bus ${escapeHtml(label)}`;
+                }
+            }
+        }
+
         function refreshOpenPanel() {
             if (!window._openPanel) return;
             const { companyId, vehicleId } = window._openPanel;
@@ -214,6 +297,8 @@
                 followBtn.classList.toggle('active', isFollowingThis);
                 followBtn.textContent = isFollowingThis ? '✓ Siguiendo en el mapa' : 'Seguir vehículo';
             }
+
+            updateFocusModeUi();
         }
 
         // Calcula que tan "fresca" es la ultima lectura (1 = recien
@@ -483,6 +568,8 @@
         window.filterCompanies = filterCompanies;
         window.closeVehiclePanel = closeVehiclePanel;
         window.toggleFollowVehicle = toggleFollowVehicle;
+        window.toggleFocusMode = toggleFocusMode;
+        window.deactivateFocusMode = deactivateFocusMode;
         window.signalWaiting = signalWaiting;
 
         // ==================== REPORTAR INCIDENTE (Parte 28) ====================
