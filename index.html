@@ -2,22 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vura · Transporte en Tiempo Real</title>
     <meta name="theme-color" content="#0d9488">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Parte 38: MapLibre GL JS + plugin de integracion con Leaflet, para
+         poder usar tiles vectoriales (con identidad visual propia de Vura,
+         ver style.css y la opcion vuraMapStyle en map.js) dentro del mismo
+         mapa Leaflet de siempre. Toda la logica existente de marcadores,
+         rutas y popups sigue siendo Leaflet normal; esto solo cambia la
+         capa base de "imagen" por una capa vectorial renderizada por GPU.
+         Debe cargarse DESPUES de leaflet.js, porque el plugin extiende el
+         objeto global L agregandole el metodo L.maplibreGL. -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <script src="icons.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
 
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
@@ -473,78 +481,101 @@
                 </div>
             </div>
 
+            <!-- Parte 42: mapa del conductor a pantalla completa.
+                 El mapa ocupa toda la pantalla; los datos (velocidad, GPS,
+                 etc.) quedan en un drawer que el conductor abre/cierra con
+                 un toque, para no distraer la vista mientras maneja. -->
             <div class="driver-active" id="driverActive">
-                <!-- MAPA A PANTALLA COMPLETA -->
-                <div class="driver-fullscreen-map">
-                    <div id="driverMap"></div>
-                    <!-- Botón flotante para finalizar sobre el mapa -->
-                    <button class="driver-finish-fab btn-danger" onclick="confirmFinishRecorrido()">
-                        <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar
-                    </button>
+
+                <!-- Mapa a pantalla completa (base del layout) -->
+                <div class="driver-fullmap" id="driverMap"></div>
+
+                <!-- HUD flotante: los 3 datos clave visibles siempre,
+                     sin tener que abrir el drawer. Tamaño de fuente grande
+                     para leer de un vistazo desde el tablero. -->
+                <div class="driver-hud">
+                    <div class="driver-hud-speed" id="driverHudSpeed">0</div>
+                    <div class="driver-hud-unit">km/h</div>
+                    <div class="driver-hud-status" id="driverStatusBadge">
+                        <div class="status-dot"></div>
+                        <span id="driverStatusText">Iniciando GPS...</span>
+                    </div>
                 </div>
 
-                <!-- DRAWER DESLIZABLE CON LOS DATOS -->
+                <!-- Banner de pasajero esperando (flota sobre el mapa) -->
+                <div class="waiting-alert" id="waitingAlert" style="display:none;">
+                    <span class="waiting-alert-icon">🙋</span>
+                    <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
+                </div>
+
+                <!-- Botón para abrir/cerrar el drawer de datos -->
+                <button class="driver-drawer-toggle" id="driverDrawerToggle"
+                        onclick="toggleDriverDrawer()" aria-label="Ver datos del recorrido">
+                    <span id="driverDrawerToggleIcon">▲</span>
+                </button>
+
+                <!-- Drawer colapsable con todos los datos del recorrido -->
                 <div class="driver-drawer" id="driverDrawer">
-                    <div class="driver-drawer-handle" onclick="toggleDriverDrawer()"></div>
-                    
-                    <div class="driver-drawer-content">
-                        <div class="status-badge wait" id="driverStatusBadge">
-                            <div class="status-dot"></div>
-                            <span id="driverStatusText">Solicitando permiso de ubicación...</span>
-                        </div>
+                    <div class="driver-drawer-handle"></div>
 
-                        <div class="waiting-alert" id="waitingAlert" style="display:none;">
-                            <span class="waiting-alert-icon">🙋</span>
-                            <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
-                        </div>
+                    <div class="driver-drawer-row">
+                        <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
+                        <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar sentido</button>
+                    </div>
 
-                        <div class="sentido-active-row">
-                            <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
-                            <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar sentido</button>
+                    <div class="gps-info-grid">
+                        <div class="gps-info-item">
+                            <label>Velocidad</label>
+                            <value id="driverSpeed">0 km/h</value>
                         </div>
+                        <div class="gps-info-item">
+                            <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
+                            <value id="driverAccuracy">—</value>
+                        </div>
+                        <div class="gps-info-item">
+                            <label>Estado</label>
+                            <value id="driverMoveStatus">Detenido</value>
+                        </div>
+                        <div class="gps-info-item">
+                            <label>Envíos</label>
+                            <value id="driverSent">0</value>
+                        </div>
+                        <div class="gps-info-item">
+                            <label>Latitud</label>
+                            <value id="driverLat">—</value>
+                        </div>
+                        <div class="gps-info-item">
+                            <label>Longitud</label>
+                            <value id="driverLng">—</value>
+                        </div>
+                    </div>
 
-                        <div class="gps-info-grid">
-                            <div class="gps-info-item">
-                                <label>Velocidad</label>
-                                <value id="driverSpeed">0 km/h</value>
-                            </div>
-                            <div class="gps-info-item">
-                                <label>Envíos</label>
-                                <value id="driverSent">0</value>
-                            </div>
-                            <div class="gps-info-item">
-                                <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
-                                <value id="driverAccuracy">—</value>
-                            </div>
-                            <div class="gps-info-item">
-                                <label>Estado</label>
-                                <value id="driverMoveStatus">Detenido</value>
-                            </div>
+                    <div class="adjacent-vehicles" id="adjacentVehicles">
+                        <div class="adjacent-vehicle-row">
+                            <span class="adjacent-label">🔼 Adelante</span>
+                            <span class="adjacent-value" id="adjacentAheadText">—</span>
                         </div>
+                        <div class="adjacent-vehicle-row">
+                            <span class="adjacent-label">🔽 Atrás</span>
+                            <span class="adjacent-value" id="adjacentBehindText">—</span>
+                        </div>
+                    </div>
 
-                        <div class="adjacent-vehicles" id="adjacentVehicles">
-                            <div class="adjacent-vehicle-row">
-                                <span class="adjacent-label">🔼 Adelante</span>
-                                <span class="adjacent-value" id="adjacentAheadText">—</span>
-                            </div>
-                            <div class="adjacent-vehicle-row">
-                                <span class="adjacent-label">🔽 Atrás</span>
-                                <span class="adjacent-value" id="adjacentBehindText">—</span>
-                            </div>
+                    <div class="occupancy-control">
+                        <p class="occupancy-control-label">¿Cómo va el bus?</p>
+                        <div class="occupancy-btn-row" id="occupancyBtnRow">
+                            <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
+                            <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
+                            <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
                         </div>
+                    </div>
 
-                        <div class="occupancy-control">
-                            <p class="occupancy-control-label">¿Cómo va el bus de pasajeros?</p>
-                            <div class="occupancy-btn-row" id="occupancyBtnRow">
-                                <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
-                                <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
-                                <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
-                            </div>
-                        </div>
-                        
-                        <div class="log-console" id="logConsole">
-                            <div class="log-entry">Sistema listo. Esperando inicio...</div>
-                        </div>
+                    <button class="btn btn-danger" onclick="confirmFinishRecorrido()" style="margin-top:4px;">
+                        <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar recorrido
+                    </button>
+
+                    <div class="log-console" id="logConsole">
+                        <div class="log-entry">Sistema listo. Esperando inicio...</div>
                     </div>
                 </div>
             </div>
@@ -668,7 +699,6 @@
     <script src="driver.js"></script>
     <script src="admin.js"></script>
     <script src="seed-data.js"></script>
-    <script src="auth.js"></script>
 
     <script>
 
@@ -792,6 +822,10 @@
         }
 
         // ==================== ENLACE COMPARTIDO (Parte 35) ====================
+        // Si alguien abre Vura desde un enlace compartido por WhatsApp
+        // (?empresa=X&vehiculo=Y), apenas lleguen los datos de empresas lo
+        // llevamos directo a ese vehiculo en el mapa, en vez de dejarlo en
+        // la lista general.
         let pendingSharedTrip = (() => {
             const params = new URLSearchParams(location.search);
             const empresa = params.get('empresa');
@@ -802,7 +836,7 @@
         function tryOpenSharedTripLink() {
             if (!pendingSharedTrip) return;
             const { empresa, vehiculo } = pendingSharedTrip;
-            if (!companies[empresa]) return;
+            if (!companies[empresa]) return; // todavia no llegan los datos de esa empresa
             pendingSharedTrip = null;
             const passengerTabBtn = document.querySelector('.tab-btn');
             if (passengerTabBtn) switchView('passenger', passengerTabBtn);
@@ -827,6 +861,9 @@
                 if (selectedCompanyId) renderFleetSummary(selectedCompanyId);
             }, 1000);
 
+            // Seguro: si por algun motivo Firebase nunca responde (sin
+            // Internet, error de configuracion), no dejamos a la persona
+            // viendo el splash para siempre.
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
                 if (splash && !splash.classList.contains('fade-out')) {
@@ -845,17 +882,14 @@
 
         function updateOfflineBanner() {
             const banner = document.getElementById('offlineBanner');
-            if (!banner) return;
-            
-            // Solo mostrar el banner si realmente está sin conexión
             if (!navigator.onLine) {
-                banner.style.display = 'block';
+                banner.classList.add('show');
                 if (activeDriverPath) {
                     setDriverStatus('err', 'Sin conexión a Internet. No se está transmitiendo tu ubicación en este momento.');
                     addLog('Conexión perdida. La transmisión se reanudará automáticamente al recuperar Internet.');
                 }
             } else {
-                banner.style.display = 'none';
+                banner.classList.remove('show');
                 if (activeDriverPath) {
                     setDriverStatus('ok', 'Conexión recuperada. Transmitiendo a Firebase en vivo.');
                     addLog('Conexión a Internet recuperada.');
@@ -869,5 +903,6 @@
         window.addEventListener('load', init);
     </script>
 
+    <script src="auth.js"></script>
 </body>
 </html>
