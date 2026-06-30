@@ -30,76 +30,6 @@
         let waitingListenerUnsub = null;
         let knownWaitingIds = {};
 
-        // ==================== SOS (Parte 48) ====================
-        let selectedSosType = null;
-        let lastSosSentAt = 0;
-
-        function openSosPanel() {
-            if (!activeDriverPath) {
-                showToast('Inicia un recorrido antes de usar el SOS', 'info');
-                return;
-            }
-            selectedSosType = null;
-            document.querySelectorAll('#sosTypeGrid .incident-type-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('sosPanel').classList.add('show');
-            document.getElementById('driverPanelBackdrop').classList.add('show');
-        }
-
-        function closeSosPanel() {
-            document.getElementById('sosPanel').classList.remove('show');
-            document.getElementById('driverPanelBackdrop').classList.remove('show');
-        }
-
-        function selectSosType(type) {
-            selectedSosType = type;
-            document.querySelectorAll('#sosTypeGrid .incident-type-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.type === type);
-            });
-        }
-
-        function submitSos() {
-            if (!activeDriverPath) return;
-            if (!selectedSosType) {
-                showToast('Elige qué tipo de emergencia es', 'info');
-                return;
-            }
-            if (!window.firebaseReady) {
-                showToast('Sin conexión: si puedes, llama directamente a la empresa', 'error');
-                return;
-            }
-            const now = Date.now();
-            // Enfriamiento corto (15s) solo para evitar doble-toque accidental
-            // sobre el mismo aviso; una emergencia real no deberia esperar mas.
-            if (now - lastSosSentAt < 15000) {
-                showToast('Ya se envió el aviso, dale un momento', 'info');
-                return;
-            }
-            const ok = window.confirm('¿Confirmas que quieres enviar una alerta de emergencia a la empresa?');
-            if (!ok) return;
-
-            const { companyId, vehicleId } = activeDriverPath;
-            const sosRef = window.fbRef(window.fbDb, `emergencias/${companyId}/${vehicleId}`);
-            const payload = { type: selectedSosType, timestamp: now };
-            if (currentTripLastPos) {
-                payload.lat = currentTripLastPos.lat;
-                payload.lng = currentTripLastPos.lng;
-            }
-            window.fbPush(sosRef, payload).then(() => {
-                lastSosSentAt = now;
-                showToast('🆘 Alerta enviada a la empresa', 'success');
-                addLog('🆘 Enviaste una alerta de emergencia.');
-                closeSosPanel();
-            }).catch(err => {
-                showToast('No se pudo enviar la alerta', 'error');
-                console.error('Error enviando SOS:', err);
-            });
-        }
-
-        window.openSosPanel = openSosPanel;
-        window.closeSosPanel = closeSosPanel;
-        window.selectSosType = selectSosType;
-        window.submitSos = submitSos;
-
         // ==================== DRIVER VIEW (GPS REAL) ====================
         function populateDriverSelects() {
             const companySelect = document.getElementById('driverCompany');
@@ -224,19 +154,31 @@
             addLog('Recorrido iniciado. Activando GPS real...');
             setDriverStatus('wait', 'Solicitando permiso de ubicación...');
 
+            // Parte 42: drawer colapsado al iniciar, para que el conductor
+            // vea el mapa completo apenas arranca el recorrido.
+            collapseDriverDrawer();
+
             setTimeout(() => {
                 if (!driverMap) {
-                    driverMap = L.map('driverMap', {
-                        zoomControl: false,
-                        attributionControl: false
-                    }).setView([-12.04, -77.03], 14);
-                    // Parte 42: mismo motor vectorial que el mapa del pasajero,
-                    // pero usando vura-driver-style.json (sin building-3d) para
-                    // no gastar GPU/bateria extra con pantalla encendida todo
-                    // el recorrido.
-                    const glDriver = L.maplibreGL({
-                        style: 'vura-driver-style.json'
+                    // Parte 42: mismo motor vectorial que el mapa del
+                    // pasajero (MapLibre GL + vura-map-style.json), para que
+                    // toda la app comparta una sola identidad visual. La
+                    // diferencia es que aqui se apaga la extrusion 3D de
+                    // edificios (building-3d) apenas el estilo carga: el
+                    // conductor tiene la pantalla encendida horas seguidas
+                    // transmitiendo GPS, asi que ese gasto extra de GPU/
+                    // bateria no se justifica para el (ver Parte 41).
+                    driverMap = L.map('driverMap', { zoomControl: false, attributionControl: true, minZoom: 3 }).setView([-12.04, -77.03], 15);
+                    const driverGlLayer = L.maplibreGL({
+                        style: 'vura-map-style.json',
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     }).addTo(driverMap);
+                    driverGlLayer.getMaplibreMap().once('styledata', () => {
+                        const glMap = driverGlLayer.getMaplibreMap();
+                        if (glMap.getLayer('building-3d')) {
+                            glMap.setLayoutProperty('building-3d', 'visibility', 'none');
+                        }
+                    });
                 }
                 if (company && company.routePointsIda) {
                     L.polyline(company.routePointsIda, {
@@ -511,9 +453,8 @@
             document.getElementById('driverLat').textContent = lat.toFixed(6);
             document.getElementById('driverLng').textContent = lng.toFixed(6);
             document.getElementById('driverSpeed').textContent = `${Math.round(speedKmh)} km/h`;
-            // Parte 42: HUD flotante — velocidad grande visible sin abrir el drawer
-            const hudSpeedEl = document.getElementById('driverHudSpeed');
-            if (hudSpeedEl) hudSpeedEl.textContent = Math.round(speedKmh);
+            const speedSummaryEl = document.getElementById('driverSpeedSummary');
+            if (speedSummaryEl) speedSummaryEl.textContent = `${Math.round(speedKmh)} km/h`;
 
             const accuracyEl = document.getElementById('driverAccuracy');
             accuracyEl.textContent = `±${acc} m`;
@@ -589,6 +530,8 @@
             window.fbSet(liveRef, payload).then(() => {
                 packetsSent++;
                 document.getElementById('driverSent').textContent = packetsSent;
+                const sentSummaryEl = document.getElementById('driverSentSummary');
+                if (sentSummaryEl) sentSummaryEl.textContent = packetsSent;
                 setDriverStatus('ok', 'Transmitiendo a Firebase en vivo');
                 addLog(`Enviado #${packetsSent} a Firebase.`);
             }).catch(err => {
@@ -765,24 +708,6 @@
         window.stopDriverMode = stopDriverMode;
         window.setOccupancy = setOccupancy;
 
-        // ==================== DRAWER DEL CONDUCTOR (Parte 42) ====================
-        // El drawer empieza cerrado para no tapar el mapa al iniciar.
-        // Se abre con un toque en el botón flotante; se puede cerrar igual.
-        let driverDrawerOpen = false;
-
-        function toggleDriverDrawer() {
-            driverDrawerOpen = !driverDrawerOpen;
-            const drawer = document.getElementById('driverDrawer');
-            const icon = document.getElementById('driverDrawerToggleIcon');
-            if (drawer) drawer.classList.toggle('open', driverDrawerOpen);
-            if (icon) icon.textContent = driverDrawerOpen ? '▼' : '▲';
-            // Tras abrir/cerrar, el mapa subyacente necesita recalcular su
-            // viewport porque el drawer empuja el canvas.
-            if (driverMap) setTimeout(() => driverMap.invalidateSize(), 320);
-        }
-
-        window.toggleDriverDrawer = toggleDriverDrawer;
-
         // ==================== SWIPE-TO-START (Parte 33) ====================
         // Reemplaza el boton normal de "Iniciar recorrido" por un control de
         // deslizar: el conductor tiene que arrastrar el circulo de un
@@ -855,6 +780,26 @@
             handle.style.left = '3px';
             if (fill) fill.style.width = '0';
         }
+
+        // ==================== PARTE 42: DRAWER DEL MAPA PANTALLA COMPLETA ====================
+        // El mapa del conductor ahora ocupa toda la pantalla; el drawer de
+        // abajo empieza colapsado (solo barra resumen: velocidad, sentido,
+        // envios) para no tapar el mapa mientras maneja, y se expande con
+        // un toque para ver GPS detallado, vehiculos adyacentes, ocupacion
+        // y el log. El estado por defecto es colapsado al iniciar un
+        // recorrido nuevo (ver startDriverMode).
+        function toggleDriverDrawer() {
+            const drawer = document.getElementById('driverDrawer');
+            if (!drawer) return;
+            drawer.classList.toggle('expanded');
+        }
+
+        function collapseDriverDrawer() {
+            const drawer = document.getElementById('driverDrawer');
+            if (drawer) drawer.classList.remove('expanded');
+        }
+
+        window.toggleDriverDrawer = toggleDriverDrawer;
 
         setupSwipeToStart();
         window.confirmFinishRecorrido = confirmFinishRecorrido;
