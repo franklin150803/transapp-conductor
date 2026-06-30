@@ -2,30 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vura · Transporte en Tiempo Real</title>
     <meta name="theme-color" content="#0d9488">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Parte 38: MapLibre GL JS + plugin de integracion con Leaflet, para
-         poder usar tiles vectoriales (con identidad visual propia de Vura,
-         ver style.css y la opcion vuraMapStyle en map.js) dentro del mismo
-         mapa Leaflet de siempre. Toda la logica existente de marcadores,
-         rutas y popups sigue siendo Leaflet normal; esto solo cambia la
-         capa base de "imagen" por una capa vectorial renderizada por GPU.
-         Debe cargarse DESPUES de leaflet.js, porque el plugin extiende el
-         objeto global L agregandole el metodo L.maplibreGL. -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <script src="icons.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
 
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
@@ -482,84 +474,78 @@
             </div>
 
             <div class="driver-active" id="driverActive">
-                <div class="status-badge wait" id="driverStatusBadge">
-                    <div class="status-dot"></div>
-                    <span id="driverStatusText">Solicitando permiso de ubicación...</span>
-                </div>
-
-                <div class="waiting-alert" id="waitingAlert" style="display:none;">
-                    <span class="waiting-alert-icon">🙋</span>
-                    <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
-                </div>
-
-                <div class="sentido-active-row">
-                    <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
-                    <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar sentido</button>
-                </div>
-
-                <div class="map-preview">
+                <!-- MAPA A PANTALLA COMPLETA -->
+                <div class="driver-fullscreen-map">
                     <div id="driverMap"></div>
+                    <!-- Botón flotante para finalizar sobre el mapa -->
+                    <button class="driver-finish-fab btn-danger" onclick="confirmFinishRecorrido()">
+                        <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar
+                    </button>
                 </div>
 
-                <div class="gps-ring">
-                    <span class="status-text">EN VIVO</span>
-                    <span class="status-icon"><span class="tab-icon-img" data-icon-key="mapPin" data-icon-size="28"></span></span>
-                    <span class="gps-text">GPS real del celular</span>
-                </div>
+                <!-- DRAWER DESLIZABLE CON LOS DATOS -->
+                <div class="driver-drawer" id="driverDrawer">
+                    <div class="driver-drawer-handle" onclick="toggleDriverDrawer()"></div>
+                    
+                    <div class="driver-drawer-content">
+                        <div class="status-badge wait" id="driverStatusBadge">
+                            <div class="status-dot"></div>
+                            <span id="driverStatusText">Solicitando permiso de ubicación...</span>
+                        </div>
 
-                <div class="gps-info-grid">
-                    <div class="gps-info-item">
-                        <label>Latitud</label>
-                        <value id="driverLat">—</value>
-                    </div>
-                    <div class="gps-info-item">
-                        <label>Longitud</label>
-                        <value id="driverLng">—</value>
-                    </div>
-                    <div class="gps-info-item">
-                        <label>Velocidad</label>
-                        <value id="driverSpeed">0 km/h</value>
-                    </div>
-                    <div class="gps-info-item">
-                        <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
-                        <value id="driverAccuracy">—</value>
-                    </div>
-                    <div class="gps-info-item">
-                        <label>Estado</label>
-                        <value id="driverMoveStatus">Detenido</value>
-                    </div>
-                    <div class="gps-info-item">
-                        <label>Envíos</label>
-                        <value id="driverSent">0</value>
-                    </div>
-                </div>
+                        <div class="waiting-alert" id="waitingAlert" style="display:none;">
+                            <span class="waiting-alert-icon">🙋</span>
+                            <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
+                        </div>
 
-                <div class="adjacent-vehicles" id="adjacentVehicles">
-                    <div class="adjacent-vehicle-row">
-                        <span class="adjacent-label">🔼 Adelante</span>
-                        <span class="adjacent-value" id="adjacentAheadText">—</span>
-                    </div>
-                    <div class="adjacent-vehicle-row">
-                        <span class="adjacent-label">🔽 Atrás</span>
-                        <span class="adjacent-value" id="adjacentBehindText">—</span>
-                    </div>
-                </div>
+                        <div class="sentido-active-row">
+                            <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
+                            <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar sentido</button>
+                        </div>
 
-                <div class="occupancy-control">
-                    <p class="occupancy-control-label">¿Cómo va el bus de pasajeros?</p>
-                    <div class="occupancy-btn-row" id="occupancyBtnRow">
-                        <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
-                        <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
-                        <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
+                        <div class="gps-info-grid">
+                            <div class="gps-info-item">
+                                <label>Velocidad</label>
+                                <value id="driverSpeed">0 km/h</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Envíos</label>
+                                <value id="driverSent">0</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
+                                <value id="driverAccuracy">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Estado</label>
+                                <value id="driverMoveStatus">Detenido</value>
+                            </div>
+                        </div>
+
+                        <div class="adjacent-vehicles" id="adjacentVehicles">
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔼 Adelante</span>
+                                <span class="adjacent-value" id="adjacentAheadText">—</span>
+                            </div>
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔽 Atrás</span>
+                                <span class="adjacent-value" id="adjacentBehindText">—</span>
+                            </div>
+                        </div>
+
+                        <div class="occupancy-control">
+                            <p class="occupancy-control-label">¿Cómo va el bus de pasajeros?</p>
+                            <div class="occupancy-btn-row" id="occupancyBtnRow">
+                                <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
+                                <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
+                                <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
+                            </div>
+                        </div>
+                        
+                        <div class="log-console" id="logConsole">
+                            <div class="log-entry">Sistema listo. Esperando inicio...</div>
+                        </div>
                     </div>
-                </div>
-
-                <button class="btn btn-danger" onclick="confirmFinishRecorrido()">
-                    <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar recorrido
-                </button>
-
-                <div class="log-console" id="logConsole">
-                    <div class="log-entry">Sistema listo. Esperando inicio...</div>
                 </div>
             </div>
         </div>
@@ -805,10 +791,6 @@
         }
 
         // ==================== ENLACE COMPARTIDO (Parte 35) ====================
-        // Si alguien abre Vura desde un enlace compartido por WhatsApp
-        // (?empresa=X&vehiculo=Y), apenas lleguen los datos de empresas lo
-        // llevamos directo a ese vehiculo en el mapa, en vez de dejarlo en
-        // la lista general.
         let pendingSharedTrip = (() => {
             const params = new URLSearchParams(location.search);
             const empresa = params.get('empresa');
@@ -819,7 +801,7 @@
         function tryOpenSharedTripLink() {
             if (!pendingSharedTrip) return;
             const { empresa, vehiculo } = pendingSharedTrip;
-            if (!companies[empresa]) return; // todavia no llegan los datos de esa empresa
+            if (!companies[empresa]) return;
             pendingSharedTrip = null;
             const passengerTabBtn = document.querySelector('.tab-btn');
             if (passengerTabBtn) switchView('passenger', passengerTabBtn);
@@ -844,9 +826,6 @@
                 if (selectedCompanyId) renderFleetSummary(selectedCompanyId);
             }, 1000);
 
-            // Seguro: si por algun motivo Firebase nunca responde (sin
-            // Internet, error de configuracion), no dejamos a la persona
-            // viendo el splash para siempre.
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
                 if (splash && !splash.classList.contains('fade-out')) {
