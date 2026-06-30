@@ -925,6 +925,7 @@
             if (document.getElementById('incidentPanel').classList.contains('show')) closeIncidentPanel();
             if (document.getElementById('stopsPanel').classList.contains('show')) closeStopsPanel();
             if (document.getElementById('notificationPanel').classList.contains('show')) closeNotificationPanel();
+            if (document.getElementById('accessibilityPanel').classList.contains('show')) closeAccessibilityPanel();
         }
 
         window.closeAnyOpenPanel = closeAnyOpenPanel;
