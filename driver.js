@@ -482,14 +482,18 @@
                 const sentidoColor = currentDriverSentido === 'retorno' ? '#ff5252' : '#22d3ee';
 
                 if (driverMarker) {
-                    driverMarker.setLatLng([lat, lng]);
+                    const fromLatLng = driverMarker.getLatLng();
+                    animateMarkerTo(driverMarker, fromLatLng, [lat, lng], 1200);
                     driverMarker.setIcon(createVehicleIcon(sentidoColor, speedKmh >= 3, plateLabel, heading));
                 } else {
                     driverMarker = L.marker([lat, lng], {
                         icon: createVehicleIcon(sentidoColor, speedKmh >= 3, plateLabel, heading)
                     }).addTo(driverMap);
                 }
-                driverMap.setView([lat, lng], 16);
+                // Parte 43: pan suave en vez de salto duro cada vez que llega
+                // una lectura GPS nueva (cada pocos segundos); easeTo anima
+                // la camara igual que panTo en el mapa del pasajero.
+                driverMap.flyTo([lat, lng], 16, { animate: true, duration: 0.8 });
             }
 
             addLog(`GPS leído → ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${acc}m, ${Math.round(speedKmh)} km/h)`);
