@@ -12,7 +12,22 @@
             // minZoom evita problemas de sincronizacion Leaflet/MapLibre en
             // niveles de zoom muy bajos (recomendado por la documentacion
             // oficial del plugin); Lima nunca se ve en zoom tan alejado.
-            map = L.map('map', { zoomControl: true, attributionControl: true, minZoom: 3 }).setView([-12.0464, -77.0428], 12);
+            //
+            // Parte 43: opciones de animacion mas fluida. zoomSnap/zoomDelta
+            // chicos hacen que el zoom con gesto de pellizco se sienta
+            // continuo en vez de saltar de golpe entre niveles enteros;
+            // wheelPxPerZoomLevel suaviza el zoom con scroll en desktop.
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: true,
+                minZoom: 3,
+                zoomSnap: 0.5,
+                zoomDelta: 0.5,
+                wheelPxPerZoomLevel: 90,
+                fadeAnimation: true,
+                zoomAnimation: true,
+                markerZoomAnimation: true
+            }).setView([-12.0464, -77.0428], 12);
 
             // Parte 38: tiles vectoriales (MapLibre GL via el plugin
             // maplibre-gl-leaflet) en vez de imagenes PNG con filtro CSS.
@@ -172,17 +187,30 @@
                         animateMarkerTo(vehicleMarkers[markerId], fromLatLng, [live.lat, live.lng], 2500);
                         vehicleMarkers[markerId].setIcon(createVehicleIcon(sentidoColor, moving, plateLabel, heading));
                     } else {
+                        // Parte 43: ya no se usa bindPopup aqui. Antes, al
+                        // tocar el marcador, Leaflet abria el popup Y se
+                        // disparaba el 'click' que abre el panel de detalle
+                        // al mismo tiempo — el popup aparecia un instante y
+                        // quedaba tapado de inmediato por el panel. El panel
+                        // ya muestra toda esa informacion (y mas), asi que
+                        // el popup era pura redundancia visual.
                         const marker = L.marker([live.lat, live.lng], {
                             icon: createVehicleIcon(sentidoColor, moving, plateLabel, heading)
                         }).addTo(map);
 
-                        marker.bindPopup(`
-                            <div class="popup-title">${appIcon('bus', 14)} ${escapeHtml(vehicle.plate || vehicleId)}</div>
-                            <div class="popup-info">Empresa: ${escapeHtml(company.name)}</div>
-                            <div class="popup-info">Sentido: ${sentidoLabel}</div>
-                            <div class="popup-info">Velocidad: ${Math.round(live.speed || 0)} km/h</div>
-                            <div class="popup-badge">✓ Empresa Verificada</div>
-                        `);
+                        // Pequeño "pop" de entrada cuando aparece un vehiculo
+                        // nuevo en el mapa, para que no se sienta que aparece
+                        // de golpe sin transicion.
+                        const el = marker.getElement && marker.getElement();
+                        if (el) {
+                            el.style.opacity = '0';
+                            el.style.transform += ' scale(0.5)';
+                            requestAnimationFrame(() => {
+                                el.style.transition = 'opacity 0.35s ease, transform 0.35s cubic-bezier(.34,1.4,.64,1)';
+                                el.style.opacity = '1';
+                                el.style.transform = el.style.transform.replace('scale(0.5)', 'scale(1)');
+                            });
+                        }
 
                         marker.on('click', () => showVehiclePanel(companyId, vehicleId));
                         vehicleMarkers[markerId] = marker;
