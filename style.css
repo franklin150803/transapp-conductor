@@ -2056,15 +2056,21 @@ body {
    BANNERS
    ========================================= */
 .guest-banner {
-    background: var(--warning);
-    color: #000;
-    padding: 10px 16px;
-    text-align: center;
-    font-size: 0.85rem;
-    font-weight: 600;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .offline-banner {
+    display: none;
     background: var(--danger);
     color: white;
     padding: 10px 16px;
@@ -2074,12 +2080,16 @@ body {
 }
 
 .install-banner {
+    display: none;
     background: var(--surface-2);
     border-bottom: 1px solid var(--border);
     padding: 12px 16px;
-    display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.install-banner.show {
+    display: flex;
 }
 
 .install-banner span {

@@ -845,14 +845,17 @@
 
         function updateOfflineBanner() {
             const banner = document.getElementById('offlineBanner');
+            if (!banner) return;
+            
+            // Solo mostrar el banner si realmente está sin conexión
             if (!navigator.onLine) {
-                banner.classList.add('show');
+                banner.style.display = 'block';
                 if (activeDriverPath) {
                     setDriverStatus('err', 'Sin conexión a Internet. No se está transmitiendo tu ubicación en este momento.');
                     addLog('Conexión perdida. La transmisión se reanudará automáticamente al recuperar Internet.');
                 }
             } else {
-                banner.classList.remove('show');
+                banner.style.display = 'none';
                 if (activeDriverPath) {
                     setDriverStatus('ok', 'Conexión recuperada. Transmitiendo a Firebase en vivo.');
                     addLog('Conexión a Internet recuperada.');
