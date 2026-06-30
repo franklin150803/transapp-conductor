@@ -34,6 +34,40 @@
         <p class="splash-status" id="splashStatus">Conectando...</p>
     </div>
 
+    <!-- Parte 44: onboarding de bienvenida, solo la primera vez que se abre
+         la app en este dispositivo (controlado por localStorage). Se queda
+         por encima de todo (z-index alto) hasta que se toca "Comenzar";
+         lo que haya debajo (landing/auth/app) se sigue preparando con
+         normalidad detrás. -->
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <div class="onboarding-slides" id="onboardingSlides">
+            <div class="onboarding-slide active" data-slide="0">
+                <div class="onboarding-icon">📍</div>
+                <h2>Encuentra tu bus en tiempo real</h2>
+                <p>Mira exactamente dónde está la unidad que esperas, sin adivinar ni preguntar.</p>
+            </div>
+            <div class="onboarding-slide" data-slide="1">
+                <div class="onboarding-icon">🚌</div>
+                <h2>Consulta el tiempo de llegada</h2>
+                <p>Vura calcula cuánto falta siguiendo la ruta real, no en línea recta.</p>
+            </div>
+            <div class="onboarding-slide" data-slide="2">
+                <div class="onboarding-icon">⭐</div>
+                <h2>Guarda tus rutas favoritas</h2>
+                <p>Empresas, paraderos y destinos frecuentes, listos con un solo toque.</p>
+            </div>
+        </div>
+        <div class="onboarding-dots" id="onboardingDots">
+            <span class="onboarding-dot active" data-dot="0"></span>
+            <span class="onboarding-dot" data-dot="1"></span>
+            <span class="onboarding-dot" data-dot="2"></span>
+        </div>
+        <div class="onboarding-actions">
+            <button class="onboarding-skip" onclick="finishOnboarding()">Omitir</button>
+            <button class="onboarding-next" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
+        </div>
+    </div>
+
     <!-- Landing Page -->
     <div class="landing-screen" id="landingScreen" style="display:none;">
         <div class="landing-hero">
@@ -736,10 +770,33 @@
             });
         }
 
+        // Parte 44: caché de lectura offline. Antes de que Firebase responda
+        // (o si no hay internet), mostramos lo último que se guardó la
+        // última vez que la app sí tuvo conexión — así la lista de empresas
+        // no aparece vacía en una zona sin señal, aunque los datos puedan
+        // estar desactualizados.
+        const COMPANIES_CACHE_KEY = 'vura_companies_cache';
+
+        function loadCachedCompanies() {
+            try {
+                const raw = localStorage.getItem(COMPANIES_CACHE_KEY);
+                if (!raw) return;
+                companies = JSON.parse(raw);
+                renderCompanyList();
+                renderPassengerHome();
+                showToast('Mostrando datos guardados. Conectando...', 'info');
+            } catch (e) { /* caché corrupta o inexistente, se ignora */ }
+        }
+
+        function cacheCompanies(data) {
+            try { localStorage.setItem(COMPANIES_CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+        }
+
         function listenCompanies() {
             const companiesRef = window.fbRef(window.fbDb, 'empresas');
             window.fbOnValue(companiesRef, (snap) => {
                 companies = snap.val() || {};
+                cacheCompanies(companies);
                 renderCompanyList();
                 renderPassengerHome();
                 renderAdminVehicleList();
@@ -849,6 +906,7 @@
         function init() {
             renderStaticIcons();
             updateOfflineBanner();
+            loadCachedCompanies();
             onFirebaseReady(() => {
                 seedIfEmpty();
                 listenAuthState();
