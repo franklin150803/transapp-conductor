@@ -1,4 +1,4 @@
-        * {
+* {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -1302,21 +1302,137 @@
             animation: pulse 2s infinite;
         }
 
-        .driver-active { display: none; flex-direction: column; align-items: center; gap: 20px; }
-        .driver-active.show { display: flex; }
+        /* Parte 42: el conductor ya no tiene una columna de datos con el
+           mapa en la mitad — ahora el mapa ocupa el 100% de la pantalla y
+           los datos van en un drawer colapsable que el conductor abre solo
+           cuando quiere, sin distraerse mientras maneja. */
+        .driver-active {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 800;
+        }
 
-        .gps-ring {
-            width: 160px;
-            height: 160px;
-            border-radius: var(--radius-full);
-            border: 4px solid var(--primary);
+        .driver-active.show { display: block; }
+
+        /* Mapa a pantalla completa como fondo del layout */
+        .driver-fullmap {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* HUD flotante: velocidad grande + estado. Siempre visible.
+           Parte superior izquierda, lejos del área donde apoya el pulgar. */
+        .driver-hud {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(10, 14, 22, 0.82);
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 10px 16px;
+            z-index: 10;
             display: flex;
-            flex-direction: column;
+            align-items: baseline;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+        }
+
+        .driver-hud-speed {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .driver-hud-unit {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-right: 8px;
+        }
+
+        .driver-hud-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Banner de pasajero esperando: flota arriba del mapa */
+        .driver-active .waiting-alert {
+            position: absolute;
+            top: 90px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+        }
+
+        /* Botón para abrir/cerrar el drawer, en la esquina inferior derecha */
+        .driver-drawer-toggle {
+            position: absolute;
+            bottom: calc(var(--bottom-nav-h) + 16px);
+            right: 16px;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-full);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            background: rgba(10, 14, 22, 0.88);
+            color: var(--text);
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            animation: ringPulse 2s infinite;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
         }
+
+        .driver-drawer-toggle:active { transform: scale(0.93); }
+
+        /* Drawer colapsable: panel que sube desde abajo con los datos.
+           Por defecto cerrado (translate 100%), abierto con clase .open. */
+        .driver-drawer {
+            position: absolute;
+            bottom: var(--bottom-nav-h);
+            left: 0;
+            right: 0;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: rgba(13, 26, 38, 0.96);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            border-top: 1px solid rgba(34, 211, 238, 0.2);
+            padding: 10px 20px 24px;
+            z-index: 9;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
+        }
+
+        .driver-drawer.open { transform: translateY(0); }
+
+        .driver-drawer-handle {
+            width: 36px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin: 0 auto 14px;
+        }
+
+        .driver-drawer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        /* El gps-ring ya no se usa en el nuevo layout — se reemplazó por
+           el HUD flotante que es más legible de un vistazo. */
+        .gps-ring { display: none; }
 
         .gps-ring::before {
             content: '';
@@ -1406,14 +1522,6 @@
         .freshness-ring.stale {
             --freshness: 1;
             background: var(--text-muted);
-        }
-
-        .map-preview {
-            height: 200px;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
         }
 
         #driverMap { width: 100%; height: 100%; }
