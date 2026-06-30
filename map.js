@@ -115,6 +115,54 @@
 
         function vehicleKey(companyId, vehicleId) { return companyId + '__' + vehicleId; }
 
+        // ==================== MODO ENFOQUE (Parte 46) ====================
+        // Cuando el pasajero activa "Modo enfoque" sobre un vehiculo, el
+        // resto del mapa (otros buses y rutas de otras empresas) se atenua
+        // visualmente para que sea obvio cual es el bus que esta esperando,
+        // sin necesidad de cerrar el panel ni perder el resto del contexto
+        // del mapa (las otras rutas siguen ahi, solo mas tenues).
+        let waitingTargetKey = null;
+
+        // Aplica/retira las clases de atenuado sobre el DOM de un marcador
+        // ya existente, sin tocar su icono ni su animacion de movimiento.
+        function applyDimClass(marker, markerId) {
+            if (!marker) return;
+            const el = marker.getElement && marker.getElement();
+            if (!el) return;
+            const wrap = el.querySelector('.vehicle-marker-wrap');
+            if (!wrap) return;
+            if (waitingTargetKey) {
+                wrap.classList.toggle('vura-dimmed', markerId !== waitingTargetKey);
+                wrap.classList.toggle('vura-waiting-target', markerId === waitingTargetKey);
+            } else {
+                wrap.classList.remove('vura-dimmed', 'vura-waiting-target');
+            }
+        }
+
+        // Define (o limpia, si key es null) cual vehiculo queda "enfocado".
+        // Recorre los marcadores y polylines ya existentes para aplicar el
+        // atenuado de inmediato, sin esperar a la proxima actualizacion de
+        // posicion GPS (que podria tardar varios segundos en buses detenidos).
+        function setWaitingTarget(key) {
+            waitingTargetKey = key;
+            const targetCompanyId = key ? key.split('__')[0] : null;
+
+            Object.keys(vehicleMarkers).forEach(markerId => applyDimClass(vehicleMarkers[markerId], markerId));
+
+            Object.keys(routePolylines).forEach(companyId => {
+                const entry = routePolylines[companyId];
+                if (!entry) return;
+                let opacity;
+                if (targetCompanyId) {
+                    opacity = (companyId === targetCompanyId) ? 0.9 : 0.08;
+                } else {
+                    opacity = (companyId === selectedCompanyId) ? 0.9 : 0.35;
+                }
+                if (entry.ida) entry.ida.setStyle({ opacity });
+                if (entry.retorno) entry.retorno.setStyle({ opacity });
+            });
+        }
+
         function animateMarkerTo(marker, fromLatLng, toLatLng, durationMs) {
             // Cancela cualquier animacion previa de este marcador para evitar
             // que se acumulen varias animaciones compitiendo entre si.
@@ -186,6 +234,10 @@
                         const fromLatLng = vehicleMarkers[markerId].getLatLng();
                         animateMarkerTo(vehicleMarkers[markerId], fromLatLng, [live.lat, live.lng], 2500);
                         vehicleMarkers[markerId].setIcon(createVehicleIcon(sentidoColor, moving, plateLabel, heading));
+                        // setIcon reconstruye el div del icono, asi que el
+                        // atenuado de Modo enfoque hay que reaplicarlo cada
+                        // vez (si no, "sobrevive" solo hasta el proximo GPS).
+                        applyDimClass(vehicleMarkers[markerId], markerId);
                     } else {
                         // Parte 43: ya no se usa bindPopup aqui. Antes, al
                         // tocar el marcador, Leaflet abria el popup Y se
@@ -214,6 +266,7 @@
 
                         marker.on('click', () => showVehiclePanel(companyId, vehicleId));
                         vehicleMarkers[markerId] = marker;
+                        applyDimClass(marker, markerId);
                     }
 
                     vehicleLastKnownPos[markerId] = { lat: live.lat, lng: live.lng, heading, timestamp: live.timestamp };
