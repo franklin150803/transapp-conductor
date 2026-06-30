@@ -2,31 +2,16 @@
 // Vista del conductor: motor real de GPS (watchPosition), calculo de
 // velocidad y rumbo, seleccion de sentido (ida/retorno), envio de
 // ubicacion a Firebase, y flujo de iniciar/finalizar recorrido con
-// confirmacion. Depende de variables globales del script principal
-// (activeDriverPath, watchId, driverMap, driverMarker, packetsSent,
-// currentDriverSentido, companies) y de funciones de utils.js
-// (haversine) y map.js (createVehicleIcon). Debe cargarse antes del
-// script principal.
+// confirmacion. 
 
-        // Estado del recorrido actual, usado para construir el registro
-        // de historial cuando el conductor finaliza (ver stopDriverMode).
         let currentTripStartTime = null;
         let currentTripDistanceM = 0;
         let currentTripLastPos = null;
 
-        // Marca de tiempo del ultimo envio real a Firebase, usada por el
-        // throttle adaptativo (Parte 25): no todas las lecturas de GPS se
-        // suben a la base de datos, para ahorrar bateria y datos moviles.
         let lastFirebaseSendTime = 0;
 
-        // Parte 37: nivel de ocupacion reportado a mano por el conductor.
-        // Viaja en cada escritura a Firebase (igual que lat/lng), para que
-        // no se pierda entre una lectura de GPS y la siguiente.
         let currentOccupancy = null;
 
-        // Aviso de "pasajero esperando" (Parte 26): listener activo y
-        // registro de avisos ya notificados, para no repetir sonido/log
-        // por un mismo aviso que ya vimos.
         let waitingListenerUnsub = null;
         let knownWaitingIds = {};
 
@@ -121,27 +106,19 @@
             const company = companies[companyId];
             updateSentidoActiveBadge();
 
-            // Estado del recorrido actual, para guardar el historial al finalizar.
             currentTripStartTime = Date.now();
             currentTripDistanceM = 0;
             currentTripLastPos = null;
-            // Reinicia el throttle: la primera lectura de este recorrido
-            // siempre se envia de inmediato, sin importar la velocidad.
             lastFirebaseSendTime = 0;
 
-            // Parte 37: cada recorrido nuevo empieza sin reportar ocupacion.
             currentOccupancy = null;
             document.querySelectorAll('.occupancy-btn').forEach(btn => btn.classList.remove('active'));
 
-            // Limpia avisos de espera de un recorrido anterior y activa el
-            // listener para este vehiculo (Parte 26).
             knownWaitingIds = {};
             const waitingAlertEl = document.getElementById('waitingAlert');
             if (waitingAlertEl) waitingAlertEl.style.display = 'none';
             listenForWaitingPassengers(companyId, vehicleId);
 
-            // Limpia la vista de "vehiculo adelante/atras" del recorrido
-            // anterior (Parte 27); se vuelve a llenar con la primera lectura.
             const aheadElInit = document.getElementById('adjacentAheadText');
             const behindElInit = document.getElementById('adjacentBehindText');
             if (aheadElInit) aheadElInit.textContent = '—';
@@ -156,23 +133,25 @@
 
             setTimeout(() => {
                 if (!driverMap) {
-                    driverMap = L.map('driverMap').setView([-12.04, -77.03], 13);
-                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                        maxZoom: 19,
-                        className: 'vura-map-tiles-driver'
+                    driverMap = L.map('driverMap').setView([-12.04, -77.03], 14);
+                    
+                    // Mapa vectorial MapLibre GL con estilo propio de Vura
+                    L.maplibreGL({
+                        style: 'vura-map-style.json'
                     }).addTo(driverMap);
                 }
                 if (company && company.routePointsIda) {
                     L.polyline(company.routePointsIda, {
-                        color: '#22d3ee', weight: 4, opacity: 0.6, dashArray: '10, 8', className: 'route-line-ida'
+                        color: '#22d3ee', weight: 5, opacity: 0.8, className: 'route-line-ida'
                     }).addTo(driverMap);
                 }
                 if (company && company.routePointsRetorno) {
                     L.polyline(company.routePointsRetorno, {
-                        color: '#ff5252', weight: 4, opacity: 0.6, dashArray: '10, 8', className: 'route-line-retorno'
+                        color: '#ff5252', weight: 5, opacity: 0.8, className: 'route-line-retorno'
                     }).addTo(driverMap);
                 }
+                // Fuerza recalcular tamaño porque ahora es fullscreen
+                setTimeout(() => driverMap.invalidateSize(), 100);
             }, 50);
 
             watchId = navigator.geolocation.watchPosition(onDriverPosition, onDriverError, {
@@ -207,10 +186,6 @@
             return 0;
         }
 
-        // Usa el heading nativo del GPS si esta disponible y es confiable;
-        // si no, lo calcula comparando con la lectura anterior. Se ignoran
-        // saltos minimos (<5m) para evitar que la flecha "tiemble" cuando
-        // el vehiculo esta casi detenido.
         function estimateHeading(pos) {
             if (typeof pos.coords.heading === 'number' && pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
                 lastHeading = pos.coords.heading;
@@ -229,14 +204,6 @@
             return lastHeading;
         }
 
-
-        // Decide si esta lectura de GPS debe escribirse a Firebase, segun
-        // la velocidad actual: detenido = cada 12s, lento = cada 6s, rapido
-        // = cada 2.5s. El navegador no permite fijar la frecuencia exacta
-        // de watchPosition, asi que en vez de eso "throttleamos" cuantas de
-        // esas lecturas realmente subimos a la base de datos en linea. La
-        // UI local (mapa, textos en pantalla del conductor) sigue
-        // actualizandose en cada lectura, sin importar el throttle.
         function shouldSendToFirebaseNow(speedKmh) {
             const now = Date.now();
             const elapsed = now - lastFirebaseSendTime;
@@ -252,10 +219,6 @@
         }
 
         // ==================== AVISO "PASAJERO ESPERANDO" (Parte 26) ====================
-        // Escucha esperando/{companyId}/{vehicleId}, donde cada pasajero que
-        // toca "Estoy esperando este bus" agrega un registro con timestamp.
-        // Cuando aparece un registro nuevo (no visto antes), avisa al
-        // conductor con sonido + vibracion + entrada en el log.
         function listenForWaitingPassengers(companyId, vehicleId) {
             if (!window.firebaseReady) return;
             const waitRef = window.fbRef(window.fbDb, `esperando/${companyId}/${vehicleId}`);
@@ -266,9 +229,6 @@
                 Object.keys(data).forEach(id => {
                     const entry = data[id];
                     const ageMs = now - (entry && entry.timestamp || 0);
-                    // Limpieza ligera: un aviso de hace mas de 10 minutos ya
-                    // no es util (el pasajero seguro ya se fue o subio a
-                    // otro bus); lo borramos para no acumular basura.
                     if (ageMs > 10 * 60 * 1000) {
                         window.fbSet(window.fbRef(window.fbDb, `esperando/${companyId}/${vehicleId}/${id}`), null);
                         return;
@@ -299,9 +259,6 @@
             }
         }
 
-        // Pitido corto con Web Audio API (sin archivo de audio externo).
-        // Si el navegador bloquea audio sin interaccion previa, simplemente
-        // no suena; la vibracion y el aviso visual funcionan igual.
         function playWaitingAlertSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -326,13 +283,6 @@
         }
 
         // ==================== VEHÍCULO ADELANTE/ATRÁS (Parte 27) ====================
-        // Compara el avance en la ruta (distancia restante hasta el destino,
-        // siguiendo la ruta real) entre este vehiculo y los demas de la
-        // MISMA empresa y MISMO sentido que esten en linea ahora mismo.
-        // Menos distancia restante = mas avanzado (adelante); mas distancia
-        // restante = menos avanzado (atras). Se recalcula en cada lectura
-        // de GPS, usando liveVehicles (variable global ya mantenida por el
-        // listener principal de vehiculos_live).
         function updateAdjacentVehicles(companyId, vehicleId, lat, lng, ownSpeedKmh) {
             const aheadEl = document.getElementById('adjacentAheadText');
             const behindEl = document.getElementById('adjacentBehindText');
@@ -366,20 +316,11 @@
                 others.push({ plate: vehicleData.plate || vid, remaining });
             });
 
-            // El mas cercano "adelante" es el que tiene menos distancia
-            // restante que yo, pero la mayor de ese grupo (el inmediato
-            // siguiente en la ruta, no el mas lejano).
             const ahead = others.filter(o => o.remaining < ownRemaining)
                 .sort((a, b) => b.remaining - a.remaining)[0];
-            // El mas cercano "atras" es el que tiene mas distancia restante
-            // que yo, pero la menor de ese grupo.
             const behind = others.filter(o => o.remaining > ownRemaining)
                 .sort((a, b) => a.remaining - b.remaining)[0];
 
-            // Para convertir la brecha de distancia en un estimado de
-            // minutos, usamos la velocidad propia actual (con un piso de
-            // 3 km/h para no dividir por casi cero), o 18 km/h de respaldo
-            // si por algun motivo no hay velocidad valida.
             const speedMs = Math.max(3, ownSpeedKmh || 18) / 3.6;
 
             if (ahead) {
@@ -400,11 +341,6 @@
         }
 
         // ==================== OCUPACIÓN (Parte 37) ====================
-        // El conductor reporta a mano que tan lleno va el bus. Queda
-        // guardado en currentOccupancy para que viaje en cada escritura
-        // normal de GPS (asi no se pierde con el throttle adaptativo), y
-        // ademas se manda de inmediato en una escritura aparte, para que el
-        // pasajero lo vea sin tener que esperar el siguiente ciclo de GPS.
         function setOccupancy(level) {
             currentOccupancy = level;
             document.querySelectorAll('.occupancy-btn').forEach(btn => {
@@ -425,10 +361,8 @@
             const speedKmh = Math.max(0, estimateSpeedKmh(pos));
             const heading = estimateHeading(pos);
 
-            // Acumula distancia recorrida en este viaje, para el historial.
             if (currentTripLastPos) {
                 const stepM = haversine(currentTripLastPos.lat, currentTripLastPos.lng, lat, lng);
-                // Ignora saltos enormes (GPS con error grande) que distorsionarian el total.
                 if (stepM < 500) currentTripDistanceM += stepM;
             }
             currentTripLastPos = { lat, lng };
@@ -475,8 +409,6 @@
 
             addLog(`GPS leído → ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${acc}m, ${Math.round(speedKmh)} km/h)`);
 
-            // Parte 27: recalcula que vehiculo de la misma empresa va
-            // adelante/atras en la ruta, con cada lectura de GPS.
             updateAdjacentVehicles(companyId, vehicleId, lat, lng, speedKmh);
 
             if (!window.firebaseReady) {
@@ -485,16 +417,10 @@
                 return;
             }
 
-            // Parte 39: si quedaron posiciones guardadas de un corte de
-            // señal anterior y ya hay conexion, las reenvia antes de seguir
-            // con la lectura actual.
             if (navigator.onLine && getOfflineQueue().length) {
                 flushOfflineQueue();
             }
 
-            // Parte 25: throttle adaptativo. Si todavia no toca enviar
-            // segun la velocidad actual, no escribimos a Firebase en este
-            // ciclo — la UI local ya se actualizo arriba igual.
             if (!shouldSendToFirebaseNow(speedKmh)) {
                 return;
             }
@@ -514,10 +440,6 @@
                 setDriverStatus('ok', 'Transmitiendo a Firebase en vivo');
                 addLog(`Enviado #${packetsSent} a Firebase.`);
             }).catch(err => {
-                // Parte 39: sin señal o sin internet. En vez de perder la
-                // posicion, la guardamos en este celular (localStorage) y
-                // la reintentamos mas adelante, para que el bus no
-                // "desaparezca" del sistema mientras dura el corte.
                 queueOfflineReading(payload);
                 const pending = getOfflineQueue().length;
                 setDriverStatus('err', `Sin conexión: ${pending} posición(es) guardadas en este celular`);
@@ -526,14 +448,8 @@
         }
 
         // ==================== CACHÉ OFFLINE DE GPS (Parte 39) ====================
-        // Si el conductor pierde señal de internet (tunel, zona sin
-        // cobertura), las posiciones que no se pudieron subir se guardan
-        // aqui (localStorage, sobrevive aunque se recargue la pagina) y se
-        // reenvian apenas vuelve la conexion, en orden, con una pequeña
-        // pausa entre cada una para que el marcador del pasajero "recorra"
-        // el camino real en vez de saltar de golpe al punto final.
         const OFFLINE_QUEUE_KEY = 'vura_offline_gps_queue';
-        const OFFLINE_QUEUE_MAX = 60; // tope para no llenar el almacenamiento si el corte dura mucho
+        const OFFLINE_QUEUE_MAX = 60;
 
         function getOfflineQueue() {
             try {
@@ -562,7 +478,7 @@
         let flushingOfflineQueue = false;
 
         async function flushOfflineQueue() {
-            if (flushingOfflineQueue) return; // ya hay un envio en curso, no duplicar
+            if (flushingOfflineQueue) return;
             const queue = getOfflineQueue();
             if (!queue.length || !activeDriverPath || !window.firebaseReady) return;
 
@@ -577,9 +493,6 @@
                     await window.fbSet(liveRef, reading);
                     await new Promise(resolve => setTimeout(resolve, 350));
                 } catch (e) {
-                    // Se volvio a cortar la señal a medio camino: lo que
-                    // falte por enviar se pierde, es un caso extremo
-                    // aceptable (mejor esto que bloquear el recorrido actual).
                     addLog('Se cortó la señal otra vez mientras se enviaban las posiciones guardadas.');
                     break;
                 }
@@ -594,11 +507,11 @@
 
         function friendlyGpsError(err) {
             switch (err.code) {
-                case 1: // PERMISSION_DENIED
+                case 1:
                     return 'No diste permiso de ubicación. Activa el permiso de ubicación para este sitio en tu navegador y vuelve a intentar.';
-                case 2: // POSITION_UNAVAILABLE
+                case 2:
                     return 'No se pudo obtener tu ubicación. Verifica que el GPS de tu celular esté activado.';
-                case 3: // TIMEOUT
+                case 3:
                     return 'El GPS está tardando en responder. Si estás en interiores, acércate a una ventana o sal al exterior.';
                 default:
                     return 'No se pudo leer tu ubicación. Intenta de nuevo en unos segundos.';
@@ -618,12 +531,9 @@
 
         function stopDriverMode() {
             if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId); // libera el GPS y ahorra batería
+                navigator.geolocation.clearWatch(watchId);
                 watchId = null;
             }
-            // Apaga el listener de avisos de espera de este vehiculo y
-            // borra los avisos pendientes: el recorrido terminó, ya no
-            // tiene sentido seguir mostrandolos al proximo conductor.
             if (waitingListenerUnsub) {
                 waitingListenerUnsub();
                 waitingListenerUnsub = null;
@@ -639,14 +549,10 @@
 
             if (activeDriverPath && window.firebaseReady) {
                 const { companyId, vehicleId } = activeDriverPath;
-                // Borra tanto la posicion en vivo como los avisos de espera
-                // pendientes de este vehiculo: el recorrido terminó.
                 window.fbSet(window.fbRef(window.fbDb, `esperando/${companyId}/${vehicleId}`), null);
                 const liveRef = window.fbRef(window.fbDb, `vehiculos_live/${companyId}/${vehicleId}`);
                 window.fbSet(liveRef, null);
 
-                // Guarda el registro de este recorrido en el historial de la empresa,
-                // para que el panel Admin pueda mostrar cuantos recorridos se hicieron.
                 if (currentTripStartTime) {
                     const company = companies[companyId] || {};
                     const vehicleData = (company.vehicles || {})[vehicleId] || {};
@@ -688,12 +594,6 @@
         window.setOccupancy = setOccupancy;
 
         // ==================== SWIPE-TO-START (Parte 33) ====================
-        // Reemplaza el boton normal de "Iniciar recorrido" por un control de
-        // deslizar: el conductor tiene que arrastrar el circulo de un
-        // extremo al otro, no solo tocarlo. Un toque accidental con el
-        // celular en el tablero ya no dispara el recorrido por error; hace
-        // falta un gesto intencional y sostenido, igual que "deslizar para
-        // contestar" en los celulares.
         function setupSwipeToStart() {
             const slider = document.getElementById('startSwipeSlider');
             const handle = document.getElementById('swipeHandle');
@@ -729,8 +629,6 @@
                 slider.classList.remove('dragging');
                 const currentLeft = parseFloat(handle.style.left || '3');
                 const dragged = currentLeft - 3;
-                // Hace falta deslizar al menos el 82% del recorrido para que
-                // cuente como intencional; menos que eso, vuelve al inicio.
                 if (maxDistance > 0 && (dragged / maxDistance) >= 0.82) {
                     handle.style.left = (maxDistance + 3) + 'px';
                     if (fill) fill.style.width = '100%';
@@ -748,8 +646,6 @@
             handle.addEventListener('pointercancel', finishDrag);
         }
 
-        // Vuelve el slider a su posicion inicial (al finalizar un recorrido,
-        // para que quede listo para el proximo).
         function resetSwipeToStart() {
             const slider = document.getElementById('startSwipeSlider');
             const handle = document.getElementById('swipeHandle');
@@ -762,3 +658,10 @@
 
         setupSwipeToStart();
         window.confirmFinishRecorrido = confirmFinishRecorrido;
+
+        // ==================== DRAWER CONDUCTOR (Parte 42) ====================
+        function toggleDriverDrawer() {
+            const drawer = document.getElementById('driverDrawer');
+            if (drawer) drawer.classList.toggle('open');
+        }
+        window.toggleDriverDrawer = toggleDriverDrawer;
