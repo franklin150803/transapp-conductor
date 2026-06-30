@@ -488,6 +488,89 @@
             cursor: default;
         }
 
+        /* Parte 46: boton de Modo enfoque, mismo patron visual que los
+           demas botones del panel pero con su propio acento para no
+           confundirse con "Seguir vehiculo" (centra la camara) ni con
+           "Estoy esperando este bus" (avisa al conductor): este solo
+           atenua visualmente el resto del mapa. */
+        .focus-mode-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            border: 2px solid #a78bfa;
+            background: var(--surface);
+            color: #a78bfa;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .focus-mode-btn.active {
+            background: #a78bfa;
+            color: white;
+        }
+
+        /* Aviso flotante sobre el mapa: visible aunque el panel del
+           vehiculo este cerrado, porque el Modo enfoque sigue activo y
+           esta es la unica forma de notar que sigue prendido (y de
+           cancelarlo) mientras se explora otra tarjeta. */
+        .focus-mode-banner {
+            position: fixed;
+            left: 50%;
+            bottom: 100px;
+            transform: translateX(-50%) translateY(20px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(20, 20, 30, 0.92);
+            border: 1px solid #a78bfa;
+            border-radius: var(--radius-md);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            z-index: 850;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .focus-mode-banner.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .focus-mode-banner button {
+            border: 1px solid rgba(255,255,255,0.4);
+            background: transparent;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Parte 46: marcadores de vehiculos que NO son el bus enfocado, y
+           el bus enfocado mismo (para que resalte un poco mas que su
+           estado normal). Se aplican sobre .vehicle-marker-wrap, ya
+           generado por createVehicleIcon en map.js. */
+        .vehicle-marker-wrap.vura-dimmed {
+            opacity: 0.22;
+            filter: grayscale(0.6);
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .vehicle-marker-wrap.vura-waiting-target {
+            filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.7));
+        }
+
         /* Parte 26 (conductor): banner que aparece cuando hay uno o mas
            pasajeros esperando el bus, con icono pulsante para que se note. */
         .waiting-alert {
