@@ -22,11 +22,6 @@
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Parte 49: jsPDF + plugin de tablas, solo para el boton "Exportar
-         PDF" del historial admin. Liviano y sin cuenta/API key, igual que
-         las demas librerias de CDN que ya usa la app. -->
-    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 </head>
 <body>
 
@@ -37,40 +32,6 @@
         <div class="splash-logo" data-icon-key="bus" data-icon-size="64"></div>
         <h1 class="splash-title">Vura</h1>
         <p class="splash-status" id="splashStatus">Conectando...</p>
-    </div>
-
-    <!-- Parte 44: onboarding de bienvenida, solo la primera vez que se abre
-         la app en este dispositivo (controlado por localStorage). Se queda
-         por encima de todo (z-index alto) hasta que se toca "Comenzar";
-         lo que haya debajo (landing/auth/app) se sigue preparando con
-         normalidad detrás. -->
-    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
-        <div class="onboarding-slides" id="onboardingSlides">
-            <div class="onboarding-slide active" data-slide="0">
-                <div class="onboarding-icon">📍</div>
-                <h2>Encuentra tu bus en tiempo real</h2>
-                <p>Mira exactamente dónde está la unidad que esperas, sin adivinar ni preguntar.</p>
-            </div>
-            <div class="onboarding-slide" data-slide="1">
-                <div class="onboarding-icon">🚌</div>
-                <h2>Consulta el tiempo de llegada</h2>
-                <p>Vura calcula cuánto falta siguiendo la ruta real, no en línea recta.</p>
-            </div>
-            <div class="onboarding-slide" data-slide="2">
-                <div class="onboarding-icon">⭐</div>
-                <h2>Guarda tus rutas favoritas</h2>
-                <p>Empresas, paraderos y destinos frecuentes, listos con un solo toque.</p>
-            </div>
-        </div>
-        <div class="onboarding-dots" id="onboardingDots">
-            <span class="onboarding-dot active" data-dot="0"></span>
-            <span class="onboarding-dot" data-dot="1"></span>
-            <span class="onboarding-dot" data-dot="2"></span>
-        </div>
-        <div class="onboarding-actions">
-            <button class="onboarding-skip" onclick="finishOnboarding()">Omitir</button>
-            <button class="onboarding-next" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
-        </div>
     </div>
 
     <!-- Landing Page -->
@@ -281,19 +242,8 @@
     <div class="view active" id="view-passenger">
         <div id="passengerHomeScreen">
             <div class="ph-greeting">
-                <div class="ph-greeting-row">
-                    <div>
-                        <h2 id="phGreetingText">Hola 👋</h2>
-                        <p>¿A dónde vas hoy? <span class="ph-weather-chip" id="phWeatherChip"></span></p>
-                    </div>
-                    <button class="notif-bell-btn" id="a11yBtn" onclick="openAccessibilityPanel()" title="Accesibilidad" style="margin-right:8px;">
-                        🔠
-                    </button>
-                    <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotificationPanel()" title="Notificaciones">
-                        🔔
-                        <span class="notif-bell-badge" id="notifBellBadge" style="display:none;">0</span>
-                    </button>
-                </div>
+                <h2 id="phGreetingText">Hola 👋</h2>
+                <p>¿A dónde vas hoy? <span class="ph-weather-chip" id="phWeatherChip"></span></p>
             </div>
 
             <div class="guest-banner" id="guestBanner" style="display:none;">
@@ -306,7 +256,7 @@
                     <circle cx="11" cy="11" r="8"/>
                     <path d="m21 21-4.35-4.35"/>
                 </svg>
-                ¿A dónde vas? Busca tu destino o empresa
+                Buscar empresa de transporte
             </button>
 
             <div class="ph-stats-row">
@@ -341,7 +291,7 @@
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.35-4.35"/>
                     </svg>
-                    <input type="text" id="searchInput" placeholder="Universidad, mall, hospital, empresa..." oninput="filterCompanies()">
+                    <input type="text" id="searchInput" placeholder="Buscar empresa de transporte..." oninput="filterCompanies()">
                 </div>
             </div>
             <div class="company-list" id="companyList">
@@ -421,51 +371,6 @@
             <button class="btn btn-primary" id="incidentSubmitBtn" onclick="submitIncidentReport()">Enviar reporte</button>
         </div>
 
-        <!-- Parte 48: panel de accesibilidad (texto grande + alto contraste).
-             Mismo patron incident-panel que notificationPanel/stopsPanel. -->
-        <div class="incident-panel" id="accessibilityPanel">
-            <div class="vehicle-panel-handle"></div>
-            <div class="vehicle-panel-header">
-                <span class="vehicle-panel-title">Accesibilidad</span>
-                <button class="vehicle-panel-close" onclick="closeAccessibilityPanel()">×</button>
-            </div>
-            <div class="a11y-option-row">
-                <div>
-                    <div class="a11y-option-title">Texto grande</div>
-                    <div class="a11y-option-desc">Aumenta el tamaño de letra en toda la app.</div>
-                </div>
-                <label class="a11y-switch">
-                    <input type="checkbox" id="a11yLargeTextToggle" onchange="toggleA11yLargeText(this.checked)">
-                    <span class="a11y-switch-track"><span class="a11y-switch-thumb"></span></span>
-                </label>
-            </div>
-            <div class="a11y-option-row">
-                <div>
-                    <div class="a11y-option-title">Alto contraste</div>
-                    <div class="a11y-option-desc">Colores más fuertes, mejor para baja visión.</div>
-                </div>
-                <label class="a11y-switch">
-                    <input type="checkbox" id="a11yHighContrastToggle" onchange="toggleA11yHighContrast(this.checked)">
-                    <span class="a11y-switch-track"><span class="a11y-switch-thumb"></span></span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Parte 47: centro de notificaciones in-app. Mismo patron visual
-             que stopsPanel/incidentPanel (incident-panel + .show), asi se
-             integra solo con closeAnyOpenPanel() y el backdrop ya existentes. -->
-        <div class="incident-panel" id="notificationPanel">
-            <div class="vehicle-panel-handle"></div>
-            <div class="vehicle-panel-header">
-                <span class="vehicle-panel-title">Notificaciones</span>
-                <button class="vehicle-panel-close" onclick="closeNotificationPanel()">×</button>
-            </div>
-            <button class="notif-clear-btn" id="notifClearBtn" onclick="clearNotificationHistory()">Borrar todo</button>
-            <div id="notificationList"></div>
-        </div>
-
-        <div class="panel-backdrop" id="panelBackdrop" onclick="closeAnyOpenPanel()"></div>
-
         <div class="vehicle-panel" id="vehiclePanel">
             <div class="vehicle-panel-handle"></div>
             <div class="vehicle-panel-header">
@@ -496,7 +401,6 @@
                 <div class="vehicle-info-item">
                     <label>Tiempo estimado</label>
                     <value id="vpEta">-</value>
-                    <span class="eta-confidence" id="vpEtaConfidence"></span>
                 </div>
                 <div class="vehicle-info-item">
                     <label>Estado</label>
@@ -533,24 +437,10 @@
                     📤 Compartir
                 </button>
             </div>
-            <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()">
-                🎯 Modo enfoque
-            </button>
             <button class="wait-signal-btn" id="waitSignalBtn" onclick="signalWaiting()">
                 🙋 Estoy esperando este bus
             </button>
         </div>
-
-        <!-- Parte 46: aviso flotante de Modo enfoque. Vive fuera del panel
-             de vehiculo (a nivel del mapa) porque el Modo enfoque sigue
-             activo aunque el pasajero cierre el panel para revisar otra
-             tarjeta; este aviso es la unica forma de notar/cancelar el
-             modo en ese momento. -->
-        <div class="focus-mode-banner" id="focusModeBanner">
-            <span id="focusModeBannerText">🎯 Enfocando bus</span>
-            <button onclick="deactivateFocusMode()">Cancelar</button>
-        </div>
-    </div>
     </div>
 
     <!-- Driver View -->
@@ -591,144 +481,121 @@
                 </div>
             </div>
 
-            <!-- Parte 42: mapa del conductor a pantalla completa.
-                 El mapa ocupa toda la pantalla; los datos (velocidad, GPS,
-                 etc.) quedan en un drawer que el conductor abre/cierra con
-                 un toque, para no distraer la vista mientras maneja. -->
             <div class="driver-active" id="driverActive">
+                <!-- Parte 42: el mapa ahora ocupa toda la pantalla disponible
+                     de fondo; todo lo demas (GPS, ocupacion, vehiculos
+                     adyacentes, log) vive en un drawer deslizable encima.
+                     Mismos IDs que antes, solo cambia donde viven en el DOM,
+                     asi que driver.js no necesita ningun cambio. -->
+                <div class="driver-map-full">
+                    <div id="driverMap"></div>
+                </div>
 
-                <!-- Mapa a pantalla completa (base del layout) -->
-                <div class="driver-fullmap" id="driverMap"></div>
-
-                <!-- HUD flotante: los 3 datos clave visibles siempre,
-                     sin tener que abrir el drawer. Tamaño de fuente grande
-                     para leer de un vistazo desde el tablero. -->
-                <div class="driver-hud">
-                    <div class="driver-hud-speed" id="driverHudSpeed">0</div>
-                    <div class="driver-hud-unit">km/h</div>
-                    <div class="driver-hud-status" id="driverStatusBadge">
+                <div class="driver-floating-top">
+                    <div class="status-badge wait" id="driverStatusBadge">
                         <div class="status-dot"></div>
-                        <span id="driverStatusText">Iniciando GPS...</span>
+                        <span id="driverStatusText">Solicitando permiso de ubicación...</span>
+                    </div>
+
+                    <div class="waiting-alert" id="waitingAlert" style="display:none;">
+                        <span class="waiting-alert-icon">🙋</span>
+                        <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
                     </div>
                 </div>
 
-                <!-- Banner de pasajero esperando (flota sobre el mapa) -->
-                <div class="waiting-alert" id="waitingAlert" style="display:none;">
-                    <span class="waiting-alert-icon">🙋</span>
-                    <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
-                </div>
-
-                <!-- Botón para abrir/cerrar el drawer de datos -->
-                <button class="driver-drawer-toggle" id="driverDrawerToggle"
-                        onclick="toggleDriverDrawer()" aria-label="Ver datos del recorrido">
-                    <span id="driverDrawerToggleIcon">▲</span>
-                </button>
-
-                <!-- Drawer colapsable con todos los datos del recorrido -->
                 <div class="driver-drawer" id="driverDrawer">
-                    <div class="driver-drawer-handle"></div>
-
-                    <div class="driver-drawer-row">
-                        <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
-                        <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar sentido</button>
-                    </div>
-
-                    <div class="gps-info-grid">
-                        <div class="gps-info-item">
-                            <label>Velocidad</label>
-                            <value id="driverSpeed">0 km/h</value>
-                        </div>
-                        <div class="gps-info-item">
-                            <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
-                            <value id="driverAccuracy">—</value>
-                        </div>
-                        <div class="gps-info-item">
-                            <label>Estado</label>
-                            <value id="driverMoveStatus">Detenido</value>
-                        </div>
-                        <div class="gps-info-item">
-                            <label>Envíos</label>
-                            <value id="driverSent">0</value>
-                        </div>
-                        <div class="gps-info-item">
-                            <label>Latitud</label>
-                            <value id="driverLat">—</value>
-                        </div>
-                        <div class="gps-info-item">
-                            <label>Longitud</label>
-                            <value id="driverLng">—</value>
-                        </div>
-                    </div>
-
-                    <div class="adjacent-vehicles" id="adjacentVehicles">
-                        <div class="adjacent-vehicle-row">
-                            <span class="adjacent-label">🔼 Adelante</span>
-                            <span class="adjacent-value" id="adjacentAheadText">—</span>
-                        </div>
-                        <div class="adjacent-vehicle-row">
-                            <span class="adjacent-label">🔽 Atrás</span>
-                            <span class="adjacent-value" id="adjacentBehindText">—</span>
-                        </div>
-                    </div>
-
-                    <div class="occupancy-control">
-                        <p class="occupancy-control-label">¿Cómo va el bus?</p>
-                        <div class="occupancy-btn-row" id="occupancyBtnRow">
-                            <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
-                            <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
-                            <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
-                        </div>
-                    </div>
-
-                    <button class="sos-btn" id="sosBtn" onclick="openSosPanel()">
-                        🆘 Emergencia (SOS)
+                    <button class="driver-drawer-handle" id="driverDrawerHandle" onclick="toggleDriverDrawer()">
+                        <span class="driver-drawer-grip"></span>
                     </button>
 
-                    <button class="btn btn-danger" onclick="confirmFinishRecorrido()" style="margin-top:4px;">
-                        <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar recorrido
-                    </button>
+                    <!-- Resumen visible siempre, incluso con el drawer colapsado -->
+                    <div class="driver-drawer-summary">
+                        <div class="driver-drawer-summary-item">
+                            <span class="driver-drawer-summary-value" id="driverSpeedSummary">0 km/h</span>
+                            <span class="driver-drawer-summary-label">Velocidad</span>
+                        </div>
+                        <div class="driver-drawer-summary-divider"></div>
+                        <div class="driver-drawer-summary-item">
+                            <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
+                            <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar</button>
+                        </div>
+                        <div class="driver-drawer-summary-divider"></div>
+                        <div class="driver-drawer-summary-item">
+                            <span class="driver-drawer-summary-value" id="driverSentSummary">0</span>
+                            <span class="driver-drawer-summary-label">Envíos</span>
+                        </div>
+                    </div>
 
-                    <div class="log-console" id="logConsole">
-                        <div class="log-entry">Sistema listo. Esperando inicio...</div>
+                    <div class="driver-drawer-content">
+                        <div class="gps-ring">
+                            <span class="status-text">EN VIVO</span>
+                            <span class="status-icon"><span class="tab-icon-img" data-icon-key="mapPin" data-icon-size="28"></span></span>
+                            <span class="gps-text">GPS real del celular</span>
+                        </div>
+
+                        <div class="gps-info-grid">
+                            <div class="gps-info-item">
+                                <label>Latitud</label>
+                                <value id="driverLat">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Longitud</label>
+                                <value id="driverLng">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Velocidad</label>
+                                <value id="driverSpeed">0 km/h</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
+                                <value id="driverAccuracy">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Estado</label>
+                                <value id="driverMoveStatus">Detenido</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Envíos</label>
+                                <value id="driverSent">0</value>
+                            </div>
+                        </div>
+
+                        <div class="adjacent-vehicles" id="adjacentVehicles">
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔼 Adelante</span>
+                                <span class="adjacent-value" id="adjacentAheadText">—</span>
+                            </div>
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔽 Atrás</span>
+                                <span class="adjacent-value" id="adjacentBehindText">—</span>
+                            </div>
+                        </div>
+
+                        <div class="occupancy-control">
+                            <p class="occupancy-control-label">¿Cómo va el bus de pasajeros?</p>
+                            <div class="occupancy-btn-row" id="occupancyBtnRow">
+                                <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
+                                <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
+                                <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger" onclick="confirmFinishRecorrido()">
+                            <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar recorrido
+                        </button>
+
+                        <div class="log-console" id="logConsole">
+                            <div class="log-entry">Sistema listo. Esperando inicio...</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Parte 48: panel de SOS, mismo patron que incidentPanel del
-             pasajero (elegir tipo + enviar), pero escribe en
-             emergencias/{companyId}/{vehicleId} en vez de incidentes/, y
-             el admin lo escucha con una alerta sonora propia. -->
-        <div class="incident-panel" id="sosPanel">
-            <div class="vehicle-panel-handle"></div>
-            <div class="vehicle-panel-header">
-                <span class="vehicle-panel-title">🆘 Enviar emergencia</span>
-                <button class="vehicle-panel-close" onclick="closeSosPanel()">×</button>
-            </div>
-            <p class="incident-panel-hint">Esto avisa de inmediato a la empresa, con tu ubicación actual. Úsalo solo en una emergencia real.</p>
-            <div class="incident-type-grid" id="sosTypeGrid">
-                <button class="incident-type-btn" data-type="accidente" onclick="selectSosType('accidente')">🚨 Accidente</button>
-                <button class="incident-type-btn" data-type="robo" onclick="selectSosType('robo')">🚓 Robo / asalto</button>
-                <button class="incident-type-btn" data-type="averia" onclick="selectSosType('averia')">🔧 Avería</button>
-                <button class="incident-type-btn" data-type="otro" onclick="selectSosType('otro')">⚠️ Otra emergencia</button>
-            </div>
-            <button class="btn btn-danger" id="sosSubmitBtn" onclick="submitSos()">Enviar emergencia ahora</button>
-        </div>
-        <div class="panel-backdrop" id="driverPanelBackdrop" onclick="closeSosPanel()"></div>
     </div>
 
     <!-- Admin View -->
     <div class="view" id="view-admin">
         <div class="admin-container">
-            <!-- Parte 48: banner de emergencias SOS de conductores. Vive
-                 arriba de todo, antes incluso de las estadisticas, porque
-                 una emergencia activa siempre debe ser lo primero que ve
-                 el admin al entrar a este panel. -->
-            <div class="emergency-banner" id="emergencyBanner" style="display:none;">
-                <div class="emergency-banner-title">🆘 Emergencias activas</div>
-                <div id="emergencyList"></div>
-            </div>
-
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="statCompanies">0</div>
@@ -767,11 +634,6 @@
                 <div class="form-group">
                     <label>Horario de operación</label>
                     <input type="text" id="regCompanySchedule" placeholder="Ej: 5:00 AM - 10:00 PM">
-                </div>
-                <div class="form-group">
-                    <label>Lugares de paso (separados por coma)</label>
-                    <input type="text" id="regCompanyDestinos" placeholder="Ej: Universidad Nacional, Plaza Norte, Hospital Rebagliati">
-                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino, no solo el nombre de tu empresa.</p>
                 </div>
                 <button class="btn btn-primary" onclick="registerCompany()">
                     <span class="tab-icon-img" data-icon-key="shieldCheck" data-icon-size="18"></span> Registrar Empresa
@@ -816,12 +678,6 @@
                         <div class="stat-label">Km recorridos hoy</div>
                     </div>
                 </div>
-                <!-- Parte 49: exportar el historial completo (no solo los
-                     30 mas recientes que se muestran en pantalla). -->
-                <div class="history-export-row">
-                    <button class="history-export-btn" onclick="exportHistoryCsv()">⬇️ Exportar CSV</button>
-                    <button class="history-export-btn" onclick="exportHistoryPdf()">⬇️ Exportar PDF</button>
-                </div>
                 <div class="history-list" id="historyList"></div>
             </div>
         </div>
@@ -848,7 +704,6 @@
 
     <script type="module" src="firebase.js"></script>
     <script src="utils.js"></script>
-    <script src="accessibility.js"></script>
     <script src="notifications.js"></script>
     <script src="map.js"></script>
     <script src="passenger.js"></script>
@@ -890,33 +745,10 @@
             });
         }
 
-        // Parte 44: caché de lectura offline. Antes de que Firebase responda
-        // (o si no hay internet), mostramos lo último que se guardó la
-        // última vez que la app sí tuvo conexión — así la lista de empresas
-        // no aparece vacía en una zona sin señal, aunque los datos puedan
-        // estar desactualizados.
-        const COMPANIES_CACHE_KEY = 'vura_companies_cache';
-
-        function loadCachedCompanies() {
-            try {
-                const raw = localStorage.getItem(COMPANIES_CACHE_KEY);
-                if (!raw) return;
-                companies = JSON.parse(raw);
-                renderCompanyList();
-                renderPassengerHome();
-                showToast('Mostrando datos guardados. Conectando...', 'info');
-            } catch (e) { /* caché corrupta o inexistente, se ignora */ }
-        }
-
-        function cacheCompanies(data) {
-            try { localStorage.setItem(COMPANIES_CACHE_KEY, JSON.stringify(data)); } catch (e) {}
-        }
-
         function listenCompanies() {
             const companiesRef = window.fbRef(window.fbDb, 'empresas');
             window.fbOnValue(companiesRef, (snap) => {
                 companies = snap.val() || {};
-                cacheCompanies(companies);
                 renderCompanyList();
                 renderPassengerHome();
                 renderAdminVehicleList();
@@ -1026,14 +858,12 @@
         function init() {
             renderStaticIcons();
             updateOfflineBanner();
-            loadCachedCompanies();
             onFirebaseReady(() => {
                 seedIfEmpty();
                 listenAuthState();
                 setTimeout(() => {
                     listenCompanies();
                     listenLiveVehicles();
-                    listenForEmergencies();
                 }, 400);
             });
             setInterval(() => {
