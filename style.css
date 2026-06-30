@@ -442,6 +442,8 @@
             transition: all 0.2s ease;
         }
 
+        .follow-vehicle-btn:active { transform: scale(0.97); }
+
         .follow-vehicle-btn.active {
             background: var(--primary);
             color: white;
@@ -480,6 +482,8 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
+        .wait-signal-btn:active:not(:disabled) { transform: scale(0.97); }
 
         .wait-signal-btn.active,
         .wait-signal-btn:disabled {
@@ -1066,7 +1070,31 @@
             margin-bottom: 16px;
         }
 
-        .vehicle-info-item { background: var(--surface-2); padding: 12px; border-radius: var(--radius-md); }
+        .vehicle-panel.show .vehicle-info-item {
+            animation: panelContentSettle 0.35s ease backwards;
+        }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(1) { animation-delay: 0.05s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(2) { animation-delay: 0.08s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(3) { animation-delay: 0.11s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(4) { animation-delay: 0.14s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(5) { animation-delay: 0.17s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(6) { animation-delay: 0.2s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(7) { animation-delay: 0.23s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(8) { animation-delay: 0.26s; }
+        .vehicle-panel.show .vehicle-info-grid .vehicle-info-item:nth-child(9) { animation-delay: 0.29s; }
+
+        @keyframes panelContentSettle {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .vehicle-info-item {
+            background: var(--surface-2);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            transition: border-color 0.2s ease;
+        }
 
         .vehicle-info-item label {
             font-size: 0.7rem;
@@ -1781,6 +1809,7 @@
             justify-content: center;
             position: relative;
             z-index: 1;
+            filter: drop-shadow(0 3px 4px rgba(0,0,0,0.45));
         }
 
         .vehicle-marker-arrow {
