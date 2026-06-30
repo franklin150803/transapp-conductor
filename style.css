@@ -280,6 +280,91 @@
             margin-bottom: 18px;
         }
 
+        /* Parte 50: Radar Vura — boton secundario (distinto del CTA
+           principal en color, para no competir visualmente) que abre el
+           panel con los buses mas cercanos sin importar la empresa. */
+        .ph-radar-cta {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px 18px;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius-lg);
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 18px;
+        }
+
+        .ph-radar-cta:active { transform: scale(0.98); }
+
+        /* Filas de resultado dentro del panel de Radar Vura. */
+        .radar-result-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 4px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .radar-result-row:last-child { border-bottom: none; }
+
+        .radar-result-rank {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            background: var(--surface-2);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radar-result-body { flex: 1; min-width: 0; }
+
+        .radar-result-plate {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .radar-result-meta {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .radar-result-distance {
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .radar-result-distance-value {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .radar-result-distance-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
         .ph-stats-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
