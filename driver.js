@@ -156,11 +156,16 @@
 
             setTimeout(() => {
                 if (!driverMap) {
-                    driverMap = L.map('driverMap').setView([-12.04, -77.03], 13);
-                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                        maxZoom: 19,
-                        className: 'vura-map-tiles-driver'
+                    driverMap = L.map('driverMap', {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView([-12.04, -77.03], 14);
+                    // Parte 42: mismo motor vectorial que el mapa del pasajero,
+                    // pero usando vura-driver-style.json (sin building-3d) para
+                    // no gastar GPU/bateria extra con pantalla encendida todo
+                    // el recorrido.
+                    const glDriver = L.maplibreGL({
+                        style: 'vura-driver-style.json'
                     }).addTo(driverMap);
                 }
                 if (company && company.routePointsIda) {
@@ -436,6 +441,9 @@
             document.getElementById('driverLat').textContent = lat.toFixed(6);
             document.getElementById('driverLng').textContent = lng.toFixed(6);
             document.getElementById('driverSpeed').textContent = `${Math.round(speedKmh)} km/h`;
+            // Parte 42: HUD flotante — velocidad grande visible sin abrir el drawer
+            const hudSpeedEl = document.getElementById('driverHudSpeed');
+            if (hudSpeedEl) hudSpeedEl.textContent = Math.round(speedKmh);
 
             const accuracyEl = document.getElementById('driverAccuracy');
             accuracyEl.textContent = `±${acc} m`;
@@ -686,6 +694,24 @@
         window.toggleActiveSentido = toggleActiveSentido;
         window.stopDriverMode = stopDriverMode;
         window.setOccupancy = setOccupancy;
+
+        // ==================== DRAWER DEL CONDUCTOR (Parte 42) ====================
+        // El drawer empieza cerrado para no tapar el mapa al iniciar.
+        // Se abre con un toque en el botón flotante; se puede cerrar igual.
+        let driverDrawerOpen = false;
+
+        function toggleDriverDrawer() {
+            driverDrawerOpen = !driverDrawerOpen;
+            const drawer = document.getElementById('driverDrawer');
+            const icon = document.getElementById('driverDrawerToggleIcon');
+            if (drawer) drawer.classList.toggle('open', driverDrawerOpen);
+            if (icon) icon.textContent = driverDrawerOpen ? '▼' : '▲';
+            // Tras abrir/cerrar, el mapa subyacente necesita recalcular su
+            // viewport porque el drawer empuja el canvas.
+            if (driverMap) setTimeout(() => driverMap.invalidateSize(), 320);
+        }
+
+        window.toggleDriverDrawer = toggleDriverDrawer;
 
         // ==================== SWIPE-TO-START (Parte 33) ====================
         // Reemplaza el boton normal de "Iniciar recorrido" por un control de
