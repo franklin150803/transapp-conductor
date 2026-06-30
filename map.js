@@ -395,3 +395,38 @@
             }
             return distM / 1000;
         }
+
+        // ==================== CONFIANZA DEL ETA (Parte 47) ====================
+        // No es lo mismo "preciso" GPS (eso ya lo muestra gpsQuality, mide
+        // la señal del telefono) que "confiable" el TIEMPO ESTIMADO: el
+        // ETA puede tener buena señal GPS pero seguir siendo una mala
+        // estimacion si el dato es viejo o si el vehiculo esta detenido
+        // (en ese caso, estimateEtaMinutes usa un promedio de respaldo de
+        // 18 km/h en vez de la velocidad real, porque no hay velocidad
+        // real que usar). Combinamos 3 señales en un puntaje 0-5:
+        //   - que tan reciente es el ultimo dato GPS (mas peso, porque un
+        //     dato viejo invalida todo lo demas)
+        //   - precision GPS del telefono del conductor
+        //   - si el calculo uso velocidad real o el promedio de respaldo
+        function estimateEtaConfidence(live) {
+            if (!live || !live.timestamp) return null;
+
+            const secsAgo = (Date.now() - live.timestamp) / 1000;
+            const acc = live.accuracy;
+            const usingRealSpeed = !!(live.speed && live.speed > 3);
+
+            let score = 0;
+            if (secsAgo <= 15) score += 2;
+            else if (secsAgo <= 40) score += 1;
+
+            if (acc !== null && acc !== undefined) {
+                if (acc < 20) score += 2;
+                else if (acc < 100) score += 1;
+            }
+
+            if (usingRealSpeed) score += 1;
+
+            if (score >= 4) return { level: 'high', label: 'Preciso', dot: '🟢' };
+            if (score >= 2) return { level: 'medium', label: 'Aproximado', dot: '🟡' };
+            return { level: 'low', label: 'Poco confiable', dot: '🔴' };
+        }
