@@ -55,18 +55,53 @@
             });
         }
 
+        // Parte 45: buscador por destino. Antes solo comparaba el nombre de
+        // la empresa y el texto libre de "ruta". Ahora tambien busca dentro
+        // de "destinos" (los lugares de paso que cada empresa puede cargar
+        // desde el panel admin, ej: "Universidad Nacional", "Plaza Norte").
+        // Asi el pasajero puede escribir a donde quiere ir, no solo el
+        // nombre exacto de una empresa que quizas no conoce.
         function filterCompanies() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
             const ids = Object.keys(companies);
             const cards = document.querySelectorAll('.company-card');
             ids.forEach((companyId, idx) => {
-                if (cards[idx]) {
-                    const company = companies[companyId];
-                    const match = (company.name || '').toLowerCase().includes(query) ||
-                                  (company.route || '').toLowerCase().includes(query);
-                    cards[idx].style.display = match ? 'block' : 'none';
+                if (!cards[idx]) return;
+                const company = companies[companyId];
+                const destinos = company.destinos || [];
+
+                if (!query) {
+                    cards[idx].style.display = 'block';
+                    setMatchedDestinoHint(cards[idx], null);
+                    return;
                 }
+
+                const nameMatch = (company.name || '').toLowerCase().includes(query);
+                const routeMatch = (company.route || '').toLowerCase().includes(query);
+                const matchedDestino = destinos.find(d => d.toLowerCase().includes(query));
+
+                const match = nameMatch || routeMatch || !!matchedDestino;
+                cards[idx].style.display = match ? 'block' : 'none';
+
+                // Si lo que hizo coincidir la tarjeta fue un destino (no el
+                // nombre de la empresa), se lo mostramos al pasajero para
+                // que entienda por que aparecio ese resultado.
+                setMatchedDestinoHint(cards[idx], (match && !nameMatch && matchedDestino) ? matchedDestino : null);
             });
+        }
+
+        function setMatchedDestinoHint(card, destino) {
+            let hint = card.querySelector('.company-destino-match');
+            if (destino) {
+                if (!hint) {
+                    hint = document.createElement('div');
+                    hint.className = 'company-destino-match';
+                    card.appendChild(hint);
+                }
+                hint.textContent = `📍 Pasa por: ${destino}`;
+            } else if (hint) {
+                hint.remove();
+            }
         }
 
         function showVehiclePanel(companyId, vehicleId) {
@@ -311,6 +346,11 @@
                     <div class="company-route">
                         <span>${escapeHtml(company.route) || ''}</span>
                     </div>
+                    ${(company.destinos && company.destinos.length) ? `
+                    <div class="company-destinos-row">
+                        ${company.destinos.slice(0, 4).map(d => `<span class="company-destino-chip">📍 ${escapeHtml(d)}</span>`).join('')}
+                        ${company.destinos.length > 4 ? `<span class="company-destino-chip">+${company.destinos.length - 4}</span>` : ''}
+                    </div>` : ''}
                 `;
                 const starBtn = card.querySelector('.fav-star-btn');
                 starBtn.onclick = (e) => {
