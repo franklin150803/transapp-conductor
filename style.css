@@ -492,6 +492,86 @@
             cursor: default;
         }
 
+        /* Parte 46: modo enfoque ("Estoy esperando este bus" descrito en
+           varias auditorias) — atenua todos los demas vehiculos del mapa
+           y deja resaltado solo el que se esta esperando. El motor que
+           aplica el atenuado real ya vive en map.js (setWaitingTarget,
+           applyDimClass); aqui solo damos estilo al boton del panel y al
+           aviso flotante que controla updateFocusModeUi() en passenger.js. */
+        .focus-mode-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            border: 2px solid var(--accent);
+            background: var(--surface);
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .focus-mode-btn:active { transform: scale(0.97); }
+
+        .focus-mode-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Aviso flotante sobre el mapa, visible incluso con el panel
+           cerrado — permite cancelar el modo enfoque sin tener que volver
+           a abrir la tarjeta del vehiculo. */
+        .focus-mode-banner {
+            display: none;
+            position: absolute;
+            top: 16px;
+            left: 12px;
+            right: 12px;
+            z-index: 500;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(99, 102, 241, 0.16);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            backdrop-filter: blur(6px);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .focus-mode-banner.show { display: flex; }
+
+        .focus-mode-banner button {
+            flex-shrink: 0;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        /* Marcador atenuado (no es el bus que se esta esperando) y
+           marcador resaltado (el que SI se esta esperando), aplicados por
+           map.js via applyDimClass() sobre .vehicle-marker-wrap. */
+        .vehicle-marker-wrap.vura-dimmed {
+            opacity: 0.22;
+            filter: grayscale(0.6);
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .vehicle-marker-wrap.vura-waiting-target {
+            transition: filter 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.9));
+        }
+
         /* Parte 26 (conductor): banner que aparece cuando hay uno o mas
            pasajeros esperando el bus, con icono pulsante para que se note. */
         .waiting-alert {
