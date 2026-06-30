@@ -14,12 +14,6 @@
             --danger: #ef4444;
             --warning: #f59e0b;
 
-            /* Parte 29: paleta oscura real (no solo el mapa). El fondo va
-               casi a negro puro (amigable con pantallas AMOLED, ahorra
-               bateria en uso prolongado del conductor), y cada "superficie"
-               siguiente es un poco mas clara que la anterior para que las
-               tarjetas se distingan del fondo sin depender de sombras
-               (que casi no se ven sobre un fondo ya oscuro). */
             --bg: #0a0e16;
             --surface: #131a26;
             --surface-2: #1c2434;
@@ -32,26 +26,17 @@
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
-            /* Parte 30: colores propios de Vura para las rutas y los
-               vehiculos en el mapa. Mantenemos el mismo significado que ya
-               usa toda la app (azul = ida, rojo = retorno); solo cambian a
-               versiones mas vivas ("neon") para que resalten sobre el mapa
-               oscuro y se vean con resplandor. */
             --ida-color: #22d3ee;
             --retorno-color: #ff5252;
 
-            /* Escala de radios de borde: usar siempre uno de estos, nunca
-               un valor suelto, para que toda la app se sienta consistente. */
-            --radius-sm: 8px;   /* chips, badges pequeños */
-            --radius-md: 12px;  /* inputs, botones, items de lista */
-            --radius-lg: 16px;  /* tarjetas, paneles */
-            --radius-xl: 24px;  /* hojas/paneles que cubren gran parte de la pantalla */
-            --radius-full: 50%; /* circulos (avatares, dots, marcadores) */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 50%;
 
-            /* Parte 31: alto de la barra de navegación inferior fija. */
             --bottom-nav-h: 58px;
 
-            /* Escala de espaciados: multiplos de 4px. */
             --space-1: 4px;
             --space-2: 8px;
             --space-3: 12px;
@@ -91,11 +76,6 @@
             margin-top: 4px;
         }
 
-        /* Parte 31: barra de navegación inferior (antes estaba arriba,
-           pegada al header). El 75% de las interacciones en movil se hacen
-           con el pulgar sosteniendo el celular con una mano, asi que mover
-           el selector de rol (Pasajero/Conductor/Admin) al fondo lo deja
-           justo en esa zona de alcance comodo. */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -215,26 +195,18 @@
             overflow-y: auto;
         }
 
-        /* Parte 31: pantalla de inicio del pasajero (dashboard antes de
-           entrar a la lista/mapa). Saludo + accion principal + stats +
-           favoritos rapidos, todo con datos que ya tenemos en memoria
-           (companies/liveVehicles/favoriteCompanyIds), sin pedir nada
-           nuevo a Firebase. */
         #passengerHomeScreen { padding: 20px 16px; }
 
         .ph-greeting { margin-bottom: 18px; }
         .ph-greeting h2 { font-size: 1.4rem; font-weight: 800; color: var(--text); }
         .ph-greeting p { font-size: 0.88rem; color: var(--text-secondary); margin-top: 2px; }
 
-        /* Parte 38: clima de Lima (Open-Meteo, gratis, sin API key). */
         .ph-weather-chip {
             display: inline-block;
             font-weight: 700;
             color: var(--text);
         }
 
-        /* Parte 34: banner que invita a crear cuenta cuando se navega en
-           modo invitado (sesion anonima de Firebase). */
         .guest-banner {
             display: flex;
             align-items: center;
@@ -355,11 +327,6 @@
             padding: 14px 16px 0;
         }
 
-        /* Parte 32: skeleton loader. Mientras companies todavia no llega
-           de Firebase, mostramos estas "cajas" parpadeantes con la forma
-           aproximada de una tarjeta de empresa, en vez de una lista vacia
-           o un spinner generico. renderCompanyList() las reemplaza apenas
-           llegan los datos reales. */
         .company-card-skeleton {
             height: 92px;
             border-radius: var(--radius-lg);
@@ -447,7 +414,6 @@
             color: white;
         }
 
-        /* Parte 35: compartir viaje (Web Share API, sin API externa). */
         .share-trip-btn {
             flex: 1;
             padding: 12px;
@@ -464,8 +430,6 @@
 
         .share-trip-btn:active { transform: scale(0.97); }
 
-        /* Parte 26 (pasajero): boton para avisar al conductor que estoy
-           esperando su bus en la parada. */
         .wait-signal-btn {
             width: 100%;
             margin-top: 10px;
@@ -488,8 +452,6 @@
             cursor: default;
         }
 
-        /* Parte 26 (conductor): banner que aparece cuando hay uno o mas
-           pasajeros esperando el bus, con icono pulsante para que se note. */
         .waiting-alert {
             display: flex;
             align-items: center;
@@ -509,8 +471,6 @@
             animation: pulse 1.2s ease-in-out infinite;
         }
 
-        /* Parte 27 (conductor): tarjeta con el vehiculo de la misma empresa
-           que va adelante y el que va atras en la ruta. */
         .adjacent-vehicles {
             display: flex;
             flex-direction: column;
@@ -541,9 +501,6 @@
             text-align: right;
         }
 
-        /* Parte 37: indicador de ocupación, reportado a mano por el
-           conductor (sin sensores, lo mas simple y confiable que se puede
-           hacer ahora). */
         .occupancy-control { margin-top: 14px; }
 
         .occupancy-control-label {
@@ -576,8 +533,6 @@
         .occupancy-btn.active[data-level="medio"] { border-color: var(--warning); background: rgba(245, 158, 11, 0.12); color: var(--warning); }
         .occupancy-btn.active[data-level="lleno"] { border-color: var(--danger); background: rgba(239, 68, 68, 0.12); color: var(--danger); }
 
-        /* Parte 28 (pasajero): boton flotante sobre el mapa para abrir el
-           panel de reporte de incidentes. */
         .report-incident-fab {
             position: absolute;
             bottom: 16px;
@@ -599,8 +554,6 @@
 
         .report-incident-fab:active { transform: scale(0.92); }
 
-        /* Parte 36: paraderos favoritos. El FAB de incidentes ya estaba en
-           esa esquina, asi que este va justo arriba para no superponerse. */
         .my-stops-fab {
             position: absolute;
             bottom: 72px;
@@ -655,8 +608,6 @@
 
         .stop-marker-icon { font-size: 22px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); }
 
-        /* Panel deslizable para elegir tipo de incidente y enviarlo,
-           mismo patron visual que vehicle-panel. */
         .incident-panel {
             position: fixed;
             bottom: 0;
@@ -707,8 +658,6 @@
             color: var(--warning);
         }
 
-        /* Lista de incidentes activos reportados para la empresa que el
-           pasajero esta viendo, visible arriba del mapa. */
         .incident-banner {
             display: flex;
             flex-direction: column;
@@ -961,53 +910,24 @@
 
         #map { width: 100%; height: 100%; }
 
-        /* Parte 30 (ajuste): los tiles vienen de OpenStreetMap en su
-           version estandar (con todo el detalle de calles, nombres y
-           referencias, no la version minimalista de antes). Este filtro
-           es lo que los convierte en el mapa oscuro propio de Vura.
-
-           La base es la tecnica conocida de invert(100%) + hue-rotate(180deg):
-           invertir los colores oscurece el fondo claro y vuelve blanco el
-           texto negro de las calles (por eso los nombres se siguen leyendo
-           perfecto), y el hue-rotate de vuelta corrige el tono para que el
-           agua/parques no queden con colores "invertidos" raros. Usamos
-           190deg en vez de 180deg a proposito: ese pequeño extra empuja el
-           agua y los acentos hacia el mismo cian que ya usamos en rutas y
-           marcadores, para que el mapa se sienta hecho a medida para Vura
-           y no un mapa oscuro generico. */
-        /* Parte 38: este filtro era para los tiles raster antiguos (PNG +
-           invert/hue-rotate). Con el mapa vectorial (MapLibre GL) el color
-           ya viene definido directamente en vura-map-style.json, asi que
-           este filtro queda desactivado. Se deja documentado por si el
-           mapa del conductor (driver.js) sigue en modo raster temporalmente. */
         .vura-map-tiles {
             filter: none;
         }
 
-        /* Parte 38: el mapa del conductor migra a MapLibre en la Parte 42
-           (junto al rediseno a pantalla completa); hasta entonces conserva
-           el filtro oscuro anterior con su propia clase, para no mezclarlo
-           con el cambio del mapa del pasajero. */
         .vura-map-tiles-driver {
-            filter: invert(1) hue-rotate(190deg) brightness(0.85) contrast(1.12) saturate(0.85);
+            filter: none; /* Migrado a vectorial */
         }
 
         .leaflet-container {
             background: var(--bg);
         }
 
-        /* Parte 30: resplandor "neon" para las rutas dibujadas sobre el
-           mapa oscuro. Se aplica via la opcion className de Leaflet sobre
-           el path SVG real, asi que no hace falta duplicar ninguna linea:
-           es el mismo trazo de siempre, solo con un filtro de sombra. La
-           ruta no seleccionada ya viene con menor opacity desde JS, lo que
-           atenua el resplandor automaticamente sin codigo adicional. */
         .route-line-ida {
-            filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.85)) drop-shadow(0 0 9px rgba(34, 211, 238, 0.45));
+            filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.9)) drop-shadow(0 0 12px rgba(34, 211, 238, 0.5));
         }
 
         .route-line-retorno {
-            filter: drop-shadow(0 0 4px rgba(255, 82, 82, 0.85)) drop-shadow(0 0 9px rgba(255, 82, 82, 0.45));
+            filter: drop-shadow(0 0 6px rgba(255, 82, 82, 0.9)) drop-shadow(0 0 12px rgba(255, 82, 82, 0.5));
         }
 
         .vehicle-panel {
@@ -1203,8 +1123,6 @@
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary:disabled { opacity: 0.6; transform: none; }
 
-        /* Parte 33: control de "deslizar para iniciar", reemplaza el boton
-           normal de Iniciar recorrido. */
         .swipe-slider {
             position: relative;
             width: 100%;
@@ -1382,12 +1300,6 @@
             margin-left: 2px;
         }
 
-        /* Anillo que se "vacia" conforme pasa el tiempo desde la ultima
-           actualizacion del vehiculo. Se controla con la variable CSS
-           --freshness (0 a 1) que actualiza JS cada segundo. Cuando llega
-           a 0 (datos viejos), el vehiculo deberia mostrarse como offline
-           de todas formas, asi que esto es principalmente para el rango
-           "recien actualizado" -> "empezando a envejecer".  */
         .freshness-ring {
             display: inline-block;
             width: 10px;
@@ -1461,9 +1373,6 @@
 
         .stat-card .stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; font-weight: 600; }
 
-        /* Parte 40: variante compacta para el mini-panel de estadísticas
-           dentro de Historial de Recorridos (cards mas chicas, ya estan
-           dentro de un admin-panel con menos espacio disponible). */
         .stats-grid-sm { margin-bottom: 16px; }
         .stats-grid-sm .stat-card { padding: 10px 6px; }
         .stats-grid-sm .stat-value { font-size: 1.3rem; }
@@ -1521,567 +1430,130 @@
             gap: 12px;
             font-size: 0.75rem;
             color: var(--text-secondary);
-            flex-wrap: wrap;
         }
 
-        .vehicle-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px;
-            background: var(--surface-2);
-            border-radius: var(--radius-md);
-            margin-bottom: 10px;
-        }
+        /* =========================================
+           PARTE 42: CONDUCTOR PANTALLA COMPLETA
+           ========================================= */
 
-        .vehicle-item-info { display: flex; align-items: center; gap: 12px; }
-
-        .vehicle-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .vehicle-item-name { font-weight: 600; font-size: 0.9rem; }
-        .vehicle-item-plate { font-size: 0.75rem; color: var(--text-muted); }
-
-        .vehicle-item-status {
-            padding: 6px 12px;
-            border-radius: var(--radius-xl);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .vehicle-item-status.online { background: rgba(34, 197, 94, 0.1); color: var(--success); }
-        .vehicle-item-status.offline { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 9999;
-            box-shadow: var(--shadow-xl);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 90%;
-        }
-
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-        .toast-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .toast-icon.success { background: rgba(34, 197, 94, 0.1); }
-        .toast-icon.info { background: rgba(99, 102, 241, 0.1); }
-        .toast-icon.error { background: rgba(239, 68, 68, 0.1); }
-
-        .toast-message { font-size: 0.9rem; color: var(--text); font-weight: 500; }
-
-        .vehicle-marker { background: none; border: none; }
-
-        .vehicle-marker-wrap {
+        .driver-active {
+            position: relative;
+            height: calc(100vh - var(--bottom-nav-h));
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 2px;
+            overflow: hidden; 
+            background: var(--bg);
         }
 
-        .vehicle-marker-label {
-            background: #1a1a1a;
-            border: 1.5px solid;
-            border-radius: var(--radius-sm);
-            padding: 3px 8px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'SF Mono', 'Consolas', monospace;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            position: relative;
-        }
-
-        .vehicle-marker-label::after {
-            content: '';
+        .driver-fullscreen-map {
             position: absolute;
-            bottom: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px 5px 0 5px;
-            border-style: solid;
-            border-color: #1a1a1a transparent transparent transparent;
-        }
-
-        .vehicle-marker-dot-wrap {
-            position: relative;
-            width: 22px;
-            height: 22px;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Anillo de "radar" que se expande y se desvanece detras del punto
-           del vehiculo, para transmitir la sensacion de tiempo real. Solo
-           corre mientras el vehiculo esta en movimiento; uno detenido no
-           necesita la animacion. */
-        .vehicle-marker-radar {
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius-full);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .vehicle-marker-wrap.moving .vehicle-marker-radar {
-            animation: radarPulse 1.8s ease-out infinite;
-        }
-
-        @keyframes radarPulse {
-            0% { transform: scale(1); opacity: 0.6; }
-            100% { transform: scale(3.4); opacity: 0; }
-        }
-
-        .vehicle-marker-dot {
-            width: 22px;
-            height: 22px;
-            border-radius: var(--radius-full);
-            border: 2.5px solid white;
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             z-index: 1;
         }
 
-        .vehicle-marker-arrow {
-            color: white;
-            font-size: 11px;
-            line-height: 1;
-            transition: transform 0.4s ease, opacity 0.3s ease;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        #driverMap { 
+            width: 100%; 
+            height: 100%; 
         }
+
+        .driver-finish-fab {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            padding: 14px 28px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+            border: none;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .driver-drawer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-radius: 24px 24px 0 0;
+            z-index: 20;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(calc(100% - 140px)); 
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .driver-drawer.open {
+            transform: translateY(0);
+        }
+
+        .driver-drawer-handle {
+            width: 40px;
+            height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            margin: 12px auto 8px;
+            cursor: pointer;
+        }
+
+        .driver-drawer-content {
+            padding: 0 20px 30px;
+            overflow-y: auto;
+        }
+
+        .driver-drawer .status-badge { margin-bottom: 12px; font-size: 0.85rem; padding: 10px 12px; }
+        .driver-drawer .gps-info-grid { padding: 14px; gap: 12px; box-shadow: none; background: var(--surface-2); }
+        .driver-drawer .adjacent-vehicles { margin-top: 10px; padding: 10px; }
+        .driver-drawer .occupancy-control { margin-top: 10px; }
+        .driver-drawer .log-console { margin-top: 10px; max-height: 100px; }
+
+        .driver-active .gps-ring, .driver-active .btn-danger:not(.driver-finish-fab) {
+            display: none !important; 
+        }
+        .driver-active .map-preview { display: none !important; }
+
+
+        /* =========================================
+           PARTE 43: POPUPS Y ANIMACIONES PREMIUM
+           ========================================= */
 
         .leaflet-popup-content-wrapper {
-            background: var(--surface) !important;
-            color: var(--text) !important;
-            border-radius: var(--radius-lg) !important;
-            box-shadow: var(--shadow-xl) !important;
-        }
-
-        .leaflet-popup-tip { background: var(--surface) !important; }
-
-        .leaflet-popup-content {
-            margin: 12px 16px !important;
-            font-family: 'Inter', sans-serif !important;
-        }
-
-        .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
-        .popup-info { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px; }
-
-        .popup-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            padding: 4px 10px;
-            border-radius: var(--radius-xl);
-            font-size: 0.7rem;
-            color: var(--success);
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        .leaflet-control-zoom a {
-            background: var(--surface) !important;
-            color: var(--text) !important;
-            border-color: var(--border) !important;
-        }
-
-        .leaflet-control-attribution {
-            background: rgba(10, 14, 22, 0.75) !important;
-            color: var(--text-secondary) !important;
-            font-size: 0.65rem !important;
-        }
-
-        .leaflet-control-attribution a { color: var(--text-secondary) !important; }
-
-        .install-banner {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            background: rgba(255,255,255,0.15);
-            border-radius: var(--radius-md);
-            padding: 10px 14px;
-            margin-top: 10px;
-        }
-
-        .install-banner.show { display: flex; }
-
-        .install-banner span { color: white; font-size: 0.78rem; font-weight: 500; text-align: left; }
-
-        .install-banner button {
-            background: white;
-            color: var(--primary-dark);
-            border: none;
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            font-weight: 700;
-            font-size: 0.78rem;
-            white-space: nowrap;
-        }
-
-        .offline-banner {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: var(--danger);
-            color: white;
-            padding: 8px 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .offline-banner.show { display: flex; }
-
-        @media (min-width: 768px) {
-            .app-header h1 { font-size: 1.5rem; }
-            .map-wrapper { height: calc(100vh - 306px - var(--bottom-nav-h)); }
-            .vehicle-panel { max-width: 500px; left: 50%; transform: translateX(-50%) translateY(100%); }
-            .vehicle-panel.show { transform: translateX(-50%) translateY(0); }
-            .incident-panel { max-width: 500px; left: 50%; transform: translateX(-50%) translateY(100%); }
-            .incident-panel.show { transform: translateX(-50%) translateY(0); }
-            .stats-grid { grid-template-columns: repeat(3, 1fr); }
-            .form-row { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .form-row { grid-template-columns: 1fr; }
-            .gps-info-grid { grid-template-columns: 1fr 1fr; }
-            .vehicle-info-grid { grid-template-columns: 1fr; }
-        }
-        .splash-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
-            z-index: 3000;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-        }
-
-        .splash-screen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        .splash-logo {
-            animation: splashPulse 1.6s ease-in-out infinite;
-            filter: brightness(0) invert(1); /* icono en blanco sobre el fondo de color */
-        }
-
-        @keyframes splashPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.08); opacity: 0.85; }
-        }
-
-        .splash-title {
-            color: white;
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .splash-status {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.85rem;
-        }
-
-        .landing-screen {
-            background: var(--bg);
-            min-height: 100vh;
-            overflow-y: auto;
-        }
-
-        .landing-hero {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
-            padding: 48px 24px 40px;
-            text-align: center;
-            color: white;
-        }
-
-        .landing-logo { font-size: 3rem; margin-bottom: 8px; }
-        .landing-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
-        .landing-subtitle { font-size: 1rem; color: rgba(255,255,255,0.9); margin-top: 6px; }
-
-        .landing-beta-tag {
-            display: inline-block;
-            margin-top: 18px;
-            background: rgba(255,255,255,0.18);
-            padding: 8px 16px;
-            border-radius: var(--radius-xl);
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
-        .landing-section {
-            padding: 36px 20px;
-            max-width: 720px;
-            margin: 0 auto;
-        }
-
-        .landing-section-alt { background: var(--surface-2); }
-
-        .landing-section-title {
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: 800;
+            background: var(--surface);
             color: var(--text);
-            margin-bottom: 24px;
-        }
-
-        .landing-steps { display: flex; flex-direction: column; gap: 18px; }
-
-        .landing-step {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            box-shadow: var(--shadow);
-        }
-
-        .landing-step-icon { font-size: 1.8rem; flex-shrink: 0; }
-        .landing-step-text strong { display: block; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
-        .landing-step-text p { font-size: 0.82rem; color: var(--text-secondary); }
-
-        .landing-advantages {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .landing-adv-card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            padding: 18px 14px;
-            text-align: center;
-            box-shadow: var(--shadow);
-        }
-
-        .landing-adv-icon { font-size: 1.8rem; display: block; margin-bottom: 8px; }
-        .landing-adv-card strong { display: block; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
-        .landing-adv-card p { font-size: 0.75rem; color: var(--text-secondary); }
-
-        .landing-company-pitch {
-            text-align: center;
-            font-size: 0.92rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            max-width: 520px;
-            margin: 0 auto;
-        }
-
-        .landing-cta {
-            padding: 32px 20px 48px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            max-width: 420px;
-            margin: 0 auto;
-        }
-
-        .landing-cta-btn { font-size: 1.05rem; }
-
-        .landing-login-link {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            font-family: inherit;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-
-        .landing-guest-link {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            font-family: inherit;
-            cursor: pointer;
-            margin-top: 4px;
-        }
-
-        @media (max-width: 480px) {
-            .landing-advantages { grid-template-columns: 1fr 1fr; }
-        }
-
-        .auth-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 2000;
-            overflow-y: auto;
-        }
-
-        .auth-card {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: 32px 24px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: var(--shadow-xl);
-            margin: auto;
-        }
-
-        .auth-logo { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
-        .auth-title { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--text); }
-        .auth-subtitle { text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; }
-
-        .auth-tabs {
-            display: flex;
-            background: var(--surface-2);
-            border-radius: var(--radius-md);
-            padding: 4px;
-            margin-bottom: 24px;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            border-radius: var(--radius-md);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .auth-tab.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow); }
-
-        .auth-form { display: flex; flex-direction: column; }
-
-        .auth-error {
-            color: var(--danger);
-            font-size: 0.8rem;
-            text-align: center;
-            margin-top: 10px;
-            min-height: 1em;
-        }
-
-        .auth-note {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 12px;
-            line-height: 1.4;
-        }
-
-        .auth-beta-note {
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 20px;
-        }
-
-        .auth-role-prompt {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-
-        .role-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .role-choice-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 24px 12px;
-            border: 2px solid var(--border);
-            background: var(--surface-2);
-            border-radius: var(--radius-lg);
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text);
-            transition: all 0.2s ease;
-        }
-
-        .role-choice-btn:active { transform: scale(0.97); border-color: var(--primary); }
-        .role-choice-icon { font-size: 2rem; }
-
-        .auth-back-link {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            font-family: inherit;
-            text-align: left;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
             padding: 0;
-            margin-bottom: 16px;
-            cursor: pointer;
         }
-
-        .app-shell {
-            min-height: 100vh;
-            padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        .leaflet-popup-content {
+            margin: 16px;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
         }
-
-        .header-top-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .leaflet-popup-tip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: none;
         }
+        .popup-title { font-weight: 800; font-size: 1.05rem; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .popup-info { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px; }
+        .popup-badge { margin-top: 8px; font-size: 0.75rem; color: var(--success); font-weight: 700; }
 
-        .logout-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: var(--radius-sm);
-            font-size: 1rem;
-            cursor: pointer;
+        .vehicle-marker {
+            transition: transform 0.3s ease-out; 
+        }
+        .vehicle-marker-dot {
+            transition: box-shadow 0.3s ease;
         }
