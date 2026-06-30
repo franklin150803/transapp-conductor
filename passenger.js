@@ -920,12 +920,120 @@
             if (backdrop) backdrop.classList.toggle('show', show);
         }
 
+        // ==================== RADAR VURA (Parte 50) ====================
+        // Los 5 buses en linea mas cercanos a la ubicacion del pasajero,
+        // sin importar la empresa. liveVehicles ya trae TODOS los vehiculos
+        // de TODAS las empresas (listenLiveVehicles escucha el nodo
+        // completo 'vehiculos_live'), asi que no hace falta pedir nada
+        // adicional a Firebase para esto — solo geolocalizar al pasajero
+        // una sola vez (no watchPosition, para no gastar bateria de mas) y
+        // comparar distancias con haversine() (ya definida en utils.js).
+        let radarWatchActive = false;
+
+        function openRadarPanel() {
+            document.getElementById('radarPanel').classList.add('show');
+            setPanelBackdrop(true);
+            locateAndRunRadar();
+        }
+
+        function closeRadarPanel() {
+            document.getElementById('radarPanel').classList.remove('show');
+            setPanelBackdrop(false);
+            radarWatchActive = false;
+        }
+
+        function locateAndRunRadar() {
+            const listEl = document.getElementById('radarList');
+            if (!listEl) return;
+            if (!navigator.geolocation) {
+                listEl.innerHTML = '<p class="fleet-empty">Tu navegador no permite ubicarte automáticamente.</p>';
+                return;
+            }
+            listEl.innerHTML = '<p class="fleet-empty">Buscando tu ubicación...</p>';
+            radarWatchActive = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    if (!radarWatchActive) return; // el panel se cerró mientras esperábamos el GPS
+                    renderRadarResults(pos.coords.latitude, pos.coords.longitude);
+                },
+                (err) => {
+                    listEl.innerHTML = '<p class="fleet-empty">No se pudo obtener tu ubicación. Revisa el permiso de GPS y vuelve a intentar.</p>';
+                    console.warn('Error de geolocalización en Radar Vura:', err);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+            );
+        }
+
+        function renderRadarResults(userLat, userLng) {
+            const listEl = document.getElementById('radarList');
+            if (!listEl) return;
+
+            const results = [];
+            Object.keys(liveVehicles).forEach(companyId => {
+                const company = companies[companyId];
+                if (!company) return;
+                const companyLive = liveVehicles[companyId] || {};
+                Object.keys(companyLive).forEach(vehicleId => {
+                    const live = companyLive[vehicleId];
+                    if (!isOnline(live)) return;
+                    const distM = haversine(userLat, userLng, live.lat, live.lng);
+                    const vehicle = (company.vehicles || {})[vehicleId] || {};
+                    results.push({ companyId, vehicleId, company, vehicle, live, distM });
+                });
+            });
+
+            if (!results.length) {
+                listEl.innerHTML = '<p class="fleet-empty">No hay buses en línea cerca de ti en este momento.</p>';
+                return;
+            }
+
+            results.sort((a, b) => a.distM - b.distM);
+            const top5 = results.slice(0, 5);
+
+            listEl.innerHTML = top5.map((r, i) => {
+                const distLabel = r.distM < 1000
+                    ? `${Math.round(r.distM)} m`
+                    : `${(r.distM / 1000).toFixed(1)} km`;
+                const plate = r.vehicle.plate || r.vehicleId;
+                const moving = (r.live.speed || 0) >= 3;
+                const speedTxt = moving ? `${Math.round(r.live.speed || 0)} km/h` : 'Detenido';
+                return `
+                    <div class="radar-result-row" onclick="goToRadarResult('${r.companyId}','${r.vehicleId}')">
+                        <div class="radar-result-rank">${i + 1}</div>
+                        <div class="radar-result-body">
+                            <div class="radar-result-plate">${escapeHtml(plate)} · ${escapeHtml(r.company.name)}</div>
+                            <div class="radar-result-meta">${speedTxt} · actualizado ${formatTimeAgo(r.live.timestamp)}</div>
+                        </div>
+                        <div class="radar-result-distance">
+                            <div class="radar-result-distance-value">${distLabel}</div>
+                            <div class="radar-result-distance-label">distancia</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Al tocar un resultado del radar: cierra el panel, entra a la
+        // empresa correspondiente (aunque el pasajero nunca la haya
+        // explorado antes) y abre el panel de detalle de ese vehiculo —
+        // mismo patron que ya usa el enlace compartido por WhatsApp.
+        function goToRadarResult(companyId, vehicleId) {
+            closeRadarPanel();
+            selectCompany(companyId);
+            setTimeout(() => showVehiclePanel(companyId, vehicleId), 700);
+        }
+
+        window.openRadarPanel = openRadarPanel;
+        window.closeRadarPanel = closeRadarPanel;
+        window.goToRadarResult = goToRadarResult;
+
         function closeAnyOpenPanel() {
             if (document.getElementById('vehiclePanel').classList.contains('show')) closeVehiclePanel();
             if (document.getElementById('incidentPanel').classList.contains('show')) closeIncidentPanel();
             if (document.getElementById('stopsPanel').classList.contains('show')) closeStopsPanel();
             if (document.getElementById('notificationPanel').classList.contains('show')) closeNotificationPanel();
             if (document.getElementById('accessibilityPanel').classList.contains('show')) closeAccessibilityPanel();
+            if (document.getElementById('radarPanel').classList.contains('show')) closeRadarPanel();
         }
 
         window.closeAnyOpenPanel = closeAnyOpenPanel;
