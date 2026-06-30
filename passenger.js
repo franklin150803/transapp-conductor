@@ -28,6 +28,7 @@
                 const vehicle = vehicles[vid];
                 const live = liveVehicles[companyId][vid];
                 const eta = estimateEtaMinutes(company, live);
+                const conf = eta !== null ? estimateEtaConfidence(live) : null;
                 const sentidoColor = live.sentido === 'retorno' ? '#ff5252' : '#22d3ee';
                 const sentidoLabel = live.sentido === 'retorno' ? 'Retorno' : 'Ida';
                 const moving = (live.speed || 0) >= 3;
@@ -49,6 +50,7 @@
                     <div class="fleet-chip-eta-block">
                         <div class="fleet-chip-eta-value">${eta || '—'}</div>
                         <div class="fleet-chip-eta-label">${eta ? 'min' : 'calc.'}</div>
+                        ${conf ? `<div class="fleet-chip-eta-confidence">${conf.dot}</div>` : ''}
                     </div>
                 `;
                 wrap.appendChild(chip);
@@ -251,14 +253,26 @@
 
             const distEl = document.getElementById('vpDistance');
             const etaEl = document.getElementById('vpEta');
+            const etaConfEl = document.getElementById('vpEtaConfidence');
             if (live && isOnline(live)) {
                 const distKm = estimateDistanceKm(company, live);
                 const eta = estimateEtaMinutes(company, live);
                 distEl.textContent = distKm !== null ? `${distKm.toFixed(1)} km` : '—';
                 etaEl.textContent = eta !== null ? `~${eta} min` : '—';
+                const conf = eta !== null ? estimateEtaConfidence(live) : null;
+                if (etaConfEl) {
+                    if (conf) {
+                        etaConfEl.textContent = `${conf.dot} ${conf.label}`;
+                        etaConfEl.className = `eta-confidence conf-${conf.level}`;
+                    } else {
+                        etaConfEl.textContent = '';
+                        etaConfEl.className = 'eta-confidence';
+                    }
+                }
             } else {
                 distEl.textContent = '—';
                 etaEl.textContent = '—';
+                if (etaConfEl) { etaConfEl.textContent = ''; etaConfEl.className = 'eta-confidence'; }
             }
 
             const statusEl = document.getElementById('vpStatus');
@@ -910,6 +924,7 @@
             if (document.getElementById('vehiclePanel').classList.contains('show')) closeVehiclePanel();
             if (document.getElementById('incidentPanel').classList.contains('show')) closeIncidentPanel();
             if (document.getElementById('stopsPanel').classList.contains('show')) closeStopsPanel();
+            if (document.getElementById('notificationPanel').classList.contains('show')) closeNotificationPanel();
         }
 
         window.closeAnyOpenPanel = closeAnyOpenPanel;
