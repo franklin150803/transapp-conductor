@@ -222,6 +222,93 @@
            nuevo a Firebase. */
         #passengerHomeScreen { padding: 20px 16px; }
 
+        /* Parte 48: accesibilidad. "Texto grande" escala el font-size base
+           del documento — como casi todo el tipografico de la app esta en
+           rem, esto agranda letra en todos lados de forma proporcional sin
+           tener que tocar cada regla una por una. "Alto contraste"
+           redefine las variables de color sobre <html>, asi que cualquier
+           elemento que ya usa var(--text)/var(--surface)/etc. se actualiza
+           solo, sin necesidad de una regla CSS por componente. */
+        html.a11y-large-text {
+            font-size: 118%;
+        }
+
+        html.a11y-high-contrast {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --surface-2: #161616;
+            --border: #ffffff;
+            --text: #ffffff;
+            --text-secondary: #f0f0f0;
+            --text-muted: #d9d9d9;
+            --primary: #2dd4bf;
+            --primary-light: #5eead4;
+        }
+
+        .a11y-option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .a11y-option-row:last-child { border-bottom: none; }
+
+        .a11y-option-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+
+        .a11y-option-desc { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Switch simple sobre un checkbox nativo (accesible con teclado y
+           lectores de pantalla), sin librerias externas. */
+        .a11y-switch {
+            position: relative;
+            flex-shrink: 0;
+            width: 46px;
+            height: 26px;
+        }
+
+        .a11y-switch input {
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            margin: 0;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .a11y-switch-track {
+            position: absolute;
+            inset: 0;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .a11y-switch-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .a11y-switch input:checked + .a11y-switch-track {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .a11y-switch input:checked + .a11y-switch-track .a11y-switch-thumb {
+            transform: translateX(20px);
+            background: white;
+        }
+
         .ph-greeting { margin-bottom: 18px; }
         .ph-greeting h2 { font-size: 1.4rem; font-weight: 800; color: var(--text); }
         .ph-greeting p { font-size: 0.88rem; color: var(--text-secondary); margin-top: 2px; }
@@ -672,6 +759,73 @@
 
         .vehicle-marker-wrap.vura-waiting-target {
             filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.7));
+        }
+
+        /* Parte 48: boton de emergencia del conductor. Rojo solido y
+           ancho completo a proposito — debe ser imposible de confundir
+           con cualquier otro boton del drawer. */
+        .sos-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            border: none;
+            background: var(--danger);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+        }
+
+        .sos-btn:active { transform: scale(0.97); }
+
+        /* Banner de emergencias activas, arriba del todo del panel admin. */
+        .emergency-banner {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1.5px solid var(--danger);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .emergency-banner-title {
+            font-weight: 800;
+            color: var(--danger);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .emergency-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 0;
+            border-top: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .emergency-item:first-child { border-top: none; }
+
+        .emergency-item-title { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+
+        .emergency-item-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .emergency-item-sub a { color: var(--ida-color); }
+
+        .emergency-resolve-btn {
+            flex-shrink: 0;
+            padding: 8px 12px;
+            border: 1px solid var(--danger);
+            background: transparent;
+            color: var(--danger);
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
         }
 
         /* Parte 26 (conductor): banner que aparece cuando hay uno o mas
@@ -1843,6 +1997,31 @@
         .vehicle-list-admin { max-height: 300px; overflow-y: auto; }
 
         .history-list { max-height: 320px; overflow-y: auto; }
+
+        /* Parte 49: fila de botones de exportacion, justo arriba de la
+           lista (que solo muestra los 30 mas recientes; estos botones
+           exportan TODO el historial cargado). */
+        .history-export-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .history-export-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-export-btn:active { transform: scale(0.97); }
 
         .history-empty {
             font-size: 0.85rem;
