@@ -276,8 +276,16 @@
     <div class="view active" id="view-passenger">
         <div id="passengerHomeScreen">
             <div class="ph-greeting">
-                <h2 id="phGreetingText">Hola 👋</h2>
-                <p>¿A dónde vas hoy? <span class="ph-weather-chip" id="phWeatherChip"></span></p>
+                <div class="ph-greeting-row">
+                    <div>
+                        <h2 id="phGreetingText">Hola 👋</h2>
+                        <p>¿A dónde vas hoy? <span class="ph-weather-chip" id="phWeatherChip"></span></p>
+                    </div>
+                    <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotificationPanel()" title="Notificaciones">
+                        🔔
+                        <span class="notif-bell-badge" id="notifBellBadge" style="display:none;">0</span>
+                    </button>
+                </div>
             </div>
 
             <div class="guest-banner" id="guestBanner" style="display:none;">
@@ -405,6 +413,19 @@
             <button class="btn btn-primary" id="incidentSubmitBtn" onclick="submitIncidentReport()">Enviar reporte</button>
         </div>
 
+        <!-- Parte 47: centro de notificaciones in-app. Mismo patron visual
+             que stopsPanel/incidentPanel (incident-panel + .show), asi se
+             integra solo con closeAnyOpenPanel() y el backdrop ya existentes. -->
+        <div class="incident-panel" id="notificationPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title">Notificaciones</span>
+                <button class="vehicle-panel-close" onclick="closeNotificationPanel()">×</button>
+            </div>
+            <button class="notif-clear-btn" id="notifClearBtn" onclick="clearNotificationHistory()">Borrar todo</button>
+            <div id="notificationList"></div>
+        </div>
+
         <div class="panel-backdrop" id="panelBackdrop" onclick="closeAnyOpenPanel()"></div>
 
         <div class="vehicle-panel" id="vehiclePanel">
@@ -437,6 +458,7 @@
                 <div class="vehicle-info-item">
                     <label>Tiempo estimado</label>
                     <value id="vpEta">-</value>
+                    <span class="eta-confidence" id="vpEtaConfidence"></span>
                 </div>
                 <div class="vehicle-info-item">
                     <label>Estado</label>
