@@ -181,7 +181,10 @@
 
         function hideSplash() {
             const splash = document.getElementById('splashScreen');
-            if (splash) splash.classList.add('fade-out');
+            if (splash && !splash.classList.contains('fade-out')) {
+                splash.classList.add('fade-out');
+                setTimeout(() => splash.style.display = 'none', 500);
+            }
         }
 
         function applyAuthUI(user, profile) {
