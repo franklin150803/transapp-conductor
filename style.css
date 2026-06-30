@@ -226,6 +226,109 @@
         .ph-greeting h2 { font-size: 1.4rem; font-weight: 800; color: var(--text); }
         .ph-greeting p { font-size: 0.88rem; color: var(--text-secondary); margin-top: 2px; }
 
+        /* Parte 47: fila del saludo ahora tiene la campana de
+           notificaciones al lado, sin reacomodar el resto del home. */
+        .ph-greeting-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .notif-bell-btn {
+            position: relative;
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .notif-bell-btn:active { transform: scale(0.93); }
+
+        .notif-bell-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            min-width: 17px;
+            height: 17px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: var(--danger, #ff5252);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--bg, #0d0d14);
+        }
+
+        /* Panel de historial: reutiliza .incident-panel (mismo deslizamiento
+           desde abajo que stopsPanel/incidentPanel), solo agrega la lista. */
+        .notif-clear-btn {
+            width: 100%;
+            margin-bottom: 14px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .notif-item:last-child { border-bottom: none; }
+
+        .notif-item-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+        .notif-item-msg { font-size: 0.85rem; color: var(--text); line-height: 1.4; }
+
+        .notif-item-time { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .notif-empty {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Parte 47: indicador de confianza del ETA (distinto del indicador
+           de precision GPS que ya existe: ese mide la señal del telefono,
+           este mide que tan confiable es el CALCULO del tiempo estimado,
+           combinando frescura del dato + precision GPS + si se uso
+           velocidad real o el promedio de respaldo). */
+        .eta-confidence {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .eta-confidence.conf-high { color: var(--success); }
+        .eta-confidence.conf-medium { color: var(--warning); }
+        .eta-confidence.conf-low { color: var(--text-secondary); }
+
+        .fleet-chip-eta-confidence {
+            font-size: 0.62rem;
+            margin-top: 1px;
+        }
+
         /* Parte 38: clima de Lima (Open-Meteo, gratis, sin API key). */
         .ph-weather-chip {
             display: inline-block;
