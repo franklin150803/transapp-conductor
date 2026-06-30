@@ -8,6 +8,134 @@
 // principal.
 
         // ==================== ADMIN VIEW ====================
+        // ==================== EDITOR VISUAL DE RUTAS (Parte 51) ====================
+        // Antes, registerCompany() generaba 6 puntos al azar alrededor de
+        // Lima para simular una ruta — se veia bien en el mapa pero no
+        // correspondia a ninguna calle real. Este editor reemplaza eso:
+        // el admin toca el mapa punto por punto, en orden, para dibujar la
+        // ruta de IDA y de RETORNO de verdad. Usa el mismo motor vectorial
+        // (MapLibre GL + vura-map-style.json) que el resto de la app.
+        let routeEditorMap = null;
+        let routeEditorMode = 'ida'; // 'ida' | 'retorno'
+        let routeEditorPointsIda = [];
+        let routeEditorPointsRetorno = [];
+        let routeEditorLineIda = null;
+        let routeEditorLineRetorno = null;
+        let routeEditorMarkersIda = [];
+        let routeEditorMarkersRetorno = [];
+
+        // Se inicializa la primera vez que se entra a la vista de admin
+        // (lazy init, igual que el mapa del pasajero y del conductor),
+        // porque el contenedor #routeEditorMap debe estar visible y con
+        // tamaño real antes de que MapLibre pueda calcular su viewport.
+        function initRouteEditorMapIfNeeded() {
+            if (routeEditorMap) {
+                setTimeout(() => routeEditorMap.invalidateSize(), 50);
+                return;
+            }
+            routeEditorMap = L.map('routeEditorMap', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([-12.0464, -77.0428], 12);
+
+            L.maplibreGL({ style: 'vura-map-style.json' }).addTo(routeEditorMap);
+
+            routeEditorMap.on('click', (e) => {
+                addRouteEditorPoint(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        function setRouteEditorMode(mode) {
+            routeEditorMode = mode;
+            document.getElementById('routeEditorModeIda').classList.toggle('active', mode === 'ida');
+            document.getElementById('routeEditorModeRetorno').classList.toggle('active', mode === 'retorno');
+            const hint = document.getElementById('routeEditorHint');
+            if (hint) {
+                hint.textContent = mode === 'ida'
+                    ? 'Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.'
+                    : 'Toca el mapa para ir agregando puntos de la ruta de RETORNO, en orden, desde el destino de vuelta al origen.';
+            }
+            updateRouteEditorCount();
+        }
+
+        function addRouteEditorPoint(lat, lng) {
+            const color = routeEditorMode === 'ida' ? '#22d3ee' : '#ff5252';
+            const points = routeEditorMode === 'ida' ? routeEditorPointsIda : routeEditorPointsRetorno;
+            points.push([lat, lng]);
+
+            const dot = L.circleMarker([lat, lng], {
+                radius: 5, color, fillColor: color, fillOpacity: 1, weight: 2
+            }).addTo(routeEditorMap);
+
+            if (routeEditorMode === 'ida') routeEditorMarkersIda.push(dot);
+            else routeEditorMarkersRetorno.push(dot);
+
+            redrawRouteEditorLines();
+            updateRouteEditorCount();
+        }
+
+        function undoRouteEditorPoint() {
+            const points = routeEditorMode === 'ida' ? routeEditorPointsIda : routeEditorPointsRetorno;
+            const markers = routeEditorMode === 'ida' ? routeEditorMarkersIda : routeEditorMarkersRetorno;
+            if (!points.length) return;
+            points.pop();
+            const lastMarker = markers.pop();
+            if (lastMarker) routeEditorMap.removeLayer(lastMarker);
+            redrawRouteEditorLines();
+            updateRouteEditorCount();
+        }
+
+        // Atajo util: muchas rutas de bus vuelven por una calle muy
+        // parecida a la de ida. En vez de obligar al admin a dibujar dos
+        // veces casi lo mismo, puede copiar la ida invertida como punto de
+        // partida del retorno y ajustarla despues si hace falta.
+        function mirrorRouteEditorRetorno() {
+            if (!routeEditorPointsIda.length) {
+                showToast('Primero dibuja la ruta de Ida', 'info');
+                return;
+            }
+            routeEditorMarkersRetorno.forEach(m => routeEditorMap.removeLayer(m));
+            routeEditorMarkersRetorno = [];
+            routeEditorPointsRetorno = [...routeEditorPointsIda].reverse().map(p => [p[0], p[1]]);
+            routeEditorPointsRetorno.forEach(([lat, lng]) => {
+                const dot = L.circleMarker([lat, lng], {
+                    radius: 5, color: '#ff5252', fillColor: '#ff5252', fillOpacity: 1, weight: 2
+                }).addTo(routeEditorMap);
+                routeEditorMarkersRetorno.push(dot);
+            });
+            redrawRouteEditorLines();
+            updateRouteEditorCount();
+            setRouteEditorMode('retorno');
+            showToast('Retorno copiado desde Ida (invertido). Puedes ajustar los puntos.', 'success');
+        }
+
+        function clearRouteEditor() {
+            [...routeEditorMarkersIda, ...routeEditorMarkersRetorno].forEach(m => routeEditorMap.removeLayer(m));
+            routeEditorMarkersIda = [];
+            routeEditorMarkersRetorno = [];
+            routeEditorPointsIda = [];
+            routeEditorPointsRetorno = [];
+            redrawRouteEditorLines();
+            updateRouteEditorCount();
+        }
+
+        function redrawRouteEditorLines() {
+            if (routeEditorLineIda) { routeEditorMap.removeLayer(routeEditorLineIda); routeEditorLineIda = null; }
+            if (routeEditorLineRetorno) { routeEditorMap.removeLayer(routeEditorLineRetorno); routeEditorLineRetorno = null; }
+            if (routeEditorPointsIda.length > 1) {
+                routeEditorLineIda = L.polyline(routeEditorPointsIda, { color: '#22d3ee', weight: 4, opacity: 0.85 }).addTo(routeEditorMap);
+            }
+            if (routeEditorPointsRetorno.length > 1) {
+                routeEditorLineRetorno = L.polyline(routeEditorPointsRetorno, { color: '#ff5252', weight: 4, opacity: 0.85, dashArray: '6, 6' }).addTo(routeEditorMap);
+            }
+        }
+
+        function updateRouteEditorCount() {
+            const el = document.getElementById('routeEditorCount');
+            if (!el) return;
+            el.textContent = `${routeEditorPointsIda.length} ida · ${routeEditorPointsRetorno.length} retorno`;
+        }
+
         function registerCompany() {
             const name = document.getElementById('regCompanyName').value.trim();
             const ruc = document.getElementById('regCompanyRuc').value.trim();
@@ -26,24 +154,24 @@
                 return;
             }
 
+            // Parte 51: la ruta ahora viene del editor visual, no de
+            // coordenadas al azar. Exigimos al menos 2 puntos de Ida (una
+            // linea necesita minimo 2); el Retorno es opcional al
+            // registrar — si no se dibuja, se usa la Ida invertida como
+            // respaldo razonable, igual que hacia el generador anterior,
+            // pero ahora sobre una ruta real en vez de inventada.
+            if (routeEditorPointsIda.length < 2) {
+                showToast('Dibuja al menos 2 puntos de la ruta de Ida en el mapa', 'info');
+                return;
+            }
+
             const colors = ['#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#8b5cf6'];
             const newId = 'empresa' + Date.now().toString().slice(-6);
 
-            const baseLat = -12.0464 + (Math.random() - 0.5) * 0.1;
-            const baseLng = -77.0428 + (Math.random() - 0.5) * 0.1;
-            const routePointsIda = [];
-            for (let i = 0; i < 6; i++) {
-                routePointsIda.push([
-                    baseLat + (Math.random() - 0.5) * 0.05,
-                    baseLng + (Math.random() - 0.5) * 0.05
-                ]);
-            }
-            // Retorno: la misma ruta invertida con una pequena variacion,
-            // para simular que el vehiculo no vuelve por la calle exacta.
-            const routePointsRetorno = [...routePointsIda].reverse().map(p => [
-                p[0] + (Math.random() - 0.5) * 0.008,
-                p[1] + (Math.random() - 0.5) * 0.008
-            ]);
+            const routePointsIda = routeEditorPointsIda.map(p => [p[0], p[1]]);
+            const routePointsRetorno = routeEditorPointsRetorno.length >= 2
+                ? routeEditorPointsRetorno.map(p => [p[0], p[1]])
+                : [...routePointsIda].reverse();
 
             const newCompany = {
                 name, ruc, route, phone,
@@ -63,7 +191,8 @@
                 document.getElementById('regCompanyRoute').value = '';
                 document.getElementById('regCompanySchedule').value = '';
                 document.getElementById('regCompanyDestinos').value = '';
-                showToast(`Empresa "${name}" registrada`, 'success');
+                clearRouteEditor();
+                showToast(`Empresa "${name}" registrada con su ruta real`, 'success');
             }).catch(err => showToast('Error: ' + err.message, 'error'));
         }
 
@@ -350,6 +479,10 @@
 
         window.registerCompany = registerCompany;
         window.addVehicleToCompany = addVehicleToCompany;
+        window.setRouteEditorMode = setRouteEditorMode;
+        window.undoRouteEditorPoint = undoRouteEditorPoint;
+        window.mirrorRouteEditorRetorno = mirrorRouteEditorRetorno;
+        window.clearRouteEditor = clearRouteEditor;
         window.loadAndRenderHistory = loadAndRenderHistory;
 
         // ==================== EXPORTAR HISTORIAL (Parte 49) ====================
