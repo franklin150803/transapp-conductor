@@ -12,8 +12,97 @@
         let toastQueue = [];
         let toastShowing = false;
 
+        // ==================== CENTRO DE NOTIFICACIONES (Parte 47) ====================
+        // Antes, cada toast desaparecia a los 3s y se perdia para siempre.
+        // Ahora ademas se guarda en un historial corto (ultimos 30 avisos),
+        // persistido en localStorage para que sobreviva a un refresh. El
+        // contador de "no leidos" se resetea al abrir el panel.
+        const NOTIF_HISTORY_KEY = 'vura_notif_history';
+        const NOTIF_HISTORY_MAX = 30;
+        let notificationHistory = [];
+        let unreadNotifCount = 0;
+
+        function loadNotificationHistory() {
+            try {
+                const raw = localStorage.getItem(NOTIF_HISTORY_KEY);
+                notificationHistory = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                notificationHistory = [];
+            }
+        }
+
+        function saveNotificationHistory() {
+            try { localStorage.setItem(NOTIF_HISTORY_KEY, JSON.stringify(notificationHistory)); } catch (e) {}
+        }
+
+        function recordNotification(message, type) {
+            notificationHistory.unshift({ message, type, timestamp: Date.now() });
+            if (notificationHistory.length > NOTIF_HISTORY_MAX) {
+                notificationHistory = notificationHistory.slice(0, NOTIF_HISTORY_MAX);
+            }
+            saveNotificationHistory();
+            unreadNotifCount++;
+            updateNotifBellBadge();
+        }
+
+        function updateNotifBellBadge() {
+            const badge = document.getElementById('notifBellBadge');
+            if (!badge) return;
+            if (unreadNotifCount > 0) {
+                badge.textContent = unreadNotifCount > 9 ? '9+' : String(unreadNotifCount);
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function renderNotificationList() {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+            if (notificationHistory.length === 0) {
+                list.innerHTML = '<div class="notif-empty">Todavía no tienes notificaciones.<br>Aquí van apareciendo los avisos de tus buses favoritos.</div>';
+                return;
+            }
+            const iconByType = { success: '✓', error: '✕', info: 'ℹ' };
+            list.innerHTML = notificationHistory.map(n => `
+                <div class="notif-item">
+                    <span class="notif-item-icon">${iconByType[n.type] || 'ℹ'}</span>
+                    <div>
+                        <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+                        <div class="notif-item-time">${formatTimeAgo(n.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openNotificationPanel() {
+            renderNotificationList();
+            document.getElementById('notificationPanel').classList.add('show');
+            setPanelBackdrop(true);
+            unreadNotifCount = 0;
+            updateNotifBellBadge();
+        }
+
+        function closeNotificationPanel() {
+            document.getElementById('notificationPanel').classList.remove('show');
+            setPanelBackdrop(false);
+        }
+
+        function clearNotificationHistory() {
+            notificationHistory = [];
+            saveNotificationHistory();
+            renderNotificationList();
+        }
+
+        window.openNotificationPanel = openNotificationPanel;
+        window.closeNotificationPanel = closeNotificationPanel;
+        window.clearNotificationHistory = clearNotificationHistory;
+
+        loadNotificationHistory();
+
         function showToast(message, type = 'success') {
             toastQueue.push({ message, type });
+            recordNotification(message, type);
             processToastQueue();
         }
 
