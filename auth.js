@@ -182,7 +182,55 @@
         function hideSplash() {
             const splash = document.getElementById('splashScreen');
             if (splash) splash.classList.add('fade-out');
+            // Parte 44: apenas se oculta el splash, si es la primera vez que
+            // se abre Vura en este dispositivo, mostramos el onboarding.
+            // El resto de applyAuthUI sigue corriendo con normalidad debajo
+            // (landing/auth/app ya quedan listos), el onboarding solo se
+            // superpone encima hasta que el usuario lo cierra.
+            maybeShowOnboarding();
         }
+
+        // ==================== ONBOARDING (Parte 44) ====================
+        const ONBOARDING_KEY = 'vura_onboarding_seen';
+        let onboardingIndex = 0;
+        const ONBOARDING_TOTAL = 3;
+
+        function maybeShowOnboarding() {
+            let seen = false;
+            try { seen = localStorage.getItem(ONBOARDING_KEY) === '1'; } catch (e) {}
+            if (seen) return;
+            const screen = document.getElementById('onboardingScreen');
+            if (screen) screen.style.display = 'flex';
+        }
+
+        function onboardingNext() {
+            if (onboardingIndex >= ONBOARDING_TOTAL - 1) {
+                finishOnboarding();
+                return;
+            }
+            const slides = document.querySelectorAll('.onboarding-slide');
+            const dots = document.querySelectorAll('.onboarding-dot');
+            slides[onboardingIndex].classList.remove('active');
+            slides[onboardingIndex].classList.add('prev');
+            onboardingIndex++;
+            slides[onboardingIndex].classList.remove('prev');
+            slides[onboardingIndex].classList.add('active');
+            dots.forEach((d, i) => d.classList.toggle('active', i === onboardingIndex));
+
+            const nextBtn = document.getElementById('onboardingNextBtn');
+            if (nextBtn && onboardingIndex === ONBOARDING_TOTAL - 1) {
+                nextBtn.textContent = 'Comenzar';
+            }
+        }
+
+        function finishOnboarding() {
+            try { localStorage.setItem(ONBOARDING_KEY, '1'); } catch (e) {}
+            const screen = document.getElementById('onboardingScreen');
+            if (screen) screen.style.display = 'none';
+        }
+
+        window.onboardingNext = onboardingNext;
+        window.finishOnboarding = finishOnboarding;
 
         function applyAuthUI(user, profile) {
             hideSplash();
