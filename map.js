@@ -61,7 +61,7 @@
         // INSTRUCCION UNICA: reemplaza 'TU_API_KEY_ORS' con la key que
         // obtienes gratis en https://openrouteservice.org/dev/#/signup
         // La key es una cadena de ~40 caracteres, empieza con "eyJ0..."
-        const ORS_API_KEY = 'TU_API_KEY_ORS';
+        const ORS_API_KEY = eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZlNWIwMDczMGQ1ODQ2ZmZiNTJjYTkyY2Q2OTM0NzQyIiwiaCI6Im11cm11cjY0In0= ;
         const ORS_BASE = 'https://api.openrouteservice.org/v2/directions/driving-car';
 
         // Cache en memoria (no hace falta persistir entre sesiones: las
