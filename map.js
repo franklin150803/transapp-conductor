@@ -52,7 +52,57 @@
             }).addTo(map);
         }
 
-        function showRoute(companyId, company) {
+        // ==================== ROUTING REAL (ORS) ====================
+        // OpenRouteService: gratis con registro, 2000 req/dia. Transforma
+        // los puntos de control que el admin dibujo en el editor visual
+        // (que ya son calles reales, no coordenadas al azar) en un trazado
+        // exacto que abraza cada curva de cada avenida.
+        //
+        // INSTRUCCION UNICA: reemplaza 'TU_API_KEY_ORS' con la key que
+        // obtienes gratis en https://openrouteservice.org/dev/#/signup
+        // La key es una cadena de ~40 caracteres, empieza con "eyJ0..."
+        const ORS_API_KEY = 'TU_API_KEY_ORS';
+        const ORS_BASE = 'https://api.openrouteservice.org/v2/directions/driving-car';
+
+        // Cache en memoria (no hace falta persistir entre sesiones: las
+        // rutas no cambian entre sesiones y ORS ya responde en <300ms).
+        const routeCache = {};
+
+        async function fetchOrsRoute(points) {
+            // ORS necesita al menos 2 puntos y los recibe en [lng, lat]
+            if (!points || points.length < 2) return null;
+            if (ORS_API_KEY === 'TU_API_KEY_ORS') return null; // sin key, dibujar línea recta
+
+            const key = points.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join('|');
+            if (routeCache[key]) return routeCache[key];
+
+            try {
+                const body = {
+                    coordinates: points.map(p => [p[1], p[0]]) // [lng, lat]
+                };
+                const res = await fetch(`${ORS_BASE}/geojson`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': ORS_API_KEY
+                    },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) return null;
+                const data = await res.json();
+                const coords = data.features?.[0]?.geometry?.coordinates;
+                if (!coords) return null;
+                // ORS devuelve [lng, lat], Leaflet quiere [lat, lng]
+                const latLngs = coords.map(c => [c[1], c[0]]);
+                routeCache[key] = latLngs;
+                return latLngs;
+            } catch (e) {
+                console.warn('ORS routing error:', e);
+                return null;
+            }
+        }
+
+        async function showRoute(companyId, company) {
             if (!company || !company.routePointsIda) return;
 
             if (routePolylines[companyId]) {
@@ -62,19 +112,26 @@
 
             const isSelected = selectedCompanyId === companyId;
             const weight = isSelected ? 5 : 3;
-            const opacity = isSelected ? 0.9 : 0.35;
+            const opacity = isSelected ? 0.92 : 0.35;
             const dash = isSelected ? null : '10, 8';
 
-            const idaLine = L.polyline(company.routePointsIda, {
-                color: '#22d3ee', // azul = ida (version neon, ver --ida-color)
+            // Intenta obtener el trazado real sobre calles desde ORS;
+            // si falla (sin key, sin internet, limite alcanzado), dibuja
+            // los puntos de control directamente como polilinea — mucho
+            // mejor que antes (que eran coordenadas al azar), ya que el
+            // editor ahora los dibuja tocando calles reales.
+            const idaPoints = await fetchOrsRoute(company.routePointsIda) || company.routePointsIda;
+            const idaLine = L.polyline(idaPoints, {
+                color: '#22d3ee',
                 weight, opacity, dashArray: dash, smoothFactor: 1,
                 className: 'route-line-ida'
             }).addTo(map);
 
             let retornoLine = null;
             if (company.routePointsRetorno && company.routePointsRetorno.length > 1) {
-                retornoLine = L.polyline(company.routePointsRetorno, {
-                    color: '#ff5252', // rojo = retorno (version neon, ver --retorno-color)
+                const retPoints = await fetchOrsRoute(company.routePointsRetorno) || company.routePointsRetorno;
+                retornoLine = L.polyline(retPoints, {
+                    color: '#ff5252',
                     weight, opacity, dashArray: dash, smoothFactor: 1,
                     className: 'route-line-retorno'
                 }).addTo(map);
