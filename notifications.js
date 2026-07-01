@@ -177,3 +177,15 @@
                 });
             });
         }
+
+        // C3-fix: limpiar las entradas falsas de notifiedEtaKeys cada
+        // 10 minutos para evitar que el objeto crezca sin limite cuando
+        // hay muchas empresas y vehiculos activos durante horas.
+        // Solo borramos las entradas que ya estan en false (es decir,
+        // vehiculos que finalizaron recorrido o se alejaron), no las
+        // que estan en true (bus cerca, no interrumpir el ciclo).
+        setInterval(() => {
+            Object.keys(notifiedEtaKeys).forEach(k => {
+                if (!notifiedEtaKeys[k]) delete notifiedEtaKeys[k];
+            });
+        }, 10 * 60 * 1000); // cada 10 minutos
