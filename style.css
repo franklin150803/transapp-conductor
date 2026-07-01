@@ -20,9 +20,9 @@
                siguiente es un poco mas clara que la anterior para que las
                tarjetas se distingan del fondo sin depender de sombras
                (que casi no se ven sobre un fondo ya oscuro). */
-            --bg: #0a0e16;
-            --surface: #131a26;
-            --surface-2: #1c2434;
+            --bg: #000000;
+            --surface: #1e2024;
+            --surface-2: #1e2024;
             --border: #2a3346;
             --text: #eef2f7;
             --text-secondary: #9aa7bd;
