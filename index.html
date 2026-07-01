@@ -21,6 +21,12 @@
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
+    <!-- B2-fix: jsPDF + autotable para exportar historial en PDF desde Admin.
+         Sin estos scripts, exportHistoryPdf() siempre mostraba
+         "No se pudo cargar el generador de PDF". Se cargan con defer
+         para no bloquear el First Paint. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -744,6 +750,61 @@
         <span class="toast-message" id="toastMessage">Operación exitosa</span>
     </div>
 
+    <!-- A3-fix: Panel de notificaciones — notifications.js lo busca con
+         getElementById('notificationPanel'). Sin este div, openNotificationPanel()
+         crasheaba con "Cannot read properties of null". -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h3>Notificaciones</h3>
+            <button class="notif-clear-btn" onclick="clearNotificationHistory()">Limpiar</button>
+            <button class="panel-close-btn" onclick="closeNotificationPanel()">✕</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+    </div>
+
+    <!-- A3-fix: Banner de emergencias SOS — admin.js lo busca con
+         getElementById('emergencyBanner'). Sin este div, listenForEmergencies()
+         crasheaba con TypeError en banner.style.display. -->
+    <div class="emergency-banner" id="emergencyBanner" style="display:none;">
+        <div class="emergency-banner-header">
+            <span class="emergency-banner-icon">🚨</span>
+            <strong>Alerta SOS de conductor</strong>
+            <button onclick="document.getElementById('emergencyBanner').style.display='none'">✕</button>
+        </div>
+        <div class="emergency-list" id="emergencyList"></div>
+    </div>
+
+    <!-- A3-fix: Pantalla de onboarding — auth.js la busca con
+         getElementById('onboardingScreen'). Sin este div, maybeShowOnboarding()
+         fallaba silenciosamente y hideSplash() podía dejar la app colgada. -->
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <div class="onboarding-slides">
+            <div class="onboarding-slide active">
+                <div class="onboarding-icon">🚌</div>
+                <h2>Bienvenido a Vura</h2>
+                <p>Ve los buses de Lima en tiempo real.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">📍</div>
+                <h2>Sigue tu ruta</h2>
+                <p>Velocidad, distancia y tiempo estimado de llegada.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">⭐</div>
+                <h2>Guarda tus favoritas</h2>
+                <p>Accede rápido a las empresas que usas siempre.</p>
+            </div>
+        </div>
+        <div class="onboarding-dots">
+            <span class="onboarding-dot active"></span>
+            <span class="onboarding-dot"></span>
+            <span class="onboarding-dot"></span>
+        </div>
+        <button class="btn btn-primary" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
+    </div>
+
+    <div class="panel-backdrop" id="panelBackdrop" onclick="setPanelBackdrop(false)" style="display:none;"></div>
+
     <nav class="bottom-nav">
         <button class="tab-btn active" onclick="switchView('passenger', this)">
             <span class="tab-icon-img" data-icon-key="bus"></span> Pasajero
@@ -826,7 +887,12 @@
             window.fbOnValue(liveRef, (snap) => {
                 const newLiveVehicles = snap.val() || {};
                 checkNotifiableEvents(newLiveVehicles);
-                previousLiveVehicles = liveVehicles;
+                // A2-fix: clon profundo para que previousLiveVehicles apunte
+                // a un objeto distinto de liveVehicles tras la asignacion de
+                // abajo. Sin esto, checkNotifiableEvents comparaba el mismo
+                // objeto con si mismo (asignacion por referencia) y los
+                // eventos "vehiculo inicio/finalizo recorrido" no disparaban.
+                previousLiveVehicles = JSON.parse(JSON.stringify(liveVehicles));
                 liveVehicles = newLiveVehicles;
                 updateMapFromLiveData();
                 renderPassengerHome();
