@@ -28,6 +28,7 @@
                 const vehicle = vehicles[vid];
                 const live = liveVehicles[companyId][vid];
                 const eta = estimateEtaMinutes(company, live);
+                const conf = eta !== null ? estimateEtaConfidence(live) : null;
                 const sentidoColor = live.sentido === 'retorno' ? '#ff5252' : '#22d3ee';
                 const sentidoLabel = live.sentido === 'retorno' ? 'Retorno' : 'Ida';
                 const moving = (live.speed || 0) >= 3;
@@ -49,24 +50,60 @@
                     <div class="fleet-chip-eta-block">
                         <div class="fleet-chip-eta-value">${eta || '—'}</div>
                         <div class="fleet-chip-eta-label">${eta ? 'min' : 'calc.'}</div>
+                        ${conf ? `<div class="fleet-chip-eta-confidence">${conf.dot}</div>` : ''}
                     </div>
                 `;
                 wrap.appendChild(chip);
             });
         }
 
+        // Parte 45: buscador por destino. Antes solo comparaba el nombre de
+        // la empresa y el texto libre de "ruta". Ahora tambien busca dentro
+        // de "destinos" (los lugares de paso que cada empresa puede cargar
+        // desde el panel admin, ej: "Universidad Nacional", "Plaza Norte").
+        // Asi el pasajero puede escribir a donde quiere ir, no solo el
+        // nombre exacto de una empresa que quizas no conoce.
         function filterCompanies() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
             const ids = Object.keys(companies);
             const cards = document.querySelectorAll('.company-card');
             ids.forEach((companyId, idx) => {
-                if (cards[idx]) {
-                    const company = companies[companyId];
-                    const match = (company.name || '').toLowerCase().includes(query) ||
-                                  (company.route || '').toLowerCase().includes(query);
-                    cards[idx].style.display = match ? 'block' : 'none';
+                if (!cards[idx]) return;
+                const company = companies[companyId];
+                const destinos = company.destinos || [];
+
+                if (!query) {
+                    cards[idx].style.display = 'block';
+                    setMatchedDestinoHint(cards[idx], null);
+                    return;
                 }
+
+                const nameMatch = (company.name || '').toLowerCase().includes(query);
+                const routeMatch = (company.route || '').toLowerCase().includes(query);
+                const matchedDestino = destinos.find(d => d.toLowerCase().includes(query));
+
+                const match = nameMatch || routeMatch || !!matchedDestino;
+                cards[idx].style.display = match ? 'block' : 'none';
+
+                // Si lo que hizo coincidir la tarjeta fue un destino (no el
+                // nombre de la empresa), se lo mostramos al pasajero para
+                // que entienda por que aparecio ese resultado.
+                setMatchedDestinoHint(cards[idx], (match && !nameMatch && matchedDestino) ? matchedDestino : null);
             });
+        }
+
+        function setMatchedDestinoHint(card, destino) {
+            let hint = card.querySelector('.company-destino-match');
+            if (destino) {
+                if (!hint) {
+                    hint = document.createElement('div');
+                    hint.className = 'company-destino-match';
+                    card.appendChild(hint);
+                }
+                hint.textContent = `📍 Pasa por: ${destino}`;
+            } else if (hint) {
+                hint.remove();
+            }
         }
 
         function showVehiclePanel(companyId, vehicleId) {
@@ -77,6 +114,7 @@
             window._openPanel = { companyId, vehicleId };
             refreshOpenPanel();
             document.getElementById('vehiclePanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function toggleFollowVehicle() {
@@ -93,6 +131,89 @@
                 // Centra de inmediato al activar, sin esperar la proxima actualizacion.
                 const live = (liveVehicles[followingVehicle.companyId] || {})[followingVehicle.vehicleId];
                 if (live && map) map.panTo([live.lat, live.lng]);
+            }
+        }
+
+        // ==================== MODO ENFOQUE (Parte 46) ====================
+        // Variacion sobre "Seguir vehiculo": ademas de centrar la camara,
+        // atenua todo lo demas en el mapa (otros buses, otras rutas) para
+        // que sea obvio cual es el bus que se esta esperando. A diferencia
+        // de "Seguir vehiculo", el Modo enfoque sobrevive a que el pasajero
+        // cierre el panel (sigue activo, con un aviso flotante en el mapa
+        // y un boton para cancelarlo desde ahi), porque la idea es que
+        // pueda seguir explorando otras tarjetas sin perder de vista cual
+        // bus esta esperando.
+        let waitingFocusVehicle = null;
+        // Si Modo enfoque tuvo que forzar "Seguir vehiculo" porque no
+        // estaba activo, recordamos eso para apagarlo de nuevo al salir
+        // del Modo enfoque (y no dejar un "Seguir vehiculo" fantasma).
+        let focusForcedFollow = false;
+
+        function toggleFocusMode() {
+            if (!window._openPanel) return;
+            const { companyId, vehicleId } = window._openPanel;
+            const key = companyId + '__' + vehicleId;
+
+            if (waitingFocusVehicle && waitingFocusVehicle.companyId === companyId &&
+                waitingFocusVehicle.vehicleId === vehicleId) {
+                deactivateFocusMode();
+                return;
+            }
+
+            waitingFocusVehicle = { companyId, vehicleId };
+            focusForcedFollow = false;
+            if (!followingVehicle || followingVehicle.companyId !== companyId || followingVehicle.vehicleId !== vehicleId) {
+                focusForcedFollow = true;
+                followingVehicle = { companyId, vehicleId };
+                const live = (liveVehicles[companyId] || {})[vehicleId];
+                if (live && map) map.panTo([live.lat, live.lng]);
+            }
+
+            setWaitingTarget(key);
+            updateFocusModeUi();
+            showToast('Modo enfoque activado: el resto del mapa se atenuó', 'info');
+        }
+
+        function deactivateFocusMode() {
+            waitingFocusVehicle = null;
+            setWaitingTarget(null);
+            if (focusForcedFollow) {
+                followingVehicle = null;
+                focusForcedFollow = false;
+                const followBtn = document.getElementById('followVehicleBtn');
+                if (followBtn) {
+                    followBtn.classList.remove('active');
+                    followBtn.textContent = 'Seguir vehículo';
+                }
+            }
+            updateFocusModeUi();
+        }
+
+        // Sincroniza el boton dentro del panel (si esta abierto, y es el
+        // vehiculo enfocado) y el aviso flotante sobre el mapa (que se ve
+        // incluso con el panel cerrado, para poder cancelar desde ahi).
+        function updateFocusModeUi() {
+            const isActive = !!waitingFocusVehicle;
+            const open = window._openPanel;
+            const isThisOne = isActive && open &&
+                waitingFocusVehicle.companyId === open.companyId && waitingFocusVehicle.vehicleId === open.vehicleId;
+
+            const btn = document.getElementById('focusModeBtn');
+            if (btn) {
+                btn.classList.toggle('active', isThisOne);
+                btn.textContent = isThisOne ? '✓ Enfocando este bus' : '🎯 Modo enfoque';
+            }
+
+            const banner = document.getElementById('focusModeBanner');
+            if (banner) {
+                banner.classList.toggle('show', isActive);
+                if (isActive) {
+                    const company = companies[waitingFocusVehicle.companyId];
+                    const vehicle = company && company.vehicles && company.vehicles[waitingFocusVehicle.vehicleId];
+                    const label = vehicle ? (vehicle.plate || waitingFocusVehicle.vehicleId) : '';
+                    const textEl = document.getElementById('focusModeBannerText');
+                    if (textEl) textEl.textContent = `🎯 Enfocando bus ${escapeHtml(label)}`;
+                }
             }
         }
 
@@ -132,14 +253,26 @@
 
             const distEl = document.getElementById('vpDistance');
             const etaEl = document.getElementById('vpEta');
+            const etaConfEl = document.getElementById('vpEtaConfidence');
             if (live && isOnline(live)) {
                 const distKm = estimateDistanceKm(company, live);
                 const eta = estimateEtaMinutes(company, live);
                 distEl.textContent = distKm !== null ? `${distKm.toFixed(1)} km` : '—';
                 etaEl.textContent = eta !== null ? `~${eta} min` : '—';
+                const conf = eta !== null ? estimateEtaConfidence(live) : null;
+                if (etaConfEl) {
+                    if (conf) {
+                        etaConfEl.textContent = `${conf.dot} ${conf.label}`;
+                        etaConfEl.className = `eta-confidence conf-${conf.level}`;
+                    } else {
+                        etaConfEl.textContent = '';
+                        etaConfEl.className = 'eta-confidence';
+                    }
+                }
             } else {
                 distEl.textContent = '—';
                 etaEl.textContent = '—';
+                if (etaConfEl) { etaConfEl.textContent = ''; etaConfEl.className = 'eta-confidence'; }
             }
 
             const statusEl = document.getElementById('vpStatus');
@@ -178,6 +311,8 @@
                 followBtn.classList.toggle('active', isFollowingThis);
                 followBtn.textContent = isFollowingThis ? '✓ Siguiendo en el mapa' : 'Seguir vehículo';
             }
+
+            updateFocusModeUi();
         }
 
         // Calcula que tan "fresca" es la ultima lectura (1 = recien
@@ -201,6 +336,7 @@
         function closeVehiclePanel() {
             document.getElementById('vehiclePanel').classList.remove('show');
             window._openPanel = null;
+            setPanelBackdrop(false);
         }
 
         // ==================== AVISO "PASAJERO ESPERANDO" (Parte 26) ====================
@@ -309,6 +445,11 @@
                     <div class="company-route">
                         <span>${escapeHtml(company.route) || ''}</span>
                     </div>
+                    ${(company.destinos && company.destinos.length) ? `
+                    <div class="company-destinos-row">
+                        ${company.destinos.slice(0, 4).map(d => `<span class="company-destino-chip">📍 ${escapeHtml(d)}</span>`).join('')}
+                        ${company.destinos.length > 4 ? `<span class="company-destino-chip">+${company.destinos.length - 4}</span>` : ''}
+                    </div>` : ''}
                 `;
                 const starBtn = card.querySelector('.fav-star-btn');
                 starBtn.onclick = (e) => {
@@ -346,7 +487,7 @@
 
             document.getElementById('passengerHomeScreen').style.display = 'none';
             document.getElementById('passengerListScreen').style.display = 'none';
-            document.getElementById('passengerMapScreen').style.display = 'contents';
+            document.getElementById('passengerMapScreen').style.display = 'block';
             document.getElementById('activeCompanyName').textContent = company.name;
             document.getElementById('activeCompanyBadge').style.display = company.verified ? 'inline-flex' : 'none';
             document.getElementById('favoriteToggleBtn').classList.toggle('active', !!favoriteCompanyIds[companyId]);
@@ -357,7 +498,7 @@
                 Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
                 const bounds = getRouteBoundsForCompany(companyId);
                 if (bounds) {
-                    map.fitBounds(bounds, { paddingTopLeft: [16, 130], paddingBottomRight: [16, 140] });
+                    map.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 1.1, easeLinearity: 0.25 });
                 }
                 updateMapFromLiveData();
                 renderStopsList(cachedFavoriteStops);
@@ -441,6 +582,8 @@
         window.filterCompanies = filterCompanies;
         window.closeVehiclePanel = closeVehiclePanel;
         window.toggleFollowVehicle = toggleFollowVehicle;
+        window.toggleFocusMode = toggleFocusMode;
+        window.deactivateFocusMode = deactivateFocusMode;
         window.signalWaiting = signalWaiting;
 
         // ==================== REPORTAR INCIDENTE (Parte 28) ====================
@@ -464,10 +607,12 @@
             document.querySelectorAll('.incident-type-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('incidentComment').value = '';
             document.getElementById('incidentPanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function closeIncidentPanel() {
             document.getElementById('incidentPanel').classList.remove('show');
+            setPanelBackdrop(false);
         }
 
         function selectIncidentType(type) {
@@ -619,10 +764,12 @@
 
         function openStopsPanel() {
             document.getElementById('stopsPanel').classList.add('show');
+            setPanelBackdrop(true);
         }
 
         function closeStopsPanel() {
             document.getElementById('stopsPanel').classList.remove('show');
+            setPanelBackdrop(false);
         }
 
         function saveCurrentMapCenterAsStop() {
@@ -683,7 +830,10 @@
                 const s = stops[id];
                 const marker = L.marker([s.lat, s.lng], {
                     icon: L.divIcon({ className: 'stop-marker-icon', html: '📍', iconSize: [24, 24], iconAnchor: [12, 22] })
-                }).addTo(map).bindPopup(escapeHtml(s.name));
+                }).addTo(map).bindPopup(`
+                    <div class="popup-title">📍 ${escapeHtml(s.name)}</div>
+                    <div class="popup-info">Tu paradero favorito</div>
+                `);
                 stopMarkers[id] = marker;
             });
         }
@@ -691,8 +841,8 @@
         function focusFavoriteStop(id) {
             const marker = stopMarkers[id];
             if (marker && map) {
-                map.setView(marker.getLatLng(), 16);
-                marker.openPopup();
+                map.flyTo(marker.getLatLng(), 16, { duration: 1, easeLinearity: 0.25 });
+                setTimeout(() => marker.openPopup(), 350);
             }
             closeStopsPanel();
         }
@@ -759,5 +909,133 @@
         }
 
         fetchLimaWeather();
+
+        // ==================== BACKDROP COMPARTIDO (Parte 43) ====================
+        // Un solo telon de fondo para los tres paneles deslizables
+        // (vehiculo, incidente, paraderos). Tocar fuera del panel lo
+        // cierra — closeAnyOpenPanel() detecta cual está abierto y llama
+        // a su función de cierre correspondiente.
+        function setPanelBackdrop(show) {
+            const backdrop = document.getElementById('panelBackdrop');
+            if (backdrop) backdrop.classList.toggle('show', show);
+        }
+
+        // ==================== RADAR VURA (Parte 50) ====================
+        // Los 5 buses en linea mas cercanos a la ubicacion del pasajero,
+        // sin importar la empresa. liveVehicles ya trae TODOS los vehiculos
+        // de TODAS las empresas (listenLiveVehicles escucha el nodo
+        // completo 'vehiculos_live'), asi que no hace falta pedir nada
+        // adicional a Firebase para esto — solo geolocalizar al pasajero
+        // una sola vez (no watchPosition, para no gastar bateria de mas) y
+        // comparar distancias con haversine() (ya definida en utils.js).
+        let radarWatchActive = false;
+
+        function openRadarPanel() {
+            document.getElementById('radarPanel').classList.add('show');
+            setPanelBackdrop(true);
+            locateAndRunRadar();
+        }
+
+        function closeRadarPanel() {
+            document.getElementById('radarPanel').classList.remove('show');
+            setPanelBackdrop(false);
+            radarWatchActive = false;
+        }
+
+        function locateAndRunRadar() {
+            const listEl = document.getElementById('radarList');
+            if (!listEl) return;
+            if (!navigator.geolocation) {
+                listEl.innerHTML = '<p class="fleet-empty">Tu navegador no permite ubicarte automáticamente.</p>';
+                return;
+            }
+            listEl.innerHTML = '<p class="fleet-empty">Buscando tu ubicación...</p>';
+            radarWatchActive = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    if (!radarWatchActive) return; // el panel se cerró mientras esperábamos el GPS
+                    renderRadarResults(pos.coords.latitude, pos.coords.longitude);
+                },
+                (err) => {
+                    listEl.innerHTML = '<p class="fleet-empty">No se pudo obtener tu ubicación. Revisa el permiso de GPS y vuelve a intentar.</p>';
+                    console.warn('Error de geolocalización en Radar Vura:', err);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+            );
+        }
+
+        function renderRadarResults(userLat, userLng) {
+            const listEl = document.getElementById('radarList');
+            if (!listEl) return;
+
+            const results = [];
+            Object.keys(liveVehicles).forEach(companyId => {
+                const company = companies[companyId];
+                if (!company) return;
+                const companyLive = liveVehicles[companyId] || {};
+                Object.keys(companyLive).forEach(vehicleId => {
+                    const live = companyLive[vehicleId];
+                    if (!isOnline(live)) return;
+                    const distM = haversine(userLat, userLng, live.lat, live.lng);
+                    const vehicle = (company.vehicles || {})[vehicleId] || {};
+                    results.push({ companyId, vehicleId, company, vehicle, live, distM });
+                });
+            });
+
+            if (!results.length) {
+                listEl.innerHTML = '<p class="fleet-empty">No hay buses en línea cerca de ti en este momento.</p>';
+                return;
+            }
+
+            results.sort((a, b) => a.distM - b.distM);
+            const top5 = results.slice(0, 5);
+
+            listEl.innerHTML = top5.map((r, i) => {
+                const distLabel = r.distM < 1000
+                    ? `${Math.round(r.distM)} m`
+                    : `${(r.distM / 1000).toFixed(1)} km`;
+                const plate = r.vehicle.plate || r.vehicleId;
+                const moving = (r.live.speed || 0) >= 3;
+                const speedTxt = moving ? `${Math.round(r.live.speed || 0)} km/h` : 'Detenido';
+                return `
+                    <div class="radar-result-row" onclick="goToRadarResult('${r.companyId}','${r.vehicleId}')">
+                        <div class="radar-result-rank">${i + 1}</div>
+                        <div class="radar-result-body">
+                            <div class="radar-result-plate">${escapeHtml(plate)} · ${escapeHtml(r.company.name)}</div>
+                            <div class="radar-result-meta">${speedTxt} · actualizado ${formatTimeAgo(r.live.timestamp)}</div>
+                        </div>
+                        <div class="radar-result-distance">
+                            <div class="radar-result-distance-value">${distLabel}</div>
+                            <div class="radar-result-distance-label">distancia</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Al tocar un resultado del radar: cierra el panel, entra a la
+        // empresa correspondiente (aunque el pasajero nunca la haya
+        // explorado antes) y abre el panel de detalle de ese vehiculo —
+        // mismo patron que ya usa el enlace compartido por WhatsApp.
+        function goToRadarResult(companyId, vehicleId) {
+            closeRadarPanel();
+            selectCompany(companyId);
+            setTimeout(() => showVehiclePanel(companyId, vehicleId), 700);
+        }
+
+        window.openRadarPanel = openRadarPanel;
+        window.closeRadarPanel = closeRadarPanel;
+        window.goToRadarResult = goToRadarResult;
+
+        function closeAnyOpenPanel() {
+            if (document.getElementById('vehiclePanel').classList.contains('show')) closeVehiclePanel();
+            if (document.getElementById('incidentPanel').classList.contains('show')) closeIncidentPanel();
+            if (document.getElementById('stopsPanel').classList.contains('show')) closeStopsPanel();
+            if (document.getElementById('notificationPanel').classList.contains('show')) closeNotificationPanel();
+            if (document.getElementById('accessibilityPanel').classList.contains('show')) closeAccessibilityPanel();
+            if (document.getElementById('radarPanel').classList.contains('show')) closeRadarPanel();
+        }
+
+        window.closeAnyOpenPanel = closeAnyOpenPanel;
         window.selectCompany = selectCompany;
         window.backToCompanyList = backToCompanyList;
