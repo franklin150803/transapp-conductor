@@ -193,8 +193,8 @@
             }, 50);
 
             watchId = navigator.geolocation.watchPosition(onDriverPosition, onDriverError, {
-                enableHighAccuracy: false,
-                maximumAge: 5000,
+                enableHighAccuracy: true,
+                maximumAge: 0,
                 timeout: 20000
             });
         }
@@ -592,24 +592,35 @@
             if (!queue.length || !activeDriverPath || !window.firebaseReady) return;
 
             flushingOfflineQueue = true;
-            clearOfflineQueue();
+            // A5-fix: NO borramos la cola aqui. Si la conexion se vuelve a
+            // cortar a mitad del for-await, las posiciones no enviadas siguen
+            // en localStorage y se intentaran enviar en el proximo flush.
+            // Solo limpiamos al final, cuando sabemos que todo se envio.
             addLog(`Conexión recuperada. Enviando ${queue.length} posición(es) guardadas...`);
             const { companyId, vehicleId } = activeDriverPath;
             const liveRef = window.fbRef(window.fbDb, `vehiculos_live/${companyId}/${vehicleId}`);
+            let enviados = 0;
 
             for (const reading of queue) {
                 try {
                     await window.fbSet(liveRef, reading);
                     await new Promise(resolve => setTimeout(resolve, 350));
+                    enviados++;
                 } catch (e) {
-                    // Se volvio a cortar la señal a medio camino: lo que
-                    // falte por enviar se pierde, es un caso extremo
-                    // aceptable (mejor esto que bloquear el recorrido actual).
                     addLog('Se cortó la señal otra vez mientras se enviaban las posiciones guardadas.');
                     break;
                 }
             }
-            addLog('Posiciones guardadas enviadas. Transmisión normal restablecida.');
+
+            // Solo eliminamos los que sí llegaron a enviarse.
+            if (enviados === queue.length) {
+                clearOfflineQueue();
+            } else {
+                // Guardamos solo los que no se enviaron.
+                const pendientes = queue.slice(enviados);
+                localStorage.setItem('vura_offline_queue', JSON.stringify(pendientes));
+            }
+            addLog(`${enviados}/${queue.length} posiciones enviadas. Transmisión normal restablecida.`);
             flushingOfflineQueue = false;
         }
 
