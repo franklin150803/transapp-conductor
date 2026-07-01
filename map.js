@@ -150,7 +150,7 @@
         }
 
         function createVehicleIcon(color, moving, plate, heading) {
-            const label = plate ? String(plate) : '';
+            const label = plate ? escapeHtml(String(plate)) : '';
             const rotation = (typeof heading === 'number') ? heading : 0;
             return L.divIcon({
                 className: 'vehicle-marker',
