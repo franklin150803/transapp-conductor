@@ -259,6 +259,10 @@
                 Buscar empresa de transporte
             </button>
 
+            <button class="ph-radar-cta" onclick="openRadarPanel()">
+                📡 Radar Vura — los 5 buses más cercanos a ti
+            </button>
+
             <div class="ph-stats-row">
                 <div class="ph-stat">
                     <div class="ph-stat-value" id="phStatCompanies">0</div>
@@ -302,46 +306,57 @@
         </div>
 
         <div id="passengerMapScreen" style="display:none;">
-            <!-- Mapa pasajero a pantalla completa: el mapa ocupa todo el
-                 espacio disponible de fondo; la barra de volver, el resumen
-                 de flota y el aviso de incidentes flotan encima, igual que
-                 ya se hizo con el mapa del conductor. Mismos IDs que antes,
-                 asi que passenger.js no necesita ningun cambio. -->
-            <div class="map-wrapper">
+            <!-- Mapa a 100% de pantalla, igual que el conductor -->
+            <div class="passenger-fullmap-wrap">
                 <div id="map"></div>
 
-                <div class="map-floating-top">
-                    <div class="map-back-bar">
-                        <button class="map-back-btn" onclick="backToCompanyList()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
-                                <path d="M15 18l-6-6 6-6"/>
+                <!-- Barra superior flotante: volver + nombre empresa + favorito -->
+                <div class="pmap-top-bar">
+                    <button class="pmap-back-btn" onclick="backToCompanyList()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <div class="pmap-company-info">
+                        <span class="pmap-company-name" id="activeCompanyName">—</span>
+                        <span class="verified-badge" id="activeCompanyBadge" style="display:none;">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M9 12l2 2 4-4"/>
+                                <circle cx="12" cy="12" r="10"/>
                             </svg>
-                            Empresas
-                        </button>
-                        <div class="map-back-title">
-                            <span class="company-name" id="activeCompanyName">—</span>
-                            <span class="verified-badge" id="activeCompanyBadge" style="display:none;">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M9 12l2 2 4-4"/>
-                                    <circle cx="12" cy="12" r="10"/>
-                                </svg>
-                                Verificada
-                            </span>
-                        </div>
-                        <button class="favorite-toggle-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Marcar empresa como favorita">★</button>
+                            Verificada
+                        </span>
                     </div>
-
-                    <div class="fleet-summary" id="fleetSummary"></div>
-
-                    <div class="incident-banner" id="incidentBanner" style="display:none;"></div>
+                    <button class="pmap-fav-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Favorita">★</button>
                 </div>
 
-                <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos">
-                    📍
-                </button>
-                <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente">
-                    ⚠️
-                </button>
+                <!-- Banner de incidentes flotante -->
+                <div class="incident-banner" id="incidentBanner" style="display:none;"></div>
+
+                <!-- Banner de modo enfoque -->
+                <div class="focus-mode-banner" id="focusModeBanner">
+                    <span id="focusModeBannerText">🎯 Modo enfoque activo</span>
+                    <button onclick="deactivateFocusMode()">Salir</button>
+                </div>
+
+                <!-- Carrusel de flota flotante en la parte inferior -->
+                <div class="pmap-fleet-bar" id="fleetSummary"></div>
+
+                <!-- FABs -->
+                <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos">📍</button>
+                <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente">⚠️</button>
+            </div>
+        </div>
+
+        <div class="incident-panel" id="radarPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title">📡 Radar Vura</span>
+                <button class="vehicle-panel-close" onclick="closeRadarPanel()">×</button>
+            </div>
+            <p class="incident-panel-hint">Los buses en línea más cercanos a tu ubicación, sin importar la empresa.</p>
+            <div id="radarList">
+                <p class="fleet-empty">Buscando tu ubicación...</p>
             </div>
         </div>
 
@@ -445,6 +460,9 @@
                     📤 Compartir
                 </button>
             </div>
+            <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()">
+                🎯 Modo enfoque
+            </button>
             <button class="wait-signal-btn" id="waitSignalBtn" onclick="signalWaiting()">
                 🙋 Estoy esperando este bus
             </button>
@@ -639,9 +657,39 @@
                     <label>Ruta (origen → destino)</label>
                     <input type="text" id="regCompanyRoute" placeholder="Ej: San Juan de Lurigancho → Centro de Lima">
                 </div>
+
+                <!-- Parte 51: editor visual de rutas. Antes, al registrar
+                     una empresa, las coordenadas de la ruta se generaban al
+                     azar alrededor de Lima — quedaba bonito en el mapa pero
+                     no correspondia a ninguna calle real. Ahora el admin
+                     dibuja la ruta de verdad, tocando el mapa punto por
+                     punto. -->
+                <div class="form-group">
+                    <label>Dibuja la ruta en el mapa</label>
+                    <p class="form-hint" id="routeEditorHint">Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.</p>
+                    <div class="route-editor-toolbar">
+                        <button type="button" class="route-editor-mode-btn active" id="routeEditorModeIda" onclick="setRouteEditorMode('ida')">🔵 Ida</button>
+                        <button type="button" class="route-editor-mode-btn" id="routeEditorModeRetorno" onclick="setRouteEditorMode('retorno')">🔴 Retorno</button>
+                        <span class="route-editor-count" id="routeEditorCount">0 puntos</span>
+                    </div>
+                    <div class="route-editor-map-wrapper">
+                        <div id="routeEditorMap"></div>
+                    </div>
+                    <div class="route-editor-actions">
+                        <button type="button" class="route-editor-action-btn" onclick="undoRouteEditorPoint()">↩️ Deshacer último punto</button>
+                        <button type="button" class="route-editor-action-btn" onclick="mirrorRouteEditorRetorno()">🔁 Copiar Ida como Retorno</button>
+                        <button type="button" class="route-editor-action-btn danger" onclick="clearRouteEditor()">🗑 Borrar todo</button>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Horario de operación</label>
                     <input type="text" id="regCompanySchedule" placeholder="Ej: 5:00 AM - 10:00 PM">
+                </div>
+                <div class="form-group">
+                    <label>Lugares de paso (separados por coma)</label>
+                    <input type="text" id="regCompanyDestinos" placeholder="Ej: Universidad Nacional, Plaza Norte, Hospital Rebagliati">
+                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino, no solo el nombre de tu empresa.</p>
                 </div>
                 <button class="btn btn-primary" onclick="registerCompany()">
                     <span class="tab-icon-img" data-icon-key="shieldCheck" data-icon-size="18"></span> Registrar Empresa
@@ -802,7 +850,7 @@
 
             if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
             if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
-            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); }
+            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); initRouteEditorMapIfNeeded(); }
         }
 
 
