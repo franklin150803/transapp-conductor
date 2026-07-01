@@ -69,13 +69,8 @@
         }
 
         .app-header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
-            padding: 16px 20px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: var(--shadow-lg);
+    display: none;
+}
         }
 
         .app-header h1 {
@@ -992,11 +987,14 @@
            Mismo patron que el conductor (Parte 42): el mapa ocupa el 100%
            del viewport y todos los controles flotan encima como overlays
            semitransparentes, liberando toda la pantalla para la cartografía. */
-        .passenger-fullmap-wrap {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-        }
+       .passenger-fullmap-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--bottom-nav-h);
+    z-index: 0;
+}
 
         /* El div del mapa de Leaflet llena el contenedor completo */
         .passenger-fullmap-wrap #map {
@@ -1009,8 +1007,8 @@
         /* Barra superior flotante: fondo semitransparente con blur,
            igual que el HUD del conductor */
         .pmap-top-bar {
-            position: absolute;
-            top: 12px;
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
             left: 12px;
             right: 12px;
             z-index: 500;
