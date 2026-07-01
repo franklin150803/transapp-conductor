@@ -54,7 +54,7 @@
       "source": "openmaptiles",
       "source-layer": "park",
       "paint": {
-        "fill-color": "#1c3a2e",
+        "fill-color": "#010c85",
         "fill-opacity": 0.75
       }
     },
