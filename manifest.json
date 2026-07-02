@@ -1,15 +1,15 @@
 {
   "name": "Vura - Transporte en Tiempo Real",
   "short_name": "Vura",
-  "description": "Localización en tiempo real de transporte público en Lima",
-  "lang": "es",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Localización GPS en tiempo real del transporte público de Lima",
+  "id": "/",
+  "start_url": "./index.html",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0e16",
-  "theme_color": "#2563eb",
-  "categories": ["transportation", "utilities"],
+  "theme_color": "#0d9488",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "categories": ["travel", "utilities"],
   "icons": [
     {
       "src": "icon-192.png",
@@ -18,7 +18,7 @@
       "purpose": "any"
     },
     {
-      "src": "icon-192-maskable.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
@@ -30,19 +30,10 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512-maskable.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Ver mapa",
-      "short_name": "Mapa",
-      "description": "Abrir el mapa de buses en tiempo real",
-      "url": "./",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
