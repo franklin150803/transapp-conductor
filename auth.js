@@ -271,11 +271,29 @@
             const isAdmin = !!(profile && profile.isAdmin === true);
             adminTabBtn.style.display = isAdmin ? 'flex' : 'none';
 
-            // Si la vista Admin quedo activa de una sesion anterior y esta cuenta
-            // no es admin, la regresamos a la vista de pasajero por seguridad.
-            if (!isAdmin && document.getElementById('view-admin').classList.contains('active')) {
-                const passengerTabBtn = document.querySelector('.tab-btn');
-                if (passengerTabBtn) switchView('passenger', passengerTabBtn);
+            // Rol único por cuenta (arreglo del bug donde pasajero y conductor
+            // veian ambas pestañas): un pasajero solo debe ver "Pasajero", un
+            // conductor solo "Conductor". Un invitado (sesion anonima, sin
+            // perfil guardado) se trata como pasajero. Si mas adelante una
+            // cuenta necesita ambos roles, se puede sumar aca sin tocar nada
+            // mas del flujo.
+            const passengerTabBtn = document.getElementById('passengerTabBtn');
+            const driverTabBtn = document.getElementById('driverTabBtn');
+            const userRole = (profile && profile.role) || 'pasajero';
+            passengerTabBtn.style.display = userRole === 'conductor' ? 'none' : 'flex';
+            driverTabBtn.style.display = userRole === 'conductor' ? 'flex' : 'none';
+            const correctTabBtn = userRole === 'conductor' ? driverTabBtn : passengerTabBtn;
+            const correctViewName = userRole === 'conductor' ? 'driver' : 'passenger';
+
+            // Si la vista activa no corresponde al rol de esta cuenta (p. ej.
+            // quedo en "driver" de una sesion anterior, o quedo en "admin" y
+            // esta cuenta ya no es admin), la mandamos a su vista correcta.
+            const currentActiveView = document.querySelector('.view.active');
+            const currentActiveViewId = currentActiveView ? currentActiveView.id : '';
+            const viewIsAllowed = currentActiveViewId === `view-${correctViewName}` ||
+                (currentActiveViewId === 'view-admin' && isAdmin);
+            if (!viewIsAllowed) {
+                switchView(correctViewName, correctTabBtn);
             }
 
             // Pre-rellenar datos conocidos en la vista de conductor si el usuario es conductor.
