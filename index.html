@@ -5,10 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vura · Transporte en Tiempo Real</title>
     <meta name="theme-color" content="#0d9488">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vura">
+    <meta name="description" content="Localización en tiempo real de transporte público en Lima">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192-maskable.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Parte 38: MapLibre GL JS + plugin de integracion con Leaflet, para
          poder usar tiles vectoriales (con identidad visual propia de Vura,
          ver style.css y la opcion vuraMapStyle en map.js) dentro del mismo
@@ -18,8 +25,8 @@
          Debe cargarse DESPUES de leaflet.js, porque el plugin extiende el
          objeto global L agregandole el metodo L.maplibreGL. -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+    <script defer src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script defer src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
     <!-- B2-fix: jsPDF + autotable para exportar historial en PDF desde Admin.
          Sin estos scripts, exportHistoryPdf() siempre mostraba
@@ -31,7 +38,7 @@
 </head>
 <body>
 
-    <script src="icons.js"></script>
+    <script defer src="icons.js"></script>
 
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
@@ -227,7 +234,7 @@
 
     <div class="app-shell" id="appShell" style="display:none;">
 
-  <header class="app-header" id="appHeader">
+    <header class="app-header">
         <div class="header-top-row">
             <div></div>
             <button class="logout-btn" onclick="doLogout()" id="logoutBtn" title="Cerrar sesión"><span class="tab-icon-img" data-icon-key="logout" data-icon-size="16"></span></button>
@@ -939,7 +946,21 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    // Cuando hay una nueva versión del SW lista, el navegador
+                    // espera a que todas las pestañas estén cerradas para
+                    // activarla. Este listener avisa al usuario para que
+                    // recargue y obtenga la versión más reciente.
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showToast('Hay una actualización disponible. Recarga para aplicarla.', 'info');
+                            }
+                        });
+                    });
+                }).catch(() => {});
             });
         }
 
