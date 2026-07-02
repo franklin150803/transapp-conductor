@@ -123,7 +123,7 @@ function offlineFallback() {
   .icon{font-size:4rem;margin-bottom:16px}
   h1{font-size:1.4rem;margin:0 0 8px}
   p{font-size:0.9rem;color:#9aa7bd;max-width:280px}
-  button{margin-top:24px;padding:12px 24px;background:#0d9488;color:white;
+  button{margin-top:24px;padding:12px 24px;background:#2563eb;color:white;
          border:none;border-radius:12px;font-size:0.9rem;cursor:pointer}
 </style>
 </head>
