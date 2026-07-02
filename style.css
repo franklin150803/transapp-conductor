@@ -1126,6 +1126,16 @@
         /* Ocultar los estilos del layout anterior que ya no se usan */
         .map-back-bar, .map-wrapper { display: none; }
 
+        /* Mapa 100% pantalla completa (pasajero o conductor): el header
+           degradado y la barra inferior tenían z-index mas alto que el
+           mapa y quedaban flotando encima tapandolo. body.map-fullscreen
+           se activa desde JS al entrar al mapa y los saca de la vista
+           por completo, dejando la cartografia limpia de borde a borde. */
+        body.map-fullscreen .app-header,
+        body.map-fullscreen .bottom-nav {
+            display: none;
+        }
+
 
         .fleet-chip {
             flex-shrink: 0;
