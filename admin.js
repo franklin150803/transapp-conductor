@@ -165,7 +165,7 @@
                 return;
             }
 
-            const colors = ['#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#8b5cf6'];
+            const colors = ['#ec4899', '#3b82f6', '#f97316', '#06b6d4', '#84cc16', '#8b5cf6'];
             const newId = 'empresa' + Date.now().toString().slice(-6);
 
             const routePointsIda = routeEditorPointsIda.map(p => [p[0], p[1]]);
