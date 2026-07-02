@@ -8,7 +8,7 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0e16",
-  "theme_color": "#0d9488",
+  "theme_color": "#2563eb",
   "categories": ["transportation", "utilities"],
   "icons": [
     {
