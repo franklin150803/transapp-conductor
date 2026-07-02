@@ -1,139 +1,143 @@
-// Service Worker de Vura — estrategia stale-while-revalidate para shell
-// de la app (HTML, CSS, JS propios) y cache-first para assets estáticos.
-// Esto permite:
-//   1. Primera carga: siempre desde red, se guarda en cache.
-//   2. Recargas siguientes: se sirve desde cache mientras se actualiza en
-//      segundo plano — la app abre instantáneamente aunque haya red lenta.
-//   3. Sin internet: se sirve lo que hay en cache; si tampoco está en
-//      cache, se muestra un fallback offline en vez de pantalla blanca.
+// sw.js — Service Worker real de Vura
+// Estrategia:
+//   CACHE FIRST  → assets estaticos del shell (HTML, CSS, JS, iconos, JSON
+//                  del mapa vectorial). Estos no cambian entre visitas; si
+//                  estan en cache, se sirven instantaneamente sin red.
+//   NETWORK FIRST → Firebase Realtime Database, tiles de OpenFreeMap y
+//                   cualquier otra URL de datos en vivo. Siempre intentamos
+//                   la red primero; el cache es solo el ultimo recurso.
+//   OFFLINE FALLBACK → si una navegacion falla completamente (sin red y sin
+//                   cache), mostramos el shell de la app (index.html cacheado)
+//                   para que el usuario vea algo en vez de la pantalla de
+//                   error del navegador.
 
-const CACHE_NAME = 'vura-shell-v2';
+const CACHE_NAME = 'vura-shell-v1';
 
-// Archivos propios que queremos tener siempre disponibles offline.
-// Solo se precachean los que existen en la raíz del repo; las librerías
-// de CDN se cachean dinámicamente la primera vez que se piden.
-const PRECACHE_URLS = [
+// Assets del shell: todo lo que la app necesita para pintarse aunque no haya
+// red. Cuando cambia cualquiera de estos archivos hay que incrementar
+// CACHE_NAME (ej. vura-shell-v2) para que el SW old se descarte y el nuevo
+// precachee la version actualizada.
+const SHELL_ASSETS = [
     './',
     './index.html',
     './style.css',
+    './icons.js',
+    './utils.js',
+    './notifications.js',
     './map.js',
     './passenger.js',
     './driver.js',
     './admin.js',
     './auth.js',
     './firebase.js',
-    './notifications.js',
-    './accessibility.js',
-    './utils.js',
-    './icons.js',
     './seed-data.js',
+    './accessibility.js',
     './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
     './vura-map-style.json',
     './vura-driver-style.json',
-    './icon-192.png',
-    './icon-512.png'
 ];
 
-// Dominios externos que queremos cachear dinámicamente.
-const CACHE_CDN_ORIGINS = [
-    'unpkg.com',
-    'cdn.jsdelivr.net',
+// Dominios que siempre van directo a la red (datos en vivo).
+// Cualquier URL que contenga alguno de estos patrones se excluye del cache.
+const NETWORK_ONLY_PATTERNS = [
+    'firebaseio.com',
+    'googleapis.com',
+    'openfreemap.org',
     'tiles.openfreemap.org',
-    'fonts.gstatic.com'
+    'router.project-osrm.org',
+    'open-meteo.com',
+    'wa.me',
 ];
 
-// ── Install: precachear shell de la app ──────────────────────────────────
-self.addEventListener('install', event => {
+// ============================================================
+// INSTALL: precachear el shell completo
+// ============================================================
+self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            // addAll falla si cualquier URL da error; usamos add() uno a uno
-            // para no bloquear la instalación si algún asset no existe.
-            return Promise.allSettled(
-                PRECACHE_URLS.map(url => cache.add(url).catch(() => {}))
-            );
-        }).then(() => self.skipWaiting())
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(SHELL_ASSETS))
+            .then(() => self.skipWaiting())
+            .catch(err => {
+                // Si algun asset falla (ej. en dev sin server), no bloqueamos
+                // la instalacion; simplemente el cache queda incompleto.
+                console.warn('[SW] Precache parcial:', err);
+                return self.skipWaiting();
+            })
     );
 });
 
-// ── Activate: limpiar caches antiguos ────────────────────────────────────
-self.addEventListener('activate', event => {
+// ============================================================
+// ACTIVATE: limpiar caches viejos de versiones anteriores
+// ============================================================
+self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-            )
-        ).then(() => self.clients.claim())
+        caches.keys()
+            .then(keys => Promise.all(
+                keys
+                    .filter(k => k !== CACHE_NAME)
+                    .map(k => {
+                        console.log('[SW] Eliminando cache viejo:', k);
+                        return caches.delete(k);
+                    })
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
-// ── Fetch: stale-while-revalidate para shell, passthrough para Firebase ──
-self.addEventListener('fetch', event => {
+// ============================================================
+// FETCH: estrategia hibrida segun la URL
+// ============================================================
+self.addEventListener('fetch', (event) => {
     const { request } = event;
-    const url = new URL(request.url);
+    const url = request.url;
 
-    // Firebase Realtime Database y Auth siempre van a red — cachearlos
-    // rompería la sincronización en tiempo real que es el corazón de Vura.
-    if (url.hostname.includes('firebaseio.com') ||
-        url.hostname.includes('firebase.googleapis.com') ||
-        url.hostname.includes('identitytoolkit.googleapis.com') ||
-        url.hostname.includes('api.openrouteservice.org')) {
-        return; // passthrough, el navegador maneja la petición normalmente
-    }
-
-    // Solo interceptamos GET
+    // Solo manejamos GET; POST/PUT de Firebase van siempre directo.
     if (request.method !== 'GET') return;
 
+    // URLs de datos en vivo: Network Only (nunca cachear).
+    if (NETWORK_ONLY_PATTERNS.some(p => url.includes(p))) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // Chrome extension requests: ignorar.
+    if (url.startsWith('chrome-extension://')) return;
+
+    // Navegaciones (documentos HTML): Network First con fallback al shell.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .catch(() => caches.match('./index.html'))
+        );
+        return;
+    }
+
+    // Assets del shell y todo lo demas: Cache First.
     event.respondWith(
-        caches.open(CACHE_NAME).then(cache =>
-            cache.match(request).then(cached => {
-                // Siempre intentamos actualizar en segundo plano
-                const fetchPromise = fetch(request)
+        caches.match(request)
+            .then(cached => {
+                if (cached) return cached;
+                // No esta en cache: buscamos en red y guardamos para futuras visitas.
+                return fetch(request)
                     .then(response => {
-                        // Solo cacheamos respuestas válidas de orígenes conocidos
-                        if (response && response.status === 200 &&
-                            (url.origin === self.location.origin ||
-                             CACHE_CDN_ORIGINS.some(o => url.hostname.includes(o)))) {
-                            cache.put(request, response.clone());
+                        // Solo cacheamos respuestas validas (status 200, tipo basico u opaco).
+                        if (!response || response.status !== 200 ||
+                            (response.type !== 'basic' && response.type !== 'opaque')) {
+                            return response;
                         }
+                        const toCache = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => cache.put(request, toCache));
                         return response;
                     })
-                    .catch(() => null);
-
-                // Si tenemos cache: lo devolvemos de inmediato (stale)
-                // y actualizamos en background.
-                // Si no hay cache: esperamos la red; si falla, fallback offline.
-                return cached || fetchPromise.then(res => res || offlineFallback());
+                    .catch(() => {
+                        // Sin red y sin cache: para imagenes devolvemos nada;
+                        // para todo lo demas intentamos el index cacheado.
+                        if (request.destination === 'image') return new Response('', { status: 404 });
+                        return caches.match('./index.html');
+                    });
             })
-        )
     );
 });
-
-function offlineFallback() {
-    return new Response(
-        `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vura — Sin conexión</title>
-<style>
-  body{margin:0;background:#0a0e16;color:#eef2f7;font-family:sans-serif;
-       display:flex;flex-direction:column;align-items:center;justify-content:center;
-       min-height:100vh;text-align:center;padding:24px}
-  .icon{font-size:4rem;margin-bottom:16px}
-  h1{font-size:1.4rem;margin:0 0 8px}
-  p{font-size:0.9rem;color:#9aa7bd;max-width:280px}
-  button{margin-top:24px;padding:12px 24px;background:#2563eb;color:white;
-         border:none;border-radius:12px;font-size:0.9rem;cursor:pointer}
-</style>
-</head>
-<body>
-  <div class="icon">🚌</div>
-  <h1>Sin conexión</h1>
-  <p>Vura necesita internet para mostrar los buses en tiempo real. Conéctate y vuelve a intentarlo.</p>
-  <button onclick="location.reload()">Reintentar</button>
-</body>
-</html>`,
-        { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
-}
