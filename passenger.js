@@ -488,6 +488,7 @@
             document.getElementById('passengerHomeScreen').style.display = 'none';
             document.getElementById('passengerListScreen').style.display = 'none';
             document.getElementById('passengerMapScreen').style.display = 'block';
+            document.body.classList.add('map-fullscreen');
             document.getElementById('activeCompanyName').textContent = company.name;
             document.getElementById('activeCompanyBadge').style.display = company.verified ? 'inline-flex' : 'none';
             document.getElementById('favoriteToggleBtn').classList.toggle('active', !!favoriteCompanyIds[companyId]);
@@ -511,6 +512,7 @@
         function backToCompanyList() {
             document.getElementById('passengerMapScreen').style.display = 'none';
             document.getElementById('passengerListScreen').style.display = 'block';
+            document.body.classList.remove('map-fullscreen');
             selectedCompanyId = null;
             // C2-fix: limpiar followingVehicle al salir del mapa para que
             // no siga rastreando el bus anterior cuando se abre otra empresa.
