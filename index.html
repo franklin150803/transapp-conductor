@@ -813,10 +813,10 @@
     <div class="panel-backdrop" id="panelBackdrop" onclick="setPanelBackdrop(false)" style="display:none;"></div>
 
     <nav class="bottom-nav">
-        <button class="tab-btn active" onclick="switchView('passenger', this)">
+        <button class="tab-btn active" id="passengerTabBtn" onclick="switchView('passenger', this)">
             <span class="tab-icon-img" data-icon-key="bus"></span> Pasajero
         </button>
-        <button class="tab-btn" onclick="switchView('driver', this)">
+        <button class="tab-btn" id="driverTabBtn" onclick="switchView('driver', this)">
             <span class="tab-icon-img" data-icon-key="smartphone"></span> Conductor
         </button>
         <button class="tab-btn" id="adminTabBtn" onclick="switchView('admin', this)" style="display:none;">
