@@ -413,7 +413,7 @@
                 card.dataset.companyId = companyId;
                 card.onclick = () => selectCompany(companyId);
                 const initial = escapeHtml((company.name || '?').trim().charAt(0).toUpperCase());
-                const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(company.color || '') ? company.color : '#0d9488';
+                const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(company.color || '') ? company.color : '#2563eb';
                 card.innerHTML = `
                     <div class="company-card-header">
                         <div style="display:flex; align-items:center; gap:10px; min-width:0;">
