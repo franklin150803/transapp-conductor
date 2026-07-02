@@ -10,7 +10,7 @@
             --primary-light: #3b82f6;
             --primary-dark: #1d4ed8;
             --accent: #64748b;
-            --success: #22c55e;
+            --success: #38bdf8;
             --danger: #ef4444;
             --warning: #f59e0b;
 
@@ -1635,7 +1635,7 @@
         }
 
         .swipe-slider.dragging .swipe-slider-handle { transition: none; cursor: grabbing; }
-        .swipe-slider.completed .swipe-slider-handle { background: linear-gradient(135deg, var(--success), #16a34a); }
+        .swipe-slider.completed .swipe-slider-handle { background: linear-gradient(135deg, var(--success), #0ea5e9); }
 
         .btn-danger {
             background: linear-gradient(135deg, var(--danger), #dc2626);
