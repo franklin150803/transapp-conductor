@@ -2764,3 +2764,12 @@
             opacity: 1;
             pointer-events: auto;
         }
+        /* --- ESTILOS PARA ICONOS SVG OUTLINE --- */
+.app-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    /* Evita que los clicks en el icono interfieran con el botón padre */
+    pointer-events: none; 
+}
