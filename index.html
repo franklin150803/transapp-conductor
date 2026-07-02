@@ -924,6 +924,16 @@
             if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
             if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
             if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); initRouteEditorMapIfNeeded(); }
+
+            // El header y la barra inferior solo se ocultan si la pestaña activa
+            // ahora mismo esta mostrando su mapa en pantalla completa. Si el
+            // pasajero deja el mapa de la empresa abierto y se va a la pestaña
+            // Conductor (o viceversa), no debe quedar oculto el header ahi.
+            const passengerMapOpen = view === 'passenger' &&
+                document.getElementById('passengerMapScreen').style.display === 'block';
+            const driverMapOpen = view === 'driver' &&
+                document.getElementById('driverActive').classList.contains('show');
+            document.body.classList.toggle('map-fullscreen', passengerMapOpen || driverMapOpen);
         }
 
 
