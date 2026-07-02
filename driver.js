@@ -149,6 +149,7 @@
 
             document.getElementById('driverLogin').style.display = 'none';
             document.getElementById('driverActive').classList.add('show');
+            document.body.classList.add('map-fullscreen');
 
             packetsSent = 0;
             addLog('Recorrido iniciado. Activando GPS real...');
@@ -711,6 +712,7 @@
 
             document.getElementById('driverLogin').style.display = 'block';
             document.getElementById('driverActive').classList.remove('show');
+            document.body.classList.remove('map-fullscreen');
             resetSwipeToStart();
 
             addLog('Recorrido finalizado. GPS apagado, ya no se comparte ubicación.');
