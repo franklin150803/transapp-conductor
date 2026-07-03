@@ -11,7 +11,7 @@
 //                   para que el usuario vea algo en vez de la pantalla de
 //                   error del navegador.
 
-const CACHE_NAME = 'vura-shell-v1';
+const CACHE_NAME = 'vura-shell-v2';
 
 // Assets del shell: todo lo que la app necesita para pintarse aunque no haya
 // red. Cuando cambia cualquiera de estos archivos hay que incrementar
