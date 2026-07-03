@@ -277,11 +277,17 @@
             // perfil guardado) se trata como pasajero. Si mas adelante una
             // cuenta necesita ambos roles, se puede sumar aca sin tocar nada
             // mas del flujo.
+            //
+            // PARTE 47: isAdmin tiene prioridad sobre esta restriccion. Antes
+            // un admin (que normalmente no tiene role:'conductor' guardado en
+            // su perfil) quedaba tratado igual que un pasajero/invitado y
+            // perdia acceso al tab de Conductor, que necesita para verificar
+            // que todo funcione. Un admin ve siempre los 3 tabs.
             const passengerTabBtn = document.getElementById('passengerTabBtn');
             const driverTabBtn = document.getElementById('driverTabBtn');
             const userRole = (profile && profile.role) || 'pasajero';
-            passengerTabBtn.style.display = userRole === 'conductor' ? 'none' : 'flex';
-            driverTabBtn.style.display = userRole === 'conductor' ? 'flex' : 'none';
+            passengerTabBtn.style.display = (isAdmin || userRole !== 'conductor') ? 'flex' : 'none';
+            driverTabBtn.style.display = (isAdmin || userRole === 'conductor') ? 'flex' : 'none';
             const correctTabBtn = userRole === 'conductor' ? driverTabBtn : passengerTabBtn;
             const correctViewName = userRole === 'conductor' ? 'driver' : 'passenger';
 
