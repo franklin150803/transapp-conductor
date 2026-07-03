@@ -2046,12 +2046,17 @@
         .vehicle-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            /* Antes: fondo solido en gradiente azul (el "sticker" pegado que
+               se veia mal, Imagen 4). Ahora: un tinte sutil y transparente,
+               igual de espiritu que .toast-icon, para que el icono se sienta
+               integrado y no como una etiqueta superpuesta. */
+            background: rgba(37, 99, 235, 0.12);
+            color: var(--primary-light);
             border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
         .vehicle-item-name { font-weight: 600; font-size: 0.9rem; }
