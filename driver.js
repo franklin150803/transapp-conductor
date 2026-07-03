@@ -181,6 +181,16 @@
                         }
                     });
                 }
+                // FIX MAPA: invalidateSize() debia llamarse siempre, no solo
+                // la primera vez que se crea driverMap. Antes, si el
+                // conductor iniciaba un segundo recorrido (o el contenedor
+                // no tenia su tamaño final listo en los primeros 50ms del
+                // primer recorrido), Leaflet se quedaba con un tamaño
+                // incorrecto (0x0 o desactualizado) y el mapa se veia negro/
+                // cortado permanentemente, porque nunca se le avisaba que
+                // vuelva a medir su contenedor. Mismo patron que ya se usa
+                // en el mapa del pasajero y en el editor de rutas del admin.
+                driverMap.invalidateSize();
                 if (company && company.routePointsIda) {
                     L.polyline(company.routePointsIda, {
                         color: '#22d3ee', weight: 4, opacity: 0.6, dashArray: '10, 8', className: 'route-line-ida'
