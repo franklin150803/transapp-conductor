@@ -18,7 +18,7 @@
             // continuo en vez de saltar de golpe entre niveles enteros;
             // wheelPxPerZoomLevel suaviza el zoom con scroll en desktop.
             map = L.map('map', {
-                zoomControl: true,
+                zoomControl: false,
                 attributionControl: true,
                 minZoom: 3,
                 zoomSnap: 0.5,
