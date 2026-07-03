@@ -8,19 +8,11 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Parte 38: MapLibre GL JS + plugin de integracion con Leaflet, para
-         poder usar tiles vectoriales (con identidad visual propia de Vura,
-         ver style.css y la opcion vuraMapStyle en map.js) dentro del mismo
-         mapa Leaflet de siempre. Toda la logica existente de marcadores,
-         rutas y popups sigue siendo Leaflet normal; esto solo cambia la
-         capa base de "imagen" por una capa vectorial renderizada por GPU.
-         Debe cargarse DESPUES de leaflet.js, porque el plugin extiende el
-         objeto global L agregandole el metodo L.maplibreGL. -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
+    <!-- B2-fix: jsPDF + autotable para exportar historial en PDF desde Admin. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -502,7 +494,7 @@
                     <div class="swipe-slider-fill" id="swipeSliderFill"></div>
                     <span class="swipe-slider-label">Desliza para iniciar →</span>
                     <div class="swipe-slider-handle" id="swipeHandle">
-                        <span class="tab-icon-img" data-icon-key="rocket" data-icon-size="20"></span>
+                        <span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span>
                     </div>
                 </div>
             </div>
@@ -744,6 +736,61 @@
         <span class="toast-message" id="toastMessage">Operación exitosa</span>
     </div>
 
+    <!-- A3-fix: Panel de notificaciones — notifications.js lo busca con
+         getElementById('notificationPanel'). Sin este div, openNotificationPanel()
+         crasheaba con "Cannot read properties of null". -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h3>Notificaciones</h3>
+            <button class="notif-clear-btn" onclick="clearNotificationHistory()">Limpiar</button>
+            <button class="panel-close-btn" onclick="closeNotificationPanel()">✕</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+    </div>
+
+    <!-- A3-fix: Banner de emergencias SOS — admin.js lo busca con
+         getElementById('emergencyBanner'). Sin este div, listenForEmergencies()
+         crasheaba con TypeError en banner.style.display. -->
+    <div class="emergency-banner" id="emergencyBanner" style="display:none;">
+        <div class="emergency-banner-header">
+            <span class="emergency-banner-icon">🚨</span>
+            <strong>Alerta SOS de conductor</strong>
+            <button onclick="document.getElementById('emergencyBanner').style.display='none'">✕</button>
+        </div>
+        <div class="emergency-list" id="emergencyList"></div>
+    </div>
+
+    <!-- A3-fix: Pantalla de onboarding — auth.js la busca con
+         getElementById('onboardingScreen'). Sin este div, maybeShowOnboarding()
+         fallaba silenciosamente y hideSplash() podía dejar la app colgada. -->
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <div class="onboarding-slides">
+            <div class="onboarding-slide active">
+                <div class="onboarding-icon">🚌</div>
+                <h2>Bienvenido a Vura</h2>
+                <p>Ve los buses de Lima en tiempo real.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">📍</div>
+                <h2>Sigue tu ruta</h2>
+                <p>Velocidad, distancia y tiempo estimado de llegada.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">⭐</div>
+                <h2>Guarda tus favoritas</h2>
+                <p>Accede rápido a las empresas que usas siempre.</p>
+            </div>
+        </div>
+        <div class="onboarding-dots">
+            <span class="onboarding-dot active"></span>
+            <span class="onboarding-dot"></span>
+            <span class="onboarding-dot"></span>
+        </div>
+        <button class="btn btn-primary" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
+    </div>
+
+    <div class="panel-backdrop" id="panelBackdrop" onclick="setPanelBackdrop(false)" style="display:none;"></div>
+
     <nav class="bottom-nav">
         <button class="tab-btn active" onclick="switchView('passenger', this)">
             <span class="tab-icon-img" data-icon-key="bus"></span> Pasajero
@@ -759,6 +806,15 @@
     </div><!-- /app-shell -->
 
     <script type="module" src="firebase.js"></script>
+    <!-- D3-fix: Leaflet y MapLibre movidos al final del body para no bloquear
+         el First Paint. La app puede pintar el splash screen y la landing
+         mientras estos scripts ~500KB se descargan en paralelo.
+         Orden importante: Leaflet primero, luego MapLibre, luego el plugin
+         que extiende L con L.maplibreGL(). -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+
     <script src="utils.js"></script>
     <script src="notifications.js"></script>
     <script src="map.js"></script>
@@ -826,7 +882,12 @@
             window.fbOnValue(liveRef, (snap) => {
                 const newLiveVehicles = snap.val() || {};
                 checkNotifiableEvents(newLiveVehicles);
-                previousLiveVehicles = liveVehicles;
+                // A2-fix: clon profundo para que previousLiveVehicles apunte
+                // a un objeto distinto de liveVehicles tras la asignacion de
+                // abajo. Sin esto, checkNotifiableEvents comparaba el mismo
+                // objeto con si mismo (asignacion por referencia) y los
+                // eventos "vehiculo inicio/finalizo recorrido" no disparaban.
+                previousLiveVehicles = JSON.parse(JSON.stringify(liveVehicles));
                 liveVehicles = newLiveVehicles;
                 updateMapFromLiveData();
                 renderPassengerHome();
@@ -911,9 +972,28 @@
             setTimeout(() => showVehiclePanel(empresa, vehiculo), 700);
         }
 
+        // ==================== ALTURA REAL DEL BOTTOM-NAV (Parte 50) ====================
+        // Antes --bottom-nav-h era un valor fijo de 58px en CSS, una
+        // estimacion que falla en celulares con distinta densidad de
+        // pantalla o fuente del sistema, dejando los FABs (⚠️ y 📍) y el
+        // drawer del conductor mal ubicados. Ahora se mide el alto real del
+        // nav con JS y se aplica como variable CSS, asi el calculo es
+        // exacto en cualquier dispositivo.
+        function updateBottomNavHeight() {
+            const nav = document.querySelector('.bottom-nav');
+            if (!nav) return;
+            const h = nav.offsetHeight;
+            if (h > 0) {
+                document.documentElement.style.setProperty('--bottom-nav-h', h + 'px');
+            }
+        }
+
         function init() {
             renderStaticIcons();
             updateOfflineBanner();
+            updateBottomNavHeight();
+            window.addEventListener('resize', updateBottomNavHeight);
+            window.addEventListener('orientationchange', () => setTimeout(updateBottomNavHeight, 300));
             onFirebaseReady(() => {
                 seedIfEmpty();
                 listenAuthState();
