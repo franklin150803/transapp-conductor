@@ -488,6 +488,7 @@
             document.getElementById('passengerHomeScreen').style.display = 'none';
             document.getElementById('passengerListScreen').style.display = 'none';
             document.getElementById('passengerMapScreen').style.display = 'block';
+            document.body.classList.add('map-fullscreen');
             document.getElementById('activeCompanyName').textContent = company.name;
             document.getElementById('activeCompanyBadge').style.display = company.verified ? 'inline-flex' : 'none';
             document.getElementById('favoriteToggleBtn').classList.toggle('active', !!favoriteCompanyIds[companyId]);
@@ -511,7 +512,11 @@
         function backToCompanyList() {
             document.getElementById('passengerMapScreen').style.display = 'none';
             document.getElementById('passengerListScreen').style.display = 'block';
+            document.body.classList.remove('map-fullscreen');
             selectedCompanyId = null;
+            // C2-fix: limpiar followingVehicle al salir del mapa para que
+            // no siga rastreando el bus anterior cuando se abre otra empresa.
+            followingVehicle = null;
             closeVehiclePanel();
             closeIncidentPanel();
             stopListenIncidents();
@@ -567,10 +572,16 @@
                 const company = companies[id];
                 const live = liveVehicles[id] || {};
                 const online = Object.values(live).filter(v => isOnline(v)).length;
+                const safeId = encodeURIComponent(id);
+                // Parte 48: el punto de color debe reflejar si hay buses
+                // activos. Antes siempre se mostraba 🟢 aunque el conteo
+                // fuera 0, lo cual es contradictorio (verde = activo, pero
+                // "0 en línea" dice que no hay nada).
+                const statusDot = online > 0 ? '🟢' : '<span class="ph-fav-chip-dot-off"></span>';
                 return `
-                    <div class="ph-fav-chip" onclick="selectCompany('${id}')">
+                    <div class="ph-fav-chip" onclick="selectCompany(decodeURIComponent('${safeId}'))">
                         <div class="ph-fav-chip-name">${escapeHtml(company.name || id)}</div>
-                        <div class="ph-fav-chip-meta">🟢 ${online} en línea</div>
+                        <div class="ph-fav-chip-meta">${statusDot} ${online} en línea</div>
                     </div>
                 `;
             }).join('');
@@ -998,7 +1009,7 @@
                 const moving = (r.live.speed || 0) >= 3;
                 const speedTxt = moving ? `${Math.round(r.live.speed || 0)} km/h` : 'Detenido';
                 return `
-                    <div class="radar-result-row" onclick="goToRadarResult('${r.companyId}','${r.vehicleId}')">
+                    <div class="radar-result-row" onclick="goToRadarResult(decodeURIComponent('${encodeURIComponent(r.companyId)}'),decodeURIComponent('${encodeURIComponent(r.vehicleId)}'))">
                         <div class="radar-result-rank">${i + 1}</div>
                         <div class="radar-result-body">
                             <div class="radar-result-plate">${escapeHtml(plate)} · ${escapeHtml(r.company.name)}</div>
