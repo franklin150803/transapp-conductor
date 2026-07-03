@@ -253,7 +253,7 @@
                             <div class="vehicle-icon">${appIcon('bus', 22)}</div>
                             <div>
                                 <div class="vehicle-item-name">${escapeHtml(vehicle.plate || vehicleId)}</div>
-                                <div class="vehicle-item-plate">${escapeHtml(company.name)} · ${escapeHtml(vehicleId)}</div>
+                                <div class="vehicle-item-plate">${escapeHtml(company.name)}</div>
                             </div>
                         </div>
                         <span class="vehicle-item-status ${online ? 'online' : 'offline'}">
