@@ -600,4 +600,345 @@
                 <div class="form-group">
                     <label>Lugares de paso (separados por coma)</label>
                     <input type="text" id="regCompanyDestinos" placeholder="Ej: Universidad Nacional, Plaza Norte, Hospital Rebagliati">
-                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino,
+                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino, no solo el nombre de tu empresa.</p>
+                </div>
+                <button class="btn btn-primary" onclick="registerCompany()">
+                    <span class="tab-icon-img" data-icon-key="shieldCheck" data-icon-size="18"></span> Registrar Empresa
+                </button>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span> Agregar Vehículo a una Empresa</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Empresa</label>
+                        <select id="addVehicleCompany"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre / placa del vehículo</label>
+                        <input type="text" id="addVehiclePlate" placeholder="Ej: ABC-123">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addVehicleToCompany()">
+                    <span class="tab-icon-img" data-icon-key="plus" data-icon-size="18"></span> Agregar Vehículo
+                </button>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span> Vehículos Registrados</h3>
+                <div class="vehicle-list-admin" id="vehicleListAdmin"></div>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="clock" data-icon-size="20"></span> Historial de Recorridos</h3>
+                <div class="stats-grid stats-grid-sm">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statHistoryToday">0</div>
+                        <div class="stat-label">Recorridos hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgDuration">—</div>
+                        <div class="stat-label">Duración promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statKmToday">0</div>
+                        <div class="stat-label">Km recorridos hoy</div>
+                    </div>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+    </div>
+        <div class="toast" id="toast">
+        <div class="toast-icon success" id="toastIcon">✓</div>
+        <span class="toast-message" id="toastMessage">Operación exitosa</span>
+    </div>
+
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h3>Notificaciones</h3>
+            <button class="notif-clear-btn" onclick="clearNotificationHistory()">Limpiar</button>
+            <button class="panel-close-btn" onclick="closeNotificationPanel()">✕</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+    </div>
+
+    <div class="emergency-banner" id="emergencyBanner" style="display:none;">
+        <div class="emergency-banner-header">
+            <span class="emergency-banner-icon">🚨</span>
+            <strong>Alerta SOS de conductor</strong>
+            <button onclick="document.getElementById('emergencyBanner').style.display='none'">✕</button>
+        </div>
+        <div class="emergency-list" id="emergencyList"></div>
+    </div>
+
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <div class="onboarding-slides">
+            <div class="onboarding-slide active">
+                <div class="onboarding-icon">🚌</div>
+                <h2>Bienvenido a Vura</h2>
+                <p>Ve los buses de Lima en tiempo real.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">📍</div>
+                <h2>Sigue tu ruta</h2>
+                <p>Velocidad, distancia y tiempo estimado de llegada.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">⭐</div>
+                <h2>Guarda tus favoritas</h2>
+                <p>Accede rápido a las empresas que usas siempre.</p>
+            </div>
+        </div>
+        <div class="onboarding-dots">
+            <span class="onboarding-dot active"></span>
+            <span class="onboarding-dot"></span>
+            <span class="onboarding-dot"></span>
+        </div>
+        <button class="btn btn-primary" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
+    </div>
+
+    <div class="panel-backdrop" id="panelBackdrop" onclick="setPanelBackdrop(false)" style="display:none;"></div>
+
+    <nav class="bottom-nav">
+        <button class="tab-btn active" onclick="switchView('passenger', this)">
+            <span class="tab-icon-img" data-icon-key="bus"></span> Pasajero
+        </button>
+        <button class="tab-btn" onclick="switchView('driver', this)">
+            <span class="tab-icon-img" data-icon-key="smartphone"></span> Conductor
+        </button>
+        <button class="tab-btn" id="adminTabBtn" onclick="switchView('admin', this)" style="display:none;">
+            <span class="tab-icon-img" data-icon-key="settings"></span> Admin
+        </button>
+    </nav>
+
+    </div><!-- /app-shell -->
+
+    <script type="module" src="firebase.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+
+    <script src="utils.js"></script>
+    <script src="notifications.js"></script>
+    <script src="map.js"></script>
+    <script src="passenger.js"></script>
+    <script src="driver.js"></script>
+    <script src="admin.js"></script>
+    <script src="rutas-lima.js"></script>
+    <script src="seed-data.js"></script>
+    <script src="auth.js"></script>
+
+    <script>
+
+        // ==================== STATE ====================
+        let companies = {};
+        let liveVehicles = {};
+        let previousLiveVehicles = {};
+        let notifiedEtaKeys = {};
+        let selectedCompanyId = null;
+        let map = null;
+        let driverMap = null;
+        let vehicleMarkers = {};
+        let vehicleLastKnownPos = {};
+        let routePolylines = {};
+        let driverMarker = null;
+        let watchId = null;
+        let packetsSent = 0;
+        let activeDriverPath = null;
+        let currentDriverSentido = 'ida';
+
+        // ==================== FIREBASE BOOTSTRAP ====================
+        function onFirebaseReady(fn) {
+            if (window.firebaseReady) fn();
+            else window.addEventListener('firebase-ready', fn, { once: true });
+        }
+
+        function seedIfEmpty() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbGet(companiesRef).then((snap) => {
+                if (!snap.exists()) {
+                    window.fbSet(companiesRef, seedCompanies);
+                }
+            });
+        }
+
+        function listenCompanies() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbOnValue(companiesRef, (snap) => {
+                companies = snap.val() || {};
+                renderCompanyList();
+                renderPassengerHome();
+                renderAdminVehicleList();
+                populateDriverSelects();
+                populateAddVehicleSelect();
+                updateStats();
+                if (map) {
+                    Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
+                }
+                tryOpenSharedTripLink();
+            }, (err) => {
+                showToast('No se pudo cargar la lista de empresas. Revisa tu conexión.', 'error');
+                console.error('Error leyendo empresas:', err);
+            });
+        }
+
+        function listenLiveVehicles() {
+            const liveRef = window.fbRef(window.fbDb, 'vehiculos_live');
+            window.fbOnValue(liveRef, (snap) => {
+                const newLiveVehicles = snap.val() || {};
+                checkNotifiableEvents(newLiveVehicles);
+                previousLiveVehicles = JSON.parse(JSON.stringify(liveVehicles));
+                liveVehicles = newLiveVehicles;
+                updateMapFromLiveData();
+                renderPassengerHome();
+                renderAdminVehicleList();
+                updateStats();
+                if (document.getElementById('vehiclePanel').classList.contains('show')) {
+                    refreshOpenPanel();
+                }
+            }, (err) => {
+                showToast('No se pudo actualizar la ubicación de los vehículos.', 'error');
+                console.error('Error leyendo vehiculos_live:', err);
+            });
+        }
+
+        // ==================== NAVIGATION ====================
+        function switchView(view, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            btn.classList.add('active');
+
+            if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
+            if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
+            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); initRouteEditorMapIfNeeded(); }
+        }
+
+
+        // ==================== PWA INSTALL ====================
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.getElementById('installBanner').classList.add('show');
+        });
+
+        window.installApp = function () {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(() => {
+                document.getElementById('installBanner').classList.remove('show');
+                deferredInstallPrompt = null;
+            });
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        window.switchView = switchView;
+
+        // ==================== INIT ====================
+        function renderStaticIcons() {
+            document.querySelectorAll('[data-icon-key]').forEach(el => {
+                const key = el.getAttribute('data-icon-key');
+                const size = parseInt(el.getAttribute('data-icon-size') || '20', 10);
+                const filled = el.getAttribute('data-icon-filled') === 'true';
+                el.innerHTML = window.appIcon ? window.appIcon(key, size, '', filled) : '';
+            });
+        }
+
+        // ==================== ENLACE COMPARTIDO (Parte 35) ====================
+        let pendingSharedTrip = (() => {
+            const params = new URLSearchParams(location.search);
+            const empresa = params.get('empresa');
+            const vehiculo = params.get('vehiculo');
+            return (empresa && vehiculo) ? { empresa, vehiculo } : null;
+        })();
+
+        function tryOpenSharedTripLink() {
+            if (!pendingSharedTrip) return;
+            const { empresa, vehiculo } = pendingSharedTrip;
+            if (!companies[empresa]) return;
+            pendingSharedTrip = null;
+            const passengerTabBtn = document.querySelector('.tab-btn');
+            if (passengerTabBtn) switchView('passenger', passengerTabBtn);
+            selectCompany(empresa);
+            setTimeout(() => showVehiclePanel(empresa, vehiculo), 700);
+        }
+
+        // ==================== ALTURA REAL DEL BOTTOM-NAV (Parte 50) ====================
+        function updateBottomNavHeight() {
+            const nav = document.querySelector('.bottom-nav');
+            if (!nav) return;
+            const h = nav.offsetHeight;
+            if (h > 0) {
+                document.documentElement.style.setProperty('--bottom-nav-h', h + 'px');
+            }
+        }
+
+        function init() {
+            renderStaticIcons();
+            updateOfflineBanner();
+            updateBottomNavHeight();
+            window.addEventListener('resize', updateBottomNavHeight);
+            window.addEventListener('orientationchange', () => setTimeout(updateBottomNavHeight, 300));
+            onFirebaseReady(() => {
+                seedIfEmpty();
+                listenAuthState();
+                setTimeout(() => {
+                    listenCompanies();
+                    listenLiveVehicles();
+                }, 400);
+            });
+            setInterval(() => {
+                if (window._openPanel) refreshOpenPanel();
+                updateCompanyListCounts();
+                if (selectedCompanyId) renderFleetSummary(selectedCompanyId);
+            }, 1000);
+
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                if (splash && !splash.classList.contains('fade-out')) {
+                    document.getElementById('splashStatus').textContent = 'Esto está tardando más de lo normal...';
+                    setTimeout(() => splash.classList.add('fade-out'), 1500);
+                }
+            }, 8000);
+        }
+
+        window.addEventListener('beforeunload', (e) => {
+            if (activeDriverPath) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        function updateOfflineBanner() {
+            const banner = document.getElementById('offlineBanner');
+            if (!navigator.onLine) {
+                banner.classList.add('show');
+                if (activeDriverPath) {
+                    setDriverStatus('err', 'Sin conexión a Internet. No se está transmitiendo tu ubicación en este momento.');
+                    addLog('Conexión perdida. La transmisión se reanudará automáticamente al recuperar Internet.');
+                }
+            } else {
+                banner.classList.remove('show');
+                if (activeDriverPath) {
+                    setDriverStatus('ok', 'Conexión recuperada. Transmitiendo a Firebase en vivo.');
+                    addLog('Conexión a Internet recuperada.');
+                }
+            }
+        }
+
+        window.addEventListener('online', updateOfflineBanner);
+        window.addEventListener('offline', updateOfflineBanner);
+
+        window.addEventListener('load', init);
+    </script>
+
+    <script src="auth.js"></script>
+</body>
+</html>
