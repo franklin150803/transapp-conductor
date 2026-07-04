@@ -11,7 +11,7 @@
 //                   para que el usuario vea algo en vez de la pantalla de
 //                   error del navegador.
 
-const CACHE_NAME = 'vura-shell-v2';
+const CACHE_NAME = 'vura-shell-v3';
 
 // Assets del shell: todo lo que la app necesita para pintarse aunque no haya
 // red. Cuando cambia cualquiera de estos archivos hay que incrementar
@@ -36,7 +36,6 @@ const SHELL_ASSETS = [
     './icon-192.png',
     './icon-512.png',
     './vura-map-style.json',
-    './vura-driver-style.json',
 ];
 
 // Dominios que siempre van directo a la red (datos en vivo).
