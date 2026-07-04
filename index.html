@@ -427,10 +427,10 @@
                     <label>Sentido del recorrido</label>
                     <div class="sentido-choice-grid">
                         <button type="button" class="sentido-btn sentido-ida active" id="sentidoIdaBtn" onclick="setDriverSentido('ida')">
-                            🔵 Ida
+                            <span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida
                         </button>
                         <button type="button" class="sentido-btn sentido-retorno" id="sentidoRetornoBtn" onclick="setDriverSentido('retorno')">
-                            🔴 Retorno
+                            <span class="status-dot-small stopped" style="background:var(--retorno-color);animation:none;"></span>Retorno
                         </button>
                     </div>
                 </div>
@@ -478,7 +478,7 @@
                         </div>
                         <div class="driver-drawer-summary-divider"></div>
                         <div class="driver-drawer-summary-item">
-                            <span class="sentido-active-badge" id="sentidoActiveBadge">🔵 Ida</span>
+                            <span class="sentido-active-badge" id="sentidoActiveBadge"><span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida</span>
                             <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar</button>
                         </div>
                         <div class="driver-drawer-summary-divider"></div>
@@ -604,8 +604,8 @@
                     <label>Dibuja la ruta en el mapa</label>
                     <p class="form-hint" id="routeEditorHint">Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.</p>
                     <div class="route-editor-toolbar">
-                        <button type="button" class="route-editor-mode-btn active" id="routeEditorModeIda" onclick="setRouteEditorMode('ida')">🔵 Ida</button>
-                        <button type="button" class="route-editor-mode-btn" id="routeEditorModeRetorno" onclick="setRouteEditorMode('retorno')">🔴 Retorno</button>
+                        <button type="button" class="route-editor-mode-btn active" id="routeEditorModeIda" onclick="setRouteEditorMode('ida')"><span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida</button>
+                        <button type="button" class="route-editor-mode-btn" id="routeEditorModeRetorno" onclick="setRouteEditorMode('retorno')"><span class="status-dot-small stopped" style="background:var(--retorno-color);animation:none;"></span>Retorno</button>
                         <span class="route-editor-count" id="routeEditorCount">0 puntos</span>
                     </div>
                     <div class="route-editor-map-wrapper">
