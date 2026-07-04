@@ -87,11 +87,11 @@
         function updateSentidoActiveBadge() {
             const badge = document.getElementById('sentidoActiveBadge');
             if (currentDriverSentido === 'retorno') {
-                badge.textContent = '🔴 Retorno';
+                badge.innerHTML = '<span class="status-dot-small stopped" style="background:#ff5252;animation:none;"></span>Retorno';
                 badge.style.color = '#ff5252';
                 badge.style.background = 'rgba(255, 82, 82, 0.1)';
             } else {
-                badge.textContent = '🔵 Ida';
+                badge.innerHTML = '<span class="status-dot-small" style="background:#22d3ee;animation:none;"></span>Ida';
                 badge.style.color = '#22d3ee';
                 badge.style.background = 'rgba(34, 211, 238, 0.1)';
             }
