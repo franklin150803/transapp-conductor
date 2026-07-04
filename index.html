@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@4.4.5/index.min.css" rel="stylesheet">
+    <!-- B2-fix: jsPDF + autotable para exportar historial en PDF desde Admin. -->
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -26,31 +27,11 @@
     </div>
 
     <!-- Landing Page -->
-    <div class="landing-screen" id="landingScreen" style="display:none;">
-        <div class="landing-hero">
-            <div class="landing-logo"><span class="tab-icon-img" data-icon-key="bus" data-icon-size="56"></span></div>
-            <h1 class="landing-title">Vura</h1>
-            <p class="landing-subtitle">Transporte público en tiempo real</p>
-            <span class="landing-beta-tag">Vura Beta — Ayúdanos a mejorar el transporte público</span>
-        </div>
 
-        <div class="landing-cta">
-            <button class="btn btn-primary landing-cta-btn" onclick="goToAuth('register')">
-                Empezar ahora — Es gratis
-            </button>
-            <button class="landing-login-link" onclick="goToAuth('login')">
-                Ya tengo cuenta, iniciar sesión
-            </button>
-            <button class="landing-guest-link" id="guestLink" onclick="continueAsGuest()">
-                Ver el mapa sin registrarme
-            </button>
-        </div>
-    </div>
 
-    <!-- Auth Screen -->
+    <!-- Auth Screen (login/registro) -->
     <div class="auth-screen" id="authScreen" style="display:none;">
         <div class="auth-card">
-            <button class="auth-back-link" onclick="backToLanding()" style="margin-bottom:8px;">← Volver al inicio</button>
             <div class="auth-logo"><span class="tab-icon-img" data-icon-key="bus" data-icon-size="40"></span></div>
             <h1 class="auth-title">Vura</h1>
             <p class="auth-subtitle">Transporte público en tiempo real</p>
@@ -144,6 +125,10 @@
                 <p class="auth-error" id="regDrvError"></p>
             </div>
 
+            <button class="landing-guest-link" id="guestLink" onclick="continueAsGuest()">
+                Ver el mapa sin registrarme
+            </button>
+
             <p class="auth-beta-note">Vura Beta — Ayúdanos a mejorar el transporte público.</p>
         </div>
     </div>
@@ -235,9 +220,11 @@
         </div>
 
         <div id="passengerMapScreen" style="display:none;">
+            <!-- Mapa a 100% de pantalla, igual que el conductor -->
             <div class="passenger-fullmap-wrap">
                 <div id="map"></div>
 
+                <!-- Barra superior flotante: volver + nombre empresa + favorito -->
                 <div class="pmap-top-bar">
                     <button class="pmap-back-btn" onclick="backToCompanyList()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
@@ -257,15 +244,19 @@
                     <button class="pmap-fav-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Favorita"><span data-icon-key="star" data-icon-size="20" data-icon-filled="true"></span></button>
                 </div>
 
+                <!-- Banner de incidentes flotante -->
                 <div class="incident-banner" id="incidentBanner" style="display:none;"></div>
 
+                <!-- Banner de modo enfoque -->
                 <div class="focus-mode-banner" id="focusModeBanner">
                     <span id="focusModeBannerText">🎯 Modo enfoque activo</span>
                     <button onclick="deactivateFocusMode()">Salir</button>
                 </div>
 
+                <!-- Carrusel de flota flotante en la parte inferior -->
                 <div class="pmap-fleet-bar" id="fleetSummary"></div>
 
+                <!-- FABs -->
                 <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos"><span data-icon-key="mapPin" data-icon-size="22"></span></button>
                 <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente"><span data-icon-key="warning" data-icon-size="22"></span></button>
             </div>
@@ -431,6 +422,11 @@
             </div>
 
             <div class="driver-active" id="driverActive">
+                <!-- Parte 42: el mapa ahora ocupa toda la pantalla disponible
+                     de fondo; todo lo demas (GPS, ocupacion, vehiculos
+                     adyacentes, log) vive en un drawer deslizable encima.
+                     Mismos IDs que antes, solo cambia donde viven en el DOM,
+                     asi que driver.js no necesita ningun cambio. -->
                 <div class="driver-map-full">
                     <div id="driverMap"></div>
                 </div>
@@ -452,6 +448,7 @@
                         <span class="driver-drawer-grip"></span>
                     </button>
 
+                    <!-- Resumen visible siempre, incluso con el drawer colapsado -->
                     <div class="driver-drawer-summary">
                         <div class="driver-drawer-summary-item">
                             <span class="driver-drawer-summary-value" id="driverSpeedSummary">0 km/h</span>
@@ -575,6 +572,12 @@
                     <input type="text" id="regCompanyRoute" placeholder="Ej: San Juan de Lurigancho → Centro de Lima">
                 </div>
 
+                <!-- Parte 51: editor visual de rutas. Antes, al registrar
+                     una empresa, las coordenadas de la ruta se generaban al
+                     azar alrededor de Lima — quedaba bonito en el mapa pero
+                     no correspondia a ninguna calle real. Ahora el admin
+                     dibuja la ruta de verdad, tocando el mapa punto por
+                     punto. -->
                 <div class="form-group">
                     <label>Dibuja la ruta en el mapa</label>
                     <p class="form-hint" id="routeEditorHint">Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.</p>
@@ -649,11 +652,15 @@
             </div>
         </div>
     </div>
-        <div class="toast" id="toast">
+
+    <div class="toast" id="toast">
         <div class="toast-icon success" id="toastIcon">✓</div>
         <span class="toast-message" id="toastMessage">Operación exitosa</span>
     </div>
 
+    <!-- A3-fix: Panel de notificaciones — notifications.js lo busca con
+         getElementById('notificationPanel'). Sin este div, openNotificationPanel()
+         crasheaba con "Cannot read properties of null". -->
     <div class="notification-panel" id="notificationPanel">
         <div class="notification-panel-header">
             <h3>Notificaciones</h3>
@@ -663,6 +670,9 @@
         <div class="notification-list" id="notificationList"></div>
     </div>
 
+    <!-- A3-fix: Banner de emergencias SOS — admin.js lo busca con
+         getElementById('emergencyBanner'). Sin este div, listenForEmergencies()
+         crasheaba con TypeError en banner.style.display. -->
     <div class="emergency-banner" id="emergencyBanner" style="display:none;">
         <div class="emergency-banner-header">
             <span class="emergency-banner-icon">🚨</span>
@@ -672,6 +682,9 @@
         <div class="emergency-list" id="emergencyList"></div>
     </div>
 
+    <!-- A3-fix: Pantalla de onboarding — auth.js la busca con
+         getElementById('onboardingScreen'). Sin este div, maybeShowOnboarding()
+         fallaba silenciosamente y hideSplash() podía dejar la app colgada. -->
     <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
         <div class="onboarding-slides">
             <div class="onboarding-slide active">
@@ -715,6 +728,11 @@
     </div><!-- /app-shell -->
 
     <script type="module" src="firebase.js"></script>
+    <!-- D3-fix: Leaflet y MapLibre movidos al final del body para no bloquear
+         el First Paint. La app puede pintar el splash screen y la landing
+         mientras estos scripts ~500KB se descargan en paralelo.
+         Orden importante: Leaflet primero, luego MapLibre, luego el plugin
+         que extiende L con L.maplibreGL(). -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
@@ -725,22 +743,20 @@
     <script src="passenger.js"></script>
     <script src="driver.js"></script>
     <script src="admin.js"></script>
-    <script src="rutas-lima.js"></script>
     <script src="seed-data.js"></script>
-    <script src="auth.js"></script>
 
     <script>
 
         // ==================== STATE ====================
         let companies = {};
         let liveVehicles = {};
-        let previousLiveVehicles = {};
-        let notifiedEtaKeys = {};
+        let previousLiveVehicles = {}; // snapshot anterior, para detectar cambios que merecen notificacion
+        let notifiedEtaKeys = {}; // evita repetir el mismo aviso de "esta cerca" una y otra vez
         let selectedCompanyId = null;
         let map = null;
         let driverMap = null;
         let vehicleMarkers = {};
-        let vehicleLastKnownPos = {};
+        let vehicleLastKnownPos = {}; // ultima posicion/heading conocido por marcador, para animar y calcular rumbo
         let routePolylines = {};
         let driverMarker = null;
         let watchId = null;
@@ -788,6 +804,11 @@
             window.fbOnValue(liveRef, (snap) => {
                 const newLiveVehicles = snap.val() || {};
                 checkNotifiableEvents(newLiveVehicles);
+                // A2-fix: clon profundo para que previousLiveVehicles apunte
+                // a un objeto distinto de liveVehicles tras la asignacion de
+                // abajo. Sin esto, checkNotifiableEvents comparaba el mismo
+                // objeto con si mismo (asignacion por referencia) y los
+                // eventos "vehiculo inicio/finalizo recorrido" no disparaban.
                 previousLiveVehicles = JSON.parse(JSON.stringify(liveVehicles));
                 liveVehicles = newLiveVehicles;
                 updateMapFromLiveData();
@@ -852,6 +873,10 @@
         }
 
         // ==================== ENLACE COMPARTIDO (Parte 35) ====================
+        // Si alguien abre Vura desde un enlace compartido por WhatsApp
+        // (?empresa=X&vehiculo=Y), apenas lleguen los datos de empresas lo
+        // llevamos directo a ese vehiculo en el mapa, en vez de dejarlo en
+        // la lista general.
         let pendingSharedTrip = (() => {
             const params = new URLSearchParams(location.search);
             const empresa = params.get('empresa');
@@ -862,7 +887,7 @@
         function tryOpenSharedTripLink() {
             if (!pendingSharedTrip) return;
             const { empresa, vehiculo } = pendingSharedTrip;
-            if (!companies[empresa]) return;
+            if (!companies[empresa]) return; // todavia no llegan los datos de esa empresa
             pendingSharedTrip = null;
             const passengerTabBtn = document.querySelector('.tab-btn');
             if (passengerTabBtn) switchView('passenger', passengerTabBtn);
@@ -871,6 +896,12 @@
         }
 
         // ==================== ALTURA REAL DEL BOTTOM-NAV (Parte 50) ====================
+        // Antes --bottom-nav-h era un valor fijo de 58px en CSS, una
+        // estimacion que falla en celulares con distinta densidad de
+        // pantalla o fuente del sistema, dejando los FABs (⚠️ y 📍) y el
+        // drawer del conductor mal ubicados. Ahora se mide el alto real del
+        // nav con JS y se aplica como variable CSS, asi el calculo es
+        // exacto en cualquier dispositivo.
         function updateBottomNavHeight() {
             const nav = document.querySelector('.bottom-nav');
             if (!nav) return;
@@ -900,6 +931,9 @@
                 if (selectedCompanyId) renderFleetSummary(selectedCompanyId);
             }, 1000);
 
+            // Seguro: si por algun motivo Firebase nunca responde (sin
+            // Internet, error de configuracion), no dejamos a la persona
+            // viendo el splash para siempre.
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
                 if (splash && !splash.classList.contains('fade-out')) {
