@@ -12,16 +12,15 @@
 // esta activo, etc.) y no tienen ningun fondo propio.
 
 (function () {
-  var SVG_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
   window.APP_ICONS = {
     bus:
-      '<path d="M4 16V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"/>' +
-      '<path d="M4 16a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1M18 16a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1"/>' +
-      '<path d="M4 11h16"/>' +
-      '<path d="M7 16v2M17 16v2"/>' +
-      '<circle cx="7.5" cy="16" r="1.5"/>' +
-      '<circle cx="16.5" cy="16" r="1.5"/>',
+      '<rect x="3" y="3" width="18" height="14" rx="2"/>' +
+      '<path d="M3 10h18"/>' +
+      '<circle cx="7" cy="20" r="1"/>' +
+      '<circle cx="17" cy="20" r="1"/>' +
+      '<line x1="7" y1="14" x2="7.01" y2="14"/>' +
+      '<line x1="17" y1="14" x2="17.01" y2="14"/>',
 
     smartphone:
       '<rect x="6" y="2" width="12" height="20" rx="2" ry="2"/>' +
@@ -92,18 +91,21 @@
       '<polyline points="16 17 21 12 16 7"/>' +
       '<line x1="21" y1="12" x2="9" y2="12"/>',
 
-    // --- PARTE 46: set ampliado, tomado del mockup "outline white" pero
-    // limpiado (mismo stroke=currentColor, sin colores fijos ni fondos) ---
+    // Fase A: iconos agregados a partir del sistema de iconos outline
+    // enviado (mismo estilo: stroke fino, sin relleno, esquinas redondeadas).
+    trash:
+      '<polyline points="3 6 5 6 21 6"/>' +
+      '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
 
-    chevronDown:
-      '<polyline points="6 9 12 15 18 9"/>',
+    warning:
+      '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>' +
+      '<line x1="12" y1="9" x2="12" y2="13"/>' +
+      '<line x1="12" y1="17" x2="12.01" y2="17"/>',
 
-    arrowLeft:
-      '<line x1="19" y1="12" x2="5" y2="12"/>' +
-      '<polyline points="12 19 5 12 12 5"/>',
-
-    minus:
-      '<line x1="5" y1="12" x2="19" y2="12"/>',
+    radar:
+      '<circle cx="12" cy="12" r="10"/>' +
+      '<line x1="12" y1="12" x2="12" y2="6"/>' +
+      '<line x1="12" y1="12" x2="16" y2="16"/>',
 
     undo:
       '<path d="M3 7v6h6"/>' +
@@ -112,45 +114,21 @@
     copy:
       '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
       '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-
-    trash:
-      '<polyline points="3 6 5 6 21 6"/>' +
-      '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
-
-    radar:
-      '<circle cx="12" cy="12" r="10"/>' +
-      '<line x1="12" y1="12" x2="12" y2="6"/>' +
-      '<line x1="12" y1="12" x2="16" y2="16"/>',
-
-    warning:
-      '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>' +
-      '<line x1="12" y1="9" x2="12" y2="13"/>' +
-      '<line x1="12" y1="17" x2="12.01" y2="17"/>',
-
-    info:
-      '<circle cx="12" cy="12" r="10"/>' +
-      '<line x1="12" y1="16" x2="12" y2="12"/>' +
-      '<line x1="12" y1="8" x2="12.01" y2="8"/>',
-
-    addVehicle:
-      '<path d="M4 16V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"/>' +
-      '<path d="M4 11h16"/>' +
-      '<circle cx="7.5" cy="16" r="1.5"/>' +
-      '<circle cx="16.5" cy="16" r="1.5"/>' +
-      '<circle cx="19" cy="5" r="4" fill="var(--icon-badge-bg, #000)" stroke-width="1.5"/>' +
-      '<line x1="19" y1="3.3" x2="19" y2="6.7" stroke-width="1.5"/>' +
-      '<line x1="17.3" y1="5" x2="20.7" y2="5" stroke-width="1.5"/>',
   };
 
   // Genera el markup de un icono a partir del diccionario de iconos de la
   // app. size: tamano en px (cuadrado). className: clases css opcionales.
-  // Devuelve un <svg> inline (stroke="currentColor", fill="none", sin
-  // fondo propio) en vez del <img> con PNG que se usaba antes.
-  window.appIcon = function (name, size, className) {
+  // filled: si es true, el icono se dibuja relleno (fill=currentColor) en
+  // vez de solo contorno -- usado para estados "activo", como la estrella
+  // de favoritos ya marcada. Devuelve un <svg> inline (stroke="currentColor",
+  // sin fondo propio) en vez del <img> con PNG que se usaba antes.
+  window.appIcon = function (name, size, className, filled) {
     size = size || 20;
     className = className ? ' ' + className : '';
     var body = window.APP_ICONS[name] || '';
-    return '<svg class="app-icon' + className + '" ' + SVG_ATTRS +
+    var fill = filled ? 'currentColor' : 'none';
+    return '<svg class="app-icon' + className + '" viewBox="0 0 24 24" fill="' + fill +
+      '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' +
       ' width="' + size + '" height="' + size + '" style="display:inline-block;vertical-align:middle;flex-shrink:0;">' +
       body + '</svg>';
   };
