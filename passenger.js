@@ -241,10 +241,10 @@
 
             const sentidoEl = document.getElementById('vpSentido');
             if (live && live.sentido === 'retorno') {
-                sentidoEl.textContent = '🔴 Retorno';
+                sentidoEl.innerHTML = '<span class="status-dot-small stopped" style="background:#ff5252;animation:none;"></span>Retorno';
                 sentidoEl.style.color = '#ff5252';
             } else if (live) {
-                sentidoEl.textContent = '🔵 Ida';
+                sentidoEl.innerHTML = '<span class="status-dot-small" style="background:#22d3ee;animation:none;"></span>Ida';
                 sentidoEl.style.color = '#22d3ee';
             } else {
                 sentidoEl.textContent = '—';
