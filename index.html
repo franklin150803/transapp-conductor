@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vura · Transporte en Tiempo Real</title>
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- B2-fix: jsPDF + autotable para exportar historial en PDF desde Admin. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=24">
+</head>
+<body>
+
+    <script src="icons.js?v=2"></script>
+
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-logo" data-icon-key="bus" data-icon-size="64"></div>
+        <h1 class="splash-title">Vura</h1>
+        <p class="splash-status" id="splashStatus">Conectando...</p>
+    </div>
+
+    <!-- Landing Page -->
+
+
+    <!-- Auth Screen (login/registro) -->
+    <div class="auth-screen" id="authScreen" style="display:none;">
+        <div class="auth-card">
+            <div class="auth-logo"><span class="tab-icon-img" data-icon-key="bus" data-icon-size="40"></span></div>
+            <h1 class="auth-title">Vura</h1>
+            <p class="auth-subtitle">Transporte público en tiempo real</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="authTabLogin" onclick="setAuthMode('login')">Iniciar sesión</button>
+                <button class="auth-tab" id="authTabRegister" onclick="setAuthMode('register')">Registrarme</button>
+            </div>
+
+            <!-- Login -->
+            <div class="auth-form" id="authFormLogin">
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="loginEmail" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Iniciar sesión</button>
+                <p class="auth-error" id="loginError"></p>
+            </div>
+
+            <!-- Registro: elegir rol -->
+            <div class="auth-form" id="authFormRegisterRole" style="display:none;">
+                <p class="auth-role-prompt">¿Cómo quieres registrarte?</p>
+                <div class="role-choice-grid">
+                    <button class="role-choice-btn" onclick="setRegisterRole('pasajero')">
+                        <span class="role-choice-icon" data-icon-key="bus" data-icon-size="32"></span>
+                        <span>Pasajero</span>
+                    </button>
+                    <button class="role-choice-btn" onclick="setRegisterRole('conductor')">
+                        <span class="role-choice-icon" data-icon-key="smartphone" data-icon-size="32"></span>
+                        <span>Conductor</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Registro: pasajero -->
+            <div class="auth-form" id="authFormRegisterPassenger" style="display:none;">
+                <button class="auth-back-link" onclick="backToRoleChoice()">← Cambiar tipo de cuenta</button>
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="regPassName" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="regPassEmail" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono (opcional)</label>
+                    <input type="text" id="regPassPhone" placeholder="987654321">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="regPassPassword" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="btn btn-primary" id="regPassBtn" onclick="doRegisterPassenger()">Crear cuenta de pasajero</button>
+                <p class="auth-error" id="regPassError"></p>
+            </div>
+
+            <!-- Registro: conductor -->
+            <div class="auth-form" id="authFormRegisterDriver" style="display:none;">
+                <button class="auth-back-link" onclick="backToRoleChoice()">← Cambiar tipo de cuenta</button>
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="regDrvName" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label>DNI</label>
+                    <input type="text" id="regDrvDni" placeholder="12345678">
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <select id="regDrvCompany"></select>
+                </div>
+                <div class="form-group">
+                    <label>Número de vehículo / placa</label>
+                    <input type="text" id="regDrvVehicle" placeholder="ABC-123">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="regDrvEmail" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="regDrvPassword" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="btn btn-primary" id="regDrvBtn" onclick="doRegisterDriver()">Crear cuenta de conductor</button>
+                <p class="auth-note">Tu cuenta quedará pendiente de validación por la empresa antes de poder transmitir GPS.</p>
+                <p class="auth-error" id="regDrvError"></p>
+            </div>
+
+            <button class="landing-guest-link" id="guestLink" onclick="continueAsGuest()">
+                Ver el mapa sin registrarme
+            </button>
+
+            <p class="auth-beta-note">Vura Beta — Ayúdanos a mejorar el transporte público.</p>
+        </div>
+    </div>
+
+    <div class="app-shell" id="appShell" style="display:none;">
+
+    <header class="app-header">
+        <div class="header-top-row">
+            <div></div>
+            <button class="profile-float-btn" onclick="toggleProfileView()" id="profileFloatBtn" title="Mi Perfil"><span class="tab-icon-img" data-icon-key="user" data-icon-size="20"></span></button>
+        </div>
+    </header>
+
+    <div class="offline-banner" id="offlineBanner">
+        <span>Sin conexión a Internet. Los datos pueden estar desactualizados.</span>
+    </div>
+
+    <!-- Passenger View -->
+    <div class="view active" id="view-passenger">
+    <div id="passengerHomeScreen">
+            <div class="ph-greeting">
+                <h2 id="phGreetingText">Buenos días</h2>
+                <p>Selecciona una empresa de transporte para ver su ruta</p>
+            </div>
+
+            <div class="guest-banner" id="guestBanner" style="display:none;">
+                <span>Estás como invitado — tus favoritos no pasan a otro dispositivo.</span>
+                <button onclick="goToAuth('register')">Crear cuenta</button>
+            </div>
+
+            <button class="ph-search-cta" onclick="showCompanyListFromHome()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                Buscar empresa de transporte
+            </button>
+
+            <button class="ph-radar-cta" onclick="openRadarPanel()">
+                <span data-icon-key="radar" data-icon-size="14"></span> Radar — buses cercanos a ti
+            </button>
+
+            <div class="ph-stats-row">
+                <div class="ph-stat">
+                    <div class="ph-stat-value" id="phStatCompanies">0</div>
+                    <div class="ph-stat-label">Empresas</div>
+                </div>
+                <div class="ph-stat">
+                    <div class="ph-stat-value" id="phStatOnline">0</div>
+                    <div class="ph-stat-label">Vehículos en línea</div>
+                </div>
+            </div>
+
+            <div class="ph-favorites" id="phFavoritesSection" style="display:none;">
+                <h3>Favoritas</h3>
+                <div class="ph-favorites-row" id="phFavoritesRow"></div>
+            </div>
+        </div>
+
+        <div id="passengerListScreen" style="display:none;">
+            <div class="list-back-bar">
+                <button class="map-back-btn" onclick="backToPassengerHome()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Inicio
+                </button>
+            </div>
+            <div class="search-container">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Buscar empresa de transporte..." oninput="filterCompanies()">
+                </div>
+            </div>
+            <div class="company-list" id="companyList">
+                <div class="company-card-skeleton"></div>
+                <div class="company-card-skeleton"></div>
+                <div class="company-card-skeleton"></div>
+            </div>
+        </div>
+
+        <div id="passengerMapScreen" style="display:none;">
+            <!-- Mapa a 100% de pantalla, igual que el conductor -->
+            <div class="passenger-fullmap-wrap">
+                <div id="map"></div>
+
+                <!-- Barra superior flotante: volver + nombre empresa + favorito -->
+                <div class="pmap-top-bar">
+                    <button class="pmap-back-btn" onclick="backToCompanyList()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <div class="pmap-company-info">
+                        <span class="pmap-company-name" id="activeCompanyName">—</span>
+                        <span class="verified-badge" id="activeCompanyBadge" style="display:none;">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M9 12l2 2 4-4"/>
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                            Verificada
+                        </span>
+                    </div>
+                    <button class="pmap-fav-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Favorita"><span data-icon-key="star" data-icon-size="20" data-icon-filled="true"></span></button>
+                </div>
+
+                <!-- Banner de incidentes flotante -->
+                <div class="incident-banner" id="incidentBanner" style="display:none;"></div>
+
+                <!-- Banner de modo enfoque -->
+                <div class="focus-mode-banner" id="focusModeBanner">
+                    <span id="focusModeBannerText">🎯 Modo enfoque activo</span>
+                    <button onclick="deactivateFocusMode()">Salir</button>
+                </div>
+
+                <!-- Carrusel de flota flotante en la parte inferior -->
+                <div class="pmap-fleet-bar" id="fleetSummary"></div>
+
+                <!-- FABs -->
+                <button class="location-fab" onclick="centerOnUserLocation()" title="Mi ubicación" id="locationFab" style="position: absolute; right: 14px; bottom: 250px; width: 44px; height: 44px; border-radius: var(--r-full); border: 1px solid var(--border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--text); display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s ease;"><span data-icon-key="smartphone" data-icon-size="22"></span></button>
+                <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos"><span data-icon-key="mapPin" data-icon-size="22"></span></button>
+                <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente"><span data-icon-key="warning" data-icon-size="22"></span></button>
+            </div>
+        </div>
+
+        <div class="incident-panel" id="radarPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title"><span data-icon-key="radar" data-icon-size="16"></span> Radar Vura</span>
+                <button class="vehicle-panel-close" onclick="closeRadarPanel()">×</button>
+            </div>
+            <p class="incident-panel-hint">Los buses en línea más cercanos a tu ubicación, sin importar la empresa.</p>
+            <div id="radarList">
+                <p class="fleet-empty">Buscando tu ubicación...</p>
+            </div>
+        </div>
+
+        <div class="incident-panel" id="stopsPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title">Mis paraderos favoritos</span>
+                <button class="vehicle-panel-close" onclick="closeStopsPanel()">×</button>
+            </div>
+            <p class="incident-panel-hint">Mueve el mapa hasta tu punto de referencia (tu casa, tu parada de siempre) y guárdalo para encontrarlo rápido la próxima vez.</p>
+            <button class="btn btn-primary" onclick="saveCurrentMapCenterAsStop()" style="margin-bottom:16px;">
+                📍 Guardar el centro del mapa como paradero
+            </button>
+            <div id="stopsList"></div>
+        </div>
+
+        <div class="incident-panel" id="incidentPanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title">Reportar incidente</span>
+                <button class="vehicle-panel-close" onclick="closeIncidentPanel()">×</button>
+            </div>
+            <p class="incident-panel-hint">Tu reporte es anónimo y se muestra a otros pasajeros de esta empresa por unas horas.</p>
+            <div class="incident-type-grid" id="incidentTypeGrid">
+                <button class="incident-type-btn" data-type="trafico" onclick="selectIncidentType('trafico')">🚦 Tráfico</button>
+                <button class="incident-type-btn" data-type="desvio" onclick="selectIncidentType('desvio')">↪️ Desvío</button>
+                <button class="incident-type-btn" data-type="paro" onclick="selectIncidentType('paro')">✊ Paro</button>
+                <button class="incident-type-btn" data-type="accidente" onclick="selectIncidentType('accidente')">🚨 Accidente</button>
+                <button class="incident-type-btn" data-type="otro" onclick="selectIncidentType('otro')">ℹ️ Otro</button>
+            </div>
+            <div class="form-group">
+                <label>Comentario (opcional)</label>
+                <input type="text" id="incidentComment" maxlength="80" placeholder="Ej: cerca al óvalo, carril bloqueado...">
+            </div>
+            <button class="btn btn-primary" id="incidentSubmitBtn" onclick="submitIncidentReport()">Enviar reporte</button>
+        </div>
+
+        <div class="vehicle-panel" id="vehiclePanel">
+            <div class="vehicle-panel-handle"></div>
+            <div class="vehicle-panel-header">
+                <span class="vehicle-panel-title" id="vehiclePanelTitle">Vehículo</span>
+                <button class="vehicle-panel-close" onclick="closeVehiclePanel()">×</button>
+            </div>
+            <div class="vehicle-info-grid">
+                <div class="vehicle-info-item">
+                    <label>Empresa</label>
+                    <value id="vpCompany">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Vehículo</label>
+                    <value id="vpPlate">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Sentido</label>
+                    <value id="vpSentido">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Velocidad</label>
+                    <value id="vpSpeed">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Distancia</label>
+                    <value id="vpDistance">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Tiempo estimado</label>
+                    <value id="vpEta">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Estado</label>
+                    <value id="vpStatus">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Última actualización</label>
+                    <value id="vpUpdate">
+                        <span class="freshness-ring" id="vpFreshnessRing"></span>
+                        <span id="vpUpdateText">-</span>
+                    </value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Precisión GPS <span id="vpGpsQualityDot" class="gps-quality-dot">⚪</span></label>
+                    <value id="vpAccuracy">-</value>
+                </div>
+                <div class="vehicle-info-item">
+                    <label>Ocupación</label>
+                    <value id="vpOccupancy">-</value>
+                </div>
+            </div>
+            <div class="verified-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                Empresa Verificada
+            </div>
+            <div class="vp-actions-row">
+                <button class="follow-vehicle-btn" id="followVehicleBtn" onclick="toggleFollowVehicle()">
+                    Seguir vehículo
+                </button>
+                <button class="share-trip-btn" id="shareTripBtn" onclick="shareVehicleTrip()">
+                    📤 Compartir
+                </button>
+            </div>
+            <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()">
+                🎯 Modo enfoque
+            </button>
+            <button class="wait-signal-btn" id="waitSignalBtn" onclick="signalWaiting()">
+                🙋 Estoy esperando este bus
+            </button>
+        </div>
+    </div>
+
+    <!-- Driver View -->
+    <div class="view" id="view-driver">
+        <div class="driver-container">
+            <div class="driver-card" id="driverLogin">
+                <h2>🚐 Modo Conductor</h2>
+                <p>Transmite tu ubicación real en vivo a los pasajeros</p>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <select id="driverCompany"></select>
+                </div>
+                <div class="form-group">
+                    <label>Vehículo</label>
+                    <select id="driverVehicle"></select>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del conductor</label>
+                    <input type="text" id="driverName" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label>Sentido del recorrido</label>
+                    <div class="sentido-choice-grid">
+                        <button type="button" class="sentido-btn sentido-ida active" id="sentidoIdaBtn" onclick="setDriverSentido('ida')">
+                            <span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida
+                        </button>
+                        <button type="button" class="sentido-btn sentido-retorno" id="sentidoRetornoBtn" onclick="setDriverSentido('retorno')">
+                            <span class="status-dot-small stopped" style="background:var(--retorno-color);animation:none;"></span>Retorno
+                        </button>
+                    </div>
+                </div>
+                <div class="swipe-slider" id="startSwipeSlider">
+                    <div class="swipe-slider-fill" id="swipeSliderFill"></div>
+                    <span class="swipe-slider-label">Desliza para iniciar →</span>
+                    <div class="swipe-slider-handle" id="swipeHandle">
+                        <span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="driver-active" id="driverActive">
+                <!-- Parte 42: el mapa ahora ocupa toda la pantalla disponible
+                     de fondo; todo lo demas (GPS, ocupacion, vehiculos
+                     adyacentes, log) vive en un drawer deslizable encima.
+                     Mismos IDs que antes, solo cambia donde viven en el DOM,
+                     asi que driver.js no necesita ningun cambio. -->
+                <div class="driver-map-full">
+                    <div id="driverMap"></div>
+                </div>
+
+                <div class="driver-floating-top">
+                    <div class="status-badge wait" id="driverStatusBadge">
+                        <div class="status-dot"></div>
+                        <span id="driverStatusText">Solicitando permiso de ubicación...</span>
+                    </div>
+
+                    <div class="waiting-alert" id="waitingAlert" style="display:none;">
+                        <span class="waiting-alert-icon">🙋</span>
+                        <span class="waiting-alert-text" id="waitingAlertText">0 pasajeros esperando</span>
+                    </div>
+                </div>
+
+                <div class="driver-drawer" id="driverDrawer">
+                    <button class="driver-drawer-handle" id="driverDrawerHandle" onclick="toggleDriverDrawer()">
+                        <span class="driver-drawer-grip"></span>
+                    </button>
+
+                    <!-- Resumen visible siempre, incluso con el drawer colapsado -->
+                    <div class="driver-drawer-summary">
+                        <div class="driver-drawer-summary-item">
+                            <span class="driver-drawer-summary-value" id="driverSpeedSummary">0 km/h</span>
+                            <span class="driver-drawer-summary-label">Velocidad</span>
+                        </div>
+                        <div class="driver-drawer-summary-divider"></div>
+                        <div class="driver-drawer-summary-item">
+                            <span class="sentido-active-badge" id="sentidoActiveBadge"><span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida</span>
+                            <button class="sentido-change-link" onclick="toggleActiveSentido()">Cambiar</button>
+                        </div>
+                        <div class="driver-drawer-summary-divider"></div>
+                        <div class="driver-drawer-summary-item">
+                            <span class="driver-drawer-summary-value" id="driverSentSummary">0</span>
+                            <span class="driver-drawer-summary-label">Envíos</span>
+                        </div>
+                    </div>
+
+                    <div class="driver-drawer-content">
+                        <div class="gps-ring">
+                            <span class="status-text">EN VIVO</span>
+                            <span class="status-icon"><span class="tab-icon-img" data-icon-key="mapPin" data-icon-size="28"></span></span>
+                            <span class="gps-text">GPS real del celular</span>
+                        </div>
+
+                        <div class="gps-info-grid">
+                            <div class="gps-info-item">
+                                <label>Latitud</label>
+                                <value id="driverLat">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Longitud</label>
+                                <value id="driverLng">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Velocidad</label>
+                                <value id="driverSpeed">0 km/h</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Precisión <span id="driverGpsQualityDot" class="gps-quality-dot">⚪</span></label>
+                                <value id="driverAccuracy">—</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Estado</label>
+                                <value id="driverMoveStatus">Detenido</value>
+                            </div>
+                            <div class="gps-info-item">
+                                <label>Envíos</label>
+                                <value id="driverSent">0</value>
+                            </div>
+                        </div>
+
+                        <div class="adjacent-vehicles" id="adjacentVehicles">
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔼 Adelante</span>
+                                <span class="adjacent-value" id="adjacentAheadText">—</span>
+                            </div>
+                            <div class="adjacent-vehicle-row">
+                                <span class="adjacent-label">🔽 Atrás</span>
+                                <span class="adjacent-value" id="adjacentBehindText">—</span>
+                            </div>
+                        </div>
+
+                        <div class="occupancy-control">
+                            <p class="occupancy-control-label">¿Cómo va el bus de pasajeros?</p>
+                            <div class="occupancy-btn-row" id="occupancyBtnRow">
+                                <button class="occupancy-btn" data-level="vacio" onclick="setOccupancy('vacio')">🟢 Vacío</button>
+                                <button class="occupancy-btn" data-level="medio" onclick="setOccupancy('medio')">🟡 Medio</button>
+                                <button class="occupancy-btn" data-level="lleno" onclick="setOccupancy('lleno')">🔴 Lleno</button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger" onclick="confirmFinishRecorrido()">
+                            <span class="tab-icon-img" data-icon-key="flag" data-icon-size="18"></span> Finalizar recorrido
+                        </button>
+
+                        <div class="log-console" id="logConsole">
+                            <div class="log-entry">Sistema listo. Esperando inicio...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin View -->
+    <div class="view" id="view-admin">
+        <div class="admin-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statCompanies">0</div>
+                    <div class="stat-label">Empresas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statVehicles">0</div>
+                    <div class="stat-label">Vehículos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statOnline">0</div>
+                    <div class="stat-label">En línea</div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="building" data-icon-size="20"></span> Registrar Nueva Empresa</h3>
+                <div class="form-group">
+                    <label>Nombre de la empresa</label>
+                    <input type="text" id="regCompanyName" placeholder="Ej: Transportes Lima Express">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>RUC</label>
+                        <input type="text" id="regCompanyRuc" placeholder="20XXXXXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="regCompanyPhone" placeholder="987654321">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ruta (origen → destino)</label>
+                    <input type="text" id="regCompanyRoute" placeholder="Ej: San Juan de Lurigancho → Centro de Lima">
+                </div>
+
+                <!-- Parte 51: editor visual de rutas. Antes, al registrar
+                     una empresa, las coordenadas de la ruta se generaban al
+                     azar alrededor de Lima — quedaba bonito en el mapa pero
+                     no correspondia a ninguna calle real. Ahora el admin
+                     dibuja la ruta de verdad, tocando el mapa punto por
+                     punto. -->
+                <div class="form-group">
+                    <label>Dibuja la ruta en el mapa</label>
+                    <p class="form-hint" id="routeEditorHint">Toca el mapa para ir agregando puntos de la ruta de IDA, en orden, desde el origen hasta el destino.</p>
+                    <div class="route-editor-toolbar">
+                        <button type="button" class="route-editor-mode-btn active" id="routeEditorModeIda" onclick="setRouteEditorMode('ida')"><span class="status-dot-small" style="background:var(--ida-color);animation:none;"></span>Ida</button>
+                        <button type="button" class="route-editor-mode-btn" id="routeEditorModeRetorno" onclick="setRouteEditorMode('retorno')"><span class="status-dot-small stopped" style="background:var(--retorno-color);animation:none;"></span>Retorno</button>
+                        <span class="route-editor-count" id="routeEditorCount">0 puntos</span>
+                    </div>
+                    <div class="route-editor-map-wrapper">
+                        <div id="routeEditorMap"></div>
+                    </div>
+                    <div class="route-editor-actions">
+                        <button type="button" class="route-editor-action-btn" onclick="undoRouteEditorPoint()"><span data-icon-key="undo" data-icon-size="16"></span> Deshacer último punto</button>
+                        <button type="button" class="route-editor-action-btn" onclick="mirrorRouteEditorRetorno()"><span data-icon-key="copy" data-icon-size="16"></span> Copiar Ida como Retorno</button>
+                        <button type="button" class="route-editor-action-btn danger" onclick="clearRouteEditor()"><span data-icon-key="trash" data-icon-size="16"></span> Borrar todo</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Horario de operación</label>
+                    <input type="text" id="regCompanySchedule" placeholder="Ej: 5:00 AM - 10:00 PM">
+                </div>
+                <div class="form-group">
+                    <label>Lugares de paso (separados por coma)</label>
+                    <input type="text" id="regCompanyDestinos" placeholder="Ej: Universidad Nacional, Plaza Norte, Hospital Rebagliati">
+                    <p class="form-hint">Esto permite que el pasajero te encuentre buscando un destino, no solo el nombre de tu empresa.</p>
+                </div>
+                <button class="btn btn-primary" onclick="registerCompany()">
+                    <span class="tab-icon-img" data-icon-key="shieldCheck" data-icon-size="18"></span> Registrar Empresa
+                </button>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span> Agregar Vehículo a una Empresa</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Empresa</label>
+                        <select id="addVehicleCompany"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre / placa del vehículo</label>
+                        <input type="text" id="addVehiclePlate" placeholder="Ej: ABC-123">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addVehicleToCompany()">
+                    <span class="tab-icon-img" data-icon-key="plus" data-icon-size="18"></span> Agregar Vehículo
+                </button>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="bus" data-icon-size="20"></span> Vehículos Registrados</h3>
+                <div class="vehicle-list-admin" id="vehicleListAdmin"></div>
+            </div>
+
+            <div class="admin-panel">
+                <h3><span class="tab-icon-img" data-icon-key="clock" data-icon-size="20"></span> Historial de Recorridos</h3>
+                <div class="stats-grid stats-grid-sm">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statHistoryToday">0</div>
+                        <div class="stat-label">Recorridos hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgDuration">—</div>
+                        <div class="stat-label">Duración promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statKmToday">0</div>
+                        <div class="stat-label">Km recorridos hoy</div>
+                    </div>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile View -->
+    <div class="view" id="view-profile">
+        <div class="driver-container" style="max-width: 480px; margin: 0 auto; padding: 24px 16px;">
+            
+            <!-- TARJETA DE PERFIL (Minimalista y Seria) -->
+            <div class="driver-card" style="border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--glass-bg); backdrop-filter: var(--glass-blur); padding: 20px;">
+                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                        <span class="tab-icon-img" data-icon-key="user" data-icon-size="22"></span>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0;" id="profileNameHeader">Mi Cuenta</h2>
+                        <span id="profileRoleHeader" style="font-size: 0.72rem; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Pasajero</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);">Nombre</span>
+                        <span id="profileNameVal" style="color: var(--text); font-weight: 600;">—</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);">Correo</span>
+                        <span id="profileEmailVal" style="color: var(--text); font-weight: 600; font-family: monospace;">—</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);">Tipo de Cuenta</span>
+                        <span id="profileRoleVal" style="color: var(--text); font-weight: 600;">—</span>
+                    </div>
+                    
+                    <!-- Extras de Conductor (DNI/Placa) -->
+                    <div id="profileDriverExtra" style="display: none; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                            <span style="color: var(--text-secondary);">DNI de Conductor</span>
+                            <span id="profileDniVal" style="color: var(--text); font-weight: 600;">—</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                            <span style="color: var(--text-secondary);">Vehículo / Placa</span>
+                            <span id="profileVehicleVal" style="color: var(--text); font-weight: 600; font-family: monospace;">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETA DE CONFIGURACIONES -->
+            <div class="driver-card" style="margin-top: 16px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--glass-bg); backdrop-filter: var(--glass-blur); padding: 20px;">
+                <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">Configuración de la App</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    
+                    <!-- Instalar Aplicación (PWA) -->
+                    <div id="installBanner" style="display: none !important; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 70%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Descargar Aplicación</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Instala Vura en tu pantalla de inicio</span>
+                        </div>
+                        <button class="btn" onclick="installApp()" style="width: auto; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; border-radius: var(--r-sm); background: var(--primary); color: #000; box-shadow: none; min-height: 0;">Instalar</button>
+                    </div>
+
+                    <!-- Alertas SOS -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 75%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Alertas SOS en vivo</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Notificar emergencias en la ruta</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="configSosAlerts" checked onchange="saveAppSetting('sosAlerts', this.checked)">
+                        </label>
+                    </div>
+                    
+                    <!-- Alertas de Sonido -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 75%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Sonido de Notificaciones</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Emitir pitido sonoro al recibir avisos</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="configSoundAlerts" checked onchange="saveAppSetting('soundAlerts', this.checked)">
+                        </label>
+                    </div>
+
+                    <!-- Modo Texto Grande -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 75%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Modo Texto Grande</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Aumentar tamaño de letras para mejor lectura</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="configLargeText" onchange="saveAppSetting('largeText', this.checked)">
+                        </label>
+                    </div>
+
+                    <!-- Ahorro Batería -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 75%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Ahorro de batería</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Desactivar mapas 3D complejos</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="configBatterySave" onchange="saveAppSetting('batterySave', this.checked)">
+                        </label>
+                    </div>
+
+                    <!-- Auto-centrado -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="max-width: 75%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Centrado automático</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Seguir la posición del bus seleccionado</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="configAutoCenter" checked onchange="saveAppSetting('autoCenter', this.checked)">
+                        </label>
+                    </div>
+
+                    <!-- Frecuencia GPS (Solo visible para Conductores/Admin) -->
+                    <div id="configGpsRow" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
+                        <div style="max-width: 60%;">
+                            <strong style="font-size: 0.85rem; display: block; color: var(--text);">Frecuencia GPS</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 2px;">Intervalo de subida de ubicación</span>
+                        </div>
+                        <select id="configGpsInterval" onchange="saveAppSetting('gpsInterval', this.value)" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: var(--r-sm); font-size: 0.78rem; font-weight: 600; outline: none; border-color: var(--border);">
+                            <option value="2">Alto Rendimiento (2s)</option>
+                            <option value="5" selected>Balanceado (5s)</option>
+                            <option value="10">Ahorro de Datos (10s)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÓN CERRAR SESIÓN (Botón secundario fino) -->
+            <button class="btn btn-ghost" onclick="doLogout()" style="margin-top: 16px; border: 1px solid rgba(244, 63, 94, 0.25); background: rgba(244, 63, 94, 0.05); color: #f43f5e; font-weight: 600; font-size: 0.88rem; border-radius: var(--r-lg);">
+                Cerrar sesión
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <div class="toast-icon success" id="toastIcon">✓</div>
+        <span class="toast-message" id="toastMessage">Operación exitosa</span>
+    </div>
+
+    <!-- A3-fix: Panel de notificaciones — notifications.js lo busca con
+         getElementById('notificationPanel'). Sin este div, openNotificationPanel()
+         crasheaba con "Cannot read properties of null". -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h3>Notificaciones</h3>
+            <button class="notif-clear-btn" onclick="clearNotificationHistory()">Limpiar</button>
+            <button class="panel-close-btn" onclick="closeNotificationPanel()">✕</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+    </div>
+
+    <!-- A3-fix: Banner de emergencias SOS — admin.js lo busca con
+         getElementById('emergencyBanner'). Sin este div, listenForEmergencies()
+         crasheaba con TypeError en banner.style.display. -->
+    <div class="emergency-banner" id="emergencyBanner" style="display:none;">
+        <div class="emergency-banner-header">
+            <span class="emergency-banner-icon">🚨</span>
+            <strong>Alerta SOS de conductor</strong>
+            <button onclick="document.getElementById('emergencyBanner').style.display='none'">✕</button>
+        </div>
+        <div class="emergency-list" id="emergencyList"></div>
+    </div>
+
+    <!-- A3-fix: Pantalla de onboarding — auth.js la busca con
+         getElementById('onboardingScreen'). Sin este div, maybeShowOnboarding()
+         fallaba silenciosamente y hideSplash() podía dejar la app colgada. -->
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <div class="onboarding-slides">
+            <div class="onboarding-slide active">
+                <div class="onboarding-icon">🚌</div>
+                <h2>Bienvenido a Vura</h2>
+                <p>Ve los buses de Lima en tiempo real.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">📍</div>
+                <h2>Sigue tu ruta</h2>
+                <p>Velocidad, distancia y tiempo estimado de llegada.</p>
+            </div>
+            <div class="onboarding-slide">
+                <div class="onboarding-icon">⭐</div>
+                <h2>Guarda tus favoritas</h2>
+                <p>Accede rápido a las empresas que usas siempre.</p>
+            </div>
+        </div>
+        <div class="onboarding-dots">
+            <span class="onboarding-dot active"></span>
+            <span class="onboarding-dot"></span>
+            <span class="onboarding-dot"></span>
+        </div>
+        <button class="btn btn-primary" id="onboardingNextBtn" onclick="onboardingNext()">Siguiente</button>
+    </div>
+
+    <div class="panel-backdrop" id="panelBackdrop" onclick="setPanelBackdrop(false)" style="display:none;"></div>
+
+    <nav class="bottom-nav">
+        <button class="tab-btn active" id="passengerTabBtn" onclick="switchView('passenger', this)">
+            <span class="tab-icon-img" data-icon-key="bus"></span> Pasajero
+        </button>
+        <button class="tab-btn" id="driverTabBtn" onclick="switchView('driver', this)">
+            <span class="tab-icon-img" data-icon-key="smartphone"></span> Conductor
+        </button>
+        <button class="tab-btn" id="adminTabBtn" onclick="switchView('admin', this)" style="display:none;">
+            <span class="tab-icon-img" data-icon-key="settings"></span> Admin
+        </button>
+        <button class="tab-btn" id="profileTabBtn" onclick="switchView('profile', this)">
+            <span class="tab-icon-img" data-icon-key="user"></span> Perfil
+        </button>
+    </nav>
+
+    </div><!-- /app-shell -->
+
+    <!-- 1) Firebase config injection (REPLACE WITH YOUR ACTUAL CONFIG) -->
+    <script>
+      window.__FIREBASE_CONFIG__ = {
+        apiKey: "AIzaSyC3E45VIACvOOsdif2TBtQfNbVv2rOqtNk",
+        authDomain: "transapp-prueba.firebaseapp.com",
+        databaseURL: "https://transapp-prueba-default-rtdb.firebaseio.com",
+        projectId: "transapp-prueba",
+        storageBucket: "transapp-prueba.firebasestorage.app",
+        messagingSenderId: "1020351679207",
+        appId: "1:1020351679207:web:75bff846e26cf60e263042"
+      };
+    </script>
+
+    <!-- 2) Firebase bootstrap (vanilla JS, no bundler) -->
+    <script src="firebase.js?v=2"></script>
+
+    <!-- D3-fix: Leaflet y MapLibre movidos al final del body para no bloquear
+         el First Paint. La app puede pintar el splash screen y la landing
+         mientras estos scripts ~500KB se descargan en paralelo.
+         Orden importante: Leaflet primero, luego MapLibre, luego el plugin
+         que extiende L con L.maplibreGL(). -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+
+    <script src="utils.js?v=4"></script>
+    <script src="notifications.js"></script>
+    <script src="map.js?v=6"></script>
+    <script src="passenger.js?v=8"></script>
+    <script src="driver.js?v=2"></script>
+    <script src="admin.js?v=2"></script>
+    <script src="seed-data.js"></script>
+
+    <script>
+
+        // ==================== STATE ====================
+        let companies = {};
+        let liveVehicles = {};
+        let previousLiveVehicles = {}; // snapshot anterior, para detectar cambios que merecen notificacion
+        let notifiedEtaKeys = {}; // evita repetir el mismo aviso de "esta cerca" una y otra vez
+        let selectedCompanyId = null;
+        let map = null;
+        let driverMap = null;
+        let vehicleMarkers = {};
+        let vehicleLastKnownPos = {}; // ultima posicion/heading conocido por marcador, para animar y calcular rumbo
+        let routePolylines = {};
+        let driverMarker = null;
+        let watchId = null;
+        let packetsSent = 0;
+        let activeDriverPath = null;
+        let currentDriverSentido = 'ida';
+
+        // ==================== FIREBASE BOOTSTRAP ====================
+        function onFirebaseReady(fn) {
+            if (window.firebaseReady) fn();
+            else window.addEventListener('firebase-ready', fn, { once: true });
+        }
+
+        function seedIfEmpty() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbGet(companiesRef).then((snap) => {
+                let currentVal = snap.val() || {};
+                const needsSeed = !snap.exists() || 
+                                  Object.keys(currentVal).length === 0 || 
+                                  (currentVal["sanjuan_1"] && !currentVal["sanjuan_1"].routePointsIda);
+                                  
+                if (needsSeed) {
+                    console.log("Re-seeding database with complete routes...");
+                    window.fbSet(companiesRef, seedCompanies);
+                }
+            });
+        }
+
+        function listenCompanies() {
+            const companiesRef = window.fbRef(window.fbDb, 'empresas');
+            window.fbOnValue(companiesRef, (snap) => {
+                companies = snap.val() || {};
+                renderCompanyList();
+                renderPassengerHome();
+                renderAdminVehicleList();
+                populateDriverSelects();
+                populateAddVehicleSelect();
+                updateStats();
+                if (map) {
+                    Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
+                }
+                tryOpenSharedTripLink();
+            }, (err) => {
+                showToast('No se pudo cargar la lista de empresas. Revisa tu conexión.', 'error');
+                console.error('Error leyendo empresas:', err);
+            });
+        }
+
+        function listenLiveVehicles() {
+            const liveRef = window.fbRef(window.fbDb, 'vehiculos_live');
+            window.fbOnValue(liveRef, (snap) => {
+                const newLiveVehicles = snap.val() || {};
+                checkNotifiableEvents(newLiveVehicles);
+                // A2-fix: clon profundo para que previousLiveVehicles apunte
+                // a un objeto distinto de liveVehicles tras la asignacion de
+                // abajo. Sin esto, checkNotifiableEvents comparaba el mismo
+                // objeto con si mismo (asignacion por referencia) y los
+                // eventos "vehiculo inicio/finalizo recorrido" no disparaban.
+                previousLiveVehicles = JSON.parse(JSON.stringify(liveVehicles));
+                liveVehicles = newLiveVehicles;
+                
+                // Reactividad: solo repintar cuando hay datos nuevos de Firebase
+                updateMapFromLiveData();
+                renderPassengerHome();
+                renderAdminVehicleList();
+                updateStats();
+                
+                // Actualizar contadores y flota solo si hay mutación real
+                updateCompanyListCounts();
+                if (selectedCompanyId) renderFleetSummary(selectedCompanyId);
+                
+                if (document.getElementById('vehiclePanel').classList.contains('show')) {
+                    refreshOpenPanel();
+                }
+            }, (err) => {
+                showToast('No se pudo actualizar la ubicación de los vehículos.', 'error');
+                console.error('Error leyendo vehiculos_live:', err);
+            });
+        }
+
+        // ==================== NAVIGATION ====================
+        function switchView(view, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            if (btn) btn.classList.add('active');
+
+            const floatBtn = document.getElementById('profileFloatBtn');
+            if (floatBtn) {
+                floatBtn.classList.toggle('active', view === 'profile');
+            }
+
+            if (view === 'passenger' && map) setTimeout(() => map.invalidateSize(), 100);
+            if (view === 'driver' && driverMap) setTimeout(() => driverMap.invalidateSize(), 100);
+            if (view === 'admin') { renderAdminVehicleList(); loadAndRenderHistory(); initRouteEditorMapIfNeeded(); }
+        }
+
+        window.toggleProfileView = function() {
+            const profileView = document.getElementById('view-profile');
+            if (!profileView) return;
+            const isProfileActive = profileView.classList.contains('active');
+            
+            if (isProfileActive) {
+                const profile = window.currentUserProfile;
+                const isAdmin = !!(profile && profile.isAdmin === true);
+                const userRole = (profile && profile.role) || 'pasajero';
+                const correctViewName = userRole === 'conductor' ? 'driver' : 'passenger';
+                const correctTabBtn = userRole === 'conductor' ? document.getElementById('driverTabBtn') : document.getElementById('passengerTabBtn');
+                switchView(correctViewName, correctTabBtn);
+            } else {
+                const profileTabBtn = document.getElementById('profileTabBtn');
+                switchView('profile', profileTabBtn);
+            }
+        };
+
+
+        // ==================== PWA INSTALL ====================
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const banner = document.getElementById('installBanner');
+            if (banner) banner.style.setProperty('display', 'flex', 'important');
+        });
+
+        window.installApp = function () {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(() => {
+                const banner = document.getElementById('installBanner');
+                if (banner) banner.style.setProperty('display', 'none', 'important');
+                deferredInstallPrompt = null;
+            });
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        window.switchView = switchView;
+
+        // ==================== INIT ====================
+        function renderStaticIcons() {
+            document.querySelectorAll('[data-icon-key]').forEach(el => {
+                const key = el.getAttribute('data-icon-key');
+                const size = parseInt(el.getAttribute('data-icon-size') || '20', 10);
+                const filled = el.getAttribute('data-icon-filled') === 'true';
+                el.innerHTML = window.appIcon ? window.appIcon(key, size, '', filled) : '';
+            });
+        }
+
+        // ==================== ENLACE COMPARTIDO (Parte 35) ====================
+        // Si alguien abre Vura desde un enlace compartido por WhatsApp
+        // (?empresa=X&vehiculo=Y), apenas lleguen los datos de empresas lo
+        // llevamos directo a ese vehiculo en el mapa, en vez de dejarlo en
+        // la lista general.
+        let pendingSharedTrip = (() => {
+            const params = new URLSearchParams(location.search);
+            const empresa = params.get('empresa');
+            const vehiculo = params.get('vehiculo');
+            return (empresa && vehiculo) ? { empresa, vehiculo } : null;
+        })();
+
+        function tryOpenSharedTripLink() {
+            if (!pendingSharedTrip) return;
+            const { empresa, vehiculo } = pendingSharedTrip;
+            if (!companies[empresa]) return; // todavia no llegan los datos de esa empresa
+            pendingSharedTrip = null;
+            const passengerTabBtn = document.querySelector('.tab-btn');
+            if (passengerTabBtn) switchView('passenger', passengerTabBtn);
+            selectCompany(empresa);
+            setTimeout(() => showVehiclePanel(empresa, vehiculo), 700);
+        }
+
+        // ==================== ALTURA REAL DEL BOTTOM-NAV (Parte 50) ====================
+        // Antes --bottom-nav-h era un valor fijo de 58px en CSS, una
+        // estimacion que falla en celulares con distinta densidad de
+        // pantalla o fuente del sistema, dejando los FABs (⚠️ y 📍) y el
+        // drawer del conductor mal ubicados. Ahora se mide el alto real del
+        // nav con JS y se aplica como variable CSS, asi el calculo es
+        // exacto en cualquier dispositivo.
+        function updateBottomNavHeight() {
+            const nav = document.querySelector('.bottom-nav');
+            if (!nav) return;
+            const h = nav.offsetHeight;
+            if (h > 0) {
+                document.documentElement.style.setProperty('--bottom-nav-h', h + 'px');
+            }
+        }
+
+        function init() {
+            renderStaticIcons();
+            updateOfflineBanner();
+            updateBottomNavHeight();
+            loadAppSettings();
+            window.addEventListener('resize', updateBottomNavHeight);
+            window.addEventListener('orientationchange', () => setTimeout(updateBottomNavHeight, 300));
+            onFirebaseReady(() => {
+                seedIfEmpty();
+                listenAuthState();
+                setTimeout(() => {
+                    listenCompanies();
+                    listenLiveVehicles();
+                }, 400);
+            });
+
+            // Seguro: si por algun motivo Firebase nunca responde (sin
+            // Internet, error de configuracion), no dejamos a la persona
+            // viendo el splash para siempre.
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                if (splash && !splash.classList.contains('fade-out')) {
+                    document.getElementById('splashStatus').textContent = 'Esto está tardando más de lo normal...';
+                    setTimeout(() => splash.classList.add('fade-out'), 1500);
+                }
+            }, 8000);
+        }
+
+        window.addEventListener('beforeunload', (e) => {
+            if (activeDriverPath) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        function updateOfflineBanner() {
+            const banner = document.getElementById('offlineBanner');
+            if (!navigator.onLine) {
+                banner.classList.add('show');
+                if (activeDriverPath) {
+                    setDriverStatus('err', 'Sin conexión a Internet. No se está transmitiendo tu ubicación en este momento.');
+                    addLog('Conexión perdida. La transmisión se reanudará automáticamente al recuperar Internet.');
+                }
+            } else {
+                banner.classList.remove('show');
+                if (activeDriverPath) {
+                    setDriverStatus('ok', 'Conexión recuperada. Transmitiendo a Firebase en vivo.');
+                    addLog('Conexión a Internet recuperada.');
+                }
+            }
+        }
+
+        window.addEventListener('online', updateOfflineBanner);
+        window.addEventListener('offline', updateOfflineBanner);
+
+        window.addEventListener('load', init);
+    </script>
+
+    <script src="auth.js?v=5"></script>
+</body>
+</html>
