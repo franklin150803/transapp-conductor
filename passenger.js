@@ -430,7 +430,7 @@
                                 Verificada
                             </span>` : ''}
                             <button class="fav-star-btn ${isFav ? 'active' : ''}" data-company-id="${companyId}" title="Marcar como favorita">
-                                ${isFav ? '★' : '☆'}
+                                ${appIcon('star', 18, '', isFav)}
                             </button>
                         </div>
                     </div>
@@ -824,7 +824,7 @@
                     ? ids.map(id => `
                         <div class="stop-row">
                             <div class="stop-row-name" onclick="focusFavoriteStop('${id}')">📍 ${escapeHtml(stops[id].name)}</div>
-                            <button class="stop-row-delete" onclick="deleteFavoriteStop('${id}')">🗑</button>
+                            <button class="stop-row-delete" onclick="deleteFavoriteStop('${id}')">${appIcon('trash', 16)}</button>
                         </div>
                     `).join('')
                     : '<p class="fleet-empty">Todavía no guardaste ningún paradero.</p>';
