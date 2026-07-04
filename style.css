@@ -2376,7 +2376,47 @@
             color: white;
         }
 
-        .landing-logo { font-size: 3rem; margin-bottom: 8px; }
+        /* Fase B: bus con efecto "neon respirando" en el logo de bienvenida
+           y de login/registro. Se eligio esta de las 4 variantes enviadas
+           porque es la mas liviana (solo filter + opacity, sin ruedas
+           girando ni inclinacion 3D) y porque ya usa el mismo azul de la
+           marca por defecto. No requiere tocar el HTML: el circulo de fondo
+           y el brillo salen de este mismo bloque via pseudo-elemento. */
+        .landing-logo, .auth-logo {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 8px;
+            border-radius: 50%;
+            background: rgba(37, 99, 235, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: var(--primary);
+            animation: vuraBusBreathe 3s ease-in-out infinite;
+        }
+
+        .auth-logo { width: 76px; height: 76px; }
+
+        .landing-logo::before, .auth-logo::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, transparent 70%);
+            animation: vuraBusPulse 3s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes vuraBusBreathe {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.3)); }
+            50% { filter: drop-shadow(0 0 14px rgba(37, 99, 235, 0.7)); }
+        }
+
+        @keyframes vuraBusPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.12); }
+        }
         .landing-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
         .landing-subtitle { font-size: 1rem; color: rgba(255,255,255,0.9); margin-top: 6px; }
 
@@ -2507,7 +2547,6 @@
             margin: auto;
         }
 
-        .auth-logo { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
         .auth-title { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--text); }
         .auth-subtitle { text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; }
 
@@ -2804,7 +2843,3 @@
             opacity: 1;
             pointer-events: auto;
         }
-       
-
-    pointer-events: none; 
-}
