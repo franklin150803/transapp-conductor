@@ -518,6 +518,19 @@
             font-weight: 600;
         }
 
+        .fav-star-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .fav-star-btn.active { color: #f59e0b; }
+
         .vp-actions-row {
             display: flex;
             gap: 10px;
@@ -768,7 +781,7 @@
             border: none;
             background: var(--surface);
             box-shadow: var(--shadow-lg);
-            font-size: 1.3rem;
+            color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -791,7 +804,7 @@
             border: none;
             background: var(--surface);
             box-shadow: var(--shadow-lg);
-            font-size: 1.3rem;
+            color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1545,6 +1558,10 @@
             font-weight: 600;
             border-radius: var(--radius-sm);
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .route-editor-action-btn:active { transform: scale(0.97); }
@@ -2332,51 +2349,6 @@
         @keyframes splashPulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.08); opacity: 0.85; }
-        }
-
-        /* PARTE 46: "líneas de velocidad" detrás del bus -- lo único que
-           valía la pena rescatar del mockup de buses animados. Se agrega
-           envolviendo el icono existente en .bus-motion, sin tocar el SVG. */
-        .bus-motion {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bus-motion .bus-speed-lines {
-            position: absolute;
-            right: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-right: 8px;
-            pointer-events: none;
-        }
-
-        .bus-motion .bus-speed-lines span {
-            height: 2px;
-            border-radius: 2px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85));
-            animation: busSpeedLine 1.4s ease-in-out infinite;
-        }
-
-        .bus-motion .bus-speed-lines span:nth-child(1) { width: 16px; animation-delay: 0s; }
-        .bus-motion .bus-speed-lines span:nth-child(2) { width: 10px; animation-delay: 0.15s; }
-        .bus-motion .bus-speed-lines span:nth-child(3) { width: 13px; animation-delay: 0.3s; }
-
-        @keyframes busSpeedLine {
-            0%, 100% { opacity: 0; transform: translateX(6px); }
-            50% { opacity: 1; transform: translateX(0); }
-        }
-
-        /* En landing/auth (fondo de color, no negro) las líneas se ven
-           oscuras en vez de blancas para no perderse. */
-        .landing-logo .bus-speed-lines span,
-        .auth-logo .bus-speed-lines span {
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
         }
 
         .splash-title {
