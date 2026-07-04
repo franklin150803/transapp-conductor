@@ -29,10 +29,7 @@
     <!-- Landing Page -->
     <div class="landing-screen" id="landingScreen" style="display:none;">
         <div class="landing-hero">
-            <div class="landing-logo bus-motion">
-                <span class="bus-speed-lines"><span></span><span></span><span></span></span>
-                <span class="tab-icon-img" data-icon-key="bus" data-icon-size="56"></span>
-            </div>
+            <div class="landing-logo"><span class="tab-icon-img" data-icon-key="bus" data-icon-size="56"></span></div>
             <h1 class="landing-title">Vura</h1>
             <p class="landing-subtitle">Transporte público en tiempo real</p>
             <span class="landing-beta-tag">Vura Beta — Ayúdanos a mejorar el transporte público</span>
@@ -61,10 +58,7 @@
     <div class="auth-screen" id="authScreen" style="display:none;">
         <div class="auth-card">
             <button class="auth-back-link" onclick="backToLanding()" style="margin-bottom:8px;">← Volver al inicio</button>
-            <div class="auth-logo bus-motion">
-                <span class="bus-speed-lines"><span></span><span></span><span></span></span>
-                <span class="tab-icon-img" data-icon-key="bus" data-icon-size="40"></span>
-            </div>
+            <div class="auth-logo"><span class="tab-icon-img" data-icon-key="bus" data-icon-size="40"></span></div>
             <h1 class="auth-title">Vura</h1>
             <p class="auth-subtitle">Transporte público en tiempo real</p>
 
@@ -202,7 +196,7 @@
             </button>
 
             <button class="ph-radar-cta" onclick="openRadarPanel()">
-                📡 Radar Vura — los 5 buses más cercanos a ti
+                <span data-icon-key="radar" data-icon-size="16"></span> Radar Vura — los 5 buses más cercanos a ti
             </button>
 
             <div class="ph-stats-row">
@@ -269,7 +263,7 @@
                             Verificada
                         </span>
                     </div>
-                    <button class="pmap-fav-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Favorita">★</button>
+                    <button class="pmap-fav-btn" id="favoriteToggleBtn" onclick="toggleFavoriteSelected()" title="Favorita"><span data-icon-key="star" data-icon-size="20" data-icon-filled="true"></span></button>
                 </div>
 
                 <!-- Banner de incidentes flotante -->
@@ -285,15 +279,15 @@
                 <div class="pmap-fleet-bar" id="fleetSummary"></div>
 
                 <!-- FABs -->
-                <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos">📍</button>
-                <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente">⚠️</button>
+                <button class="my-stops-fab" onclick="openStopsPanel()" title="Mis paraderos favoritos"><span data-icon-key="mapPin" data-icon-size="22"></span></button>
+                <button class="report-incident-fab" onclick="openIncidentPanel()" title="Reportar un incidente"><span data-icon-key="warning" data-icon-size="22"></span></button>
             </div>
         </div>
 
         <div class="incident-panel" id="radarPanel">
             <div class="vehicle-panel-handle"></div>
             <div class="vehicle-panel-header">
-                <span class="vehicle-panel-title">📡 Radar Vura</span>
+                <span class="vehicle-panel-title"><span data-icon-key="radar" data-icon-size="16"></span> Radar Vura</span>
                 <button class="vehicle-panel-close" onclick="closeRadarPanel()">×</button>
             </div>
             <p class="incident-panel-hint">Los buses en línea más cercanos a tu ubicación, sin importar la empresa.</p>
@@ -618,9 +612,9 @@
                         <div id="routeEditorMap"></div>
                     </div>
                     <div class="route-editor-actions">
-                        <button type="button" class="route-editor-action-btn" onclick="undoRouteEditorPoint()">↩️ Deshacer último punto</button>
-                        <button type="button" class="route-editor-action-btn" onclick="mirrorRouteEditorRetorno()">🔁 Copiar Ida como Retorno</button>
-                        <button type="button" class="route-editor-action-btn danger" onclick="clearRouteEditor()">🗑 Borrar todo</button>
+                        <button type="button" class="route-editor-action-btn" onclick="undoRouteEditorPoint()"><span data-icon-key="undo" data-icon-size="16"></span> Deshacer último punto</button>
+                        <button type="button" class="route-editor-action-btn" onclick="mirrorRouteEditorRetorno()"><span data-icon-key="copy" data-icon-size="16"></span> Copiar Ida como Retorno</button>
+                        <button type="button" class="route-editor-action-btn danger" onclick="clearRouteEditor()"><span data-icon-key="trash" data-icon-size="16"></span> Borrar todo</button>
                     </div>
                 </div>
 
@@ -895,7 +889,8 @@
             document.querySelectorAll('[data-icon-key]').forEach(el => {
                 const key = el.getAttribute('data-icon-key');
                 const size = parseInt(el.getAttribute('data-icon-size') || '20', 10);
-                el.innerHTML = window.appIcon ? window.appIcon(key, size) : '';
+                const filled = el.getAttribute('data-icon-filled') === 'true';
+                el.innerHTML = window.appIcon ? window.appIcon(key, size, '', filled) : '';
             });
         }
 
