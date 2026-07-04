@@ -13,16 +13,7 @@
         let favoriteCompanyIds = {}; // { companyId: true }
         let isGuestSession = false; // true si entro con fbSignInAnonymously (Parte 34)
 
-        function backToLanding() {
-            window._authScreenManuallyOpened = false;
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('landingScreen').style.display = 'block';
-        }
-
         function goToAuth(mode) {
-            window._authScreenManuallyOpened = true;
-            document.getElementById('landingScreen').style.display = 'none';
-            document.getElementById('authScreen').style.display = 'flex';
             setAuthMode(mode);
         }
 
@@ -234,21 +225,11 @@
 
         function applyAuthUI(user, profile) {
             hideSplash();
-            const landingScreen = document.getElementById('landingScreen');
             const authScreen = document.getElementById('authScreen');
             const appShell = document.getElementById('appShell');
 
             if (!user) {
-                // Si el usuario ya habia avanzado al login (p. ej. tras cerrar sesion
-                // desde dentro de la app), lo dejamos en login en vez de regresarlo
-                // a la landing; si es la primera carga, ve la landing primero.
-                if (!window._authScreenManuallyOpened) {
-                    landingScreen.style.display = 'block';
-                    authScreen.style.display = 'none';
-                } else {
-                    landingScreen.style.display = 'none';
-                    authScreen.style.display = 'flex';
-                }
+                authScreen.style.display = 'flex';
                 appShell.style.display = 'none';
                 currentUserId = null;
                 favoriteCompanyIds = {};
@@ -257,7 +238,6 @@
                 return;
             }
 
-            landingScreen.style.display = 'none';
             authScreen.style.display = 'none';
             appShell.style.display = 'block';
             currentUserProfile = profile;
@@ -355,7 +335,6 @@
             });
         }
 
-        window.backToLanding = backToLanding;
         window.goToAuth = goToAuth;
         window.setAuthMode = setAuthMode;
         window.setRegisterRole = setRegisterRole;
