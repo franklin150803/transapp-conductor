@@ -9,14 +9,6 @@
 
         // ==================== MAP (PASSENGER) ====================
         function initMap() {
-            // minZoom evita problemas de sincronizacion Leaflet/MapLibre en
-            // niveles de zoom muy bajos (recomendado por la documentacion
-            // oficial del plugin); Lima nunca se ve en zoom tan alejado.
-            //
-            // Parte 43: opciones de animacion mas fluida. zoomSnap/zoomDelta
-            // chicos hacen que el zoom con gesto de pellizco se sienta
-            // continuo en vez de saltar de golpe entre niveles enteros;
-            // wheelPxPerZoomLevel suaviza el zoom con scroll en desktop.
             map = L.map('map', {
                 zoomControl: false,
                 attributionControl: true,
@@ -29,23 +21,6 @@
                 markerZoomAnimation: true
             }).setView([-12.0464, -77.0428], 12);
 
-            // Parte 38: tiles vectoriales (MapLibre GL via el plugin
-            // maplibre-gl-leaflet) en vez de imagenes PNG con filtro CSS.
-            // El estilo en vura-map-style.json define colores, jerarquia de
-            // vias y categorias (hospital, parque, etc) por separado, algo
-            // que un filtro CSS sobre una imagen no puede lograr. Viene de
-            // OpenFreeMap (datos de OpenStreetMap), sin cuenta ni API key.
-            // Todo lo de abajo (marcadores, polylines, popups) sigue siendo
-            // Leaflet normal: el plugin solo agrega esta capa base al mapa.
-            //
-            // Nota tecnica: el propio plugin deja el mapa de MapLibre sin
-            // rotacion/inclinacion mientras esta dentro de Leaflet (Leaflet
-            // maneja los gestos y sincroniza MapLibre por detras), asi que
-            // no hace falta deshabilitarlas a mano. Esto tambien significa
-            // que los edificios 3D con inclinacion de camara que se
-            // planeaban para mas adelante no se ven "inclinados" aqui (se
-            // ven en planta, como una sombra con volumen) — se ajusta el
-            // plan de esa parte cuando se llegue.
             L.maplibreGL({
                 style: 'vura-map-style.json',
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -53,32 +28,21 @@
         }
 
         // ==================== ROUTING REAL (ORS) ====================
-        // OpenRouteService: gratis con registro, 2000 req/dia. Transforma
-        // los puntos de control que el admin dibujo en el editor visual
-        // (que ya son calles reales, no coordenadas al azar) en un trazado
-        // exacto que abraza cada curva de cada avenida.
-        //
-        // INSTRUCCION UNICA: reemplaza 'TU_API_KEY_ORS' con la key que
-        // obtienes gratis en https://openrouteservice.org/dev/#/signup
-        // La key es una cadena de ~40 caracteres, empieza con "eyJ0..."
         const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZlNWIwMDczMGQ1ODQ2ZmZiNTJjYTkyY2Q2OTM0NzQyIiwiaCI6Im11cm11cjY0In0=';
         const ORS_BASE = 'https://api.openrouteservice.org/v2/directions/driving-car';
 
-        // Cache en memoria (no hace falta persistir entre sesiones: las
-        // rutas no cambian entre sesiones y ORS ya responde en <300ms).
         const routeCache = {};
 
         async function fetchOrsRoute(points) {
-            // ORS necesita al menos 2 puntos y los recibe en [lng, lat]
             if (!points || points.length < 2) return null;
-            if (ORS_API_KEY === 'TU_API_KEY_ORS') return null; // sin key, dibujar línea recta
+            if (ORS_API_KEY === 'TU_API_KEY_ORS') return null;
 
             const key = points.map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join('|');
             if (routeCache[key]) return routeCache[key];
 
             try {
                 const body = {
-                    coordinates: points.map(p => [p[1], p[0]]) // [lng, lat]
+                    coordinates: points.map(p => [p[1], p[0]])
                 };
                 const res = await fetch(`${ORS_BASE}/geojson`, {
                     method: 'POST',
@@ -92,7 +56,6 @@
                 const data = await res.json();
                 const coords = data.features?.[0]?.geometry?.coordinates;
                 if (!coords) return null;
-                // ORS devuelve [lng, lat], Leaflet quiere [lat, lng]
                 const latLngs = coords.map(c => [c[1], c[0]]);
                 routeCache[key] = latLngs;
                 return latLngs;
@@ -102,6 +65,9 @@
             }
         }
 
+        // ==================== MOSTRAR RUTAS (MODIFICADO) ====================
+        // Ahora muestra rutas para TODAS las empresas (incluso no registradas)
+        // pero los vehículos SOLO para empresas registradas (registered: true)
         async function showRoute(companyId, company) {
             if (!company || !company.routePointsIda) return;
 
@@ -111,29 +77,30 @@
             }
 
             const isSelected = selectedCompanyId === companyId;
-            const weight = isSelected ? 5 : 3;
-            const opacity = isSelected ? 0.92 : 0.35;
-            const dash = isSelected ? null : '10, 8';
+            // Las empresas NO registradas se muestran con líneas más tenues
+            const isRegistered = company.registered === true;
+            const weight = isSelected ? 5 : (isRegistered ? 3 : 2);
+            const opacity = isSelected ? 0.92 : (isRegistered ? 0.5 : 0.3);
+            const dash = isSelected ? null : (isRegistered ? null : '10, 8');
 
-            // Intenta obtener el trazado real sobre calles desde ORS;
-            // si falla (sin key, sin internet, limite alcanzado), dibuja
-            // los puntos de control directamente como polilinea — mucho
-            // mejor que antes (que eran coordenadas al azar), ya que el
-            // editor ahora los dibuja tocando calles reales.
+            // Colores más limpios para las rutas
+            const idaColor = isRegistered ? '#0ea5e9' : '#4a7a9c';
+            const retornoColor = isRegistered ? '#ef4444' : '#9c4a4a';
+
             const idaPoints = await fetchOrsRoute(company.routePointsIda) || company.routePointsIda;
             const idaLine = L.polyline(idaPoints, {
-                color: '#22d3ee',
+                color: idaColor,
                 weight, opacity, dashArray: dash, smoothFactor: 1,
-                className: 'route-line-ida'
+                className: isRegistered ? 'route-line-ida' : 'route-line-ida-dim'
             }).addTo(map);
 
             let retornoLine = null;
             if (company.routePointsRetorno && company.routePointsRetorno.length > 1) {
                 const retPoints = await fetchOrsRoute(company.routePointsRetorno) || company.routePointsRetorno;
                 retornoLine = L.polyline(retPoints, {
-                    color: '#ff5252',
+                    color: retornoColor,
                     weight, opacity, dashArray: dash, smoothFactor: 1,
-                    className: 'route-line-retorno'
+                    className: isRegistered ? 'route-line-retorno' : 'route-line-retorno-dim'
                 }).addTo(map);
             }
 
@@ -172,16 +139,9 @@
 
         function vehicleKey(companyId, vehicleId) { return companyId + '__' + vehicleId; }
 
-        // ==================== MODO ENFOQUE (Parte 46) ====================
-        // Cuando el pasajero activa "Modo enfoque" sobre un vehiculo, el
-        // resto del mapa (otros buses y rutas de otras empresas) se atenua
-        // visualmente para que sea obvio cual es el bus que esta esperando,
-        // sin necesidad de cerrar el panel ni perder el resto del contexto
-        // del mapa (las otras rutas siguen ahi, solo mas tenues).
+        // ==================== MODO ENFOQUE ====================
         let waitingTargetKey = null;
 
-        // Aplica/retira las clases de atenuado sobre el DOM de un marcador
-        // ya existente, sin tocar su icono ni su animacion de movimiento.
         function applyDimClass(marker, markerId) {
             if (!marker) return;
             const el = marker.getElement && marker.getElement();
@@ -196,10 +156,6 @@
             }
         }
 
-        // Define (o limpia, si key es null) cual vehiculo queda "enfocado".
-        // Recorre los marcadores y polylines ya existentes para aplicar el
-        // atenuado de inmediato, sin esperar a la proxima actualizacion de
-        // posicion GPS (que podria tardar varios segundos en buses detenidos).
         function setWaitingTarget(key) {
             waitingTargetKey = key;
             const targetCompanyId = key ? key.split('__')[0] : null;
@@ -221,8 +177,6 @@
         }
 
         function animateMarkerTo(marker, fromLatLng, toLatLng, durationMs) {
-            // Cancela cualquier animacion previa de este marcador para evitar
-            // que se acumulen varias animaciones compitiendo entre si.
             if (marker._animFrame) {
                 cancelAnimationFrame(marker._animFrame);
                 marker._animFrame = null;
@@ -235,7 +189,7 @@
             function step(now) {
                 const elapsed = now - start;
                 const t = Math.min(1, elapsed / durationMs);
-                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; // ease-in-out suave
+                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
                 const lat = fromLat + (toLat - fromLat) * ease;
                 const lng = fromLng + (toLng - fromLng) * ease;
                 marker.setLatLng([lat, lng]);
@@ -248,11 +202,17 @@
             marker._animFrame = requestAnimationFrame(step);
         }
 
+        // ==================== ACTUALIZAR MAPA CON DATOS EN VIVO (MODIFICADO) ====================
+        // SOLO muestra vehículos para empresas REGISTRADAS (registered: true)
         function updateMapFromLiveData() {
             if (!map) return;
             Object.keys(companies).forEach(companyId => {
                 const company = companies[companyId];
                 if (!company.vehicles) return;
+
+                // Si la empresa NO está registrada, NO mostramos vehículos
+                if (company.registered !== true) return;
+
                 Object.keys(company.vehicles).forEach(vehicleId => {
                     const vehicle = company.vehicles[vehicleId];
                     const live = (liveVehicles[companyId] || {})[vehicleId];
@@ -264,22 +224,15 @@
                     }
 
                     const moving = (live.speed || 0) >= 3;
-                    const sentidoColor = live.sentido === 'retorno' ? '#ff5252' : '#22d3ee';
-                    const sentidoLabel = live.sentido === 'retorno' ? 'Retorno' : 'Ida';
+                    const sentidoColor = live.sentido === 'retorno' ? '#ef4444' : '#0ea5e9';
                     const plateLabel = vehicle.plate || vehicleId;
 
-                    // Si nada relevante cambio desde la ultima actualizacion de
-                    // este vehiculo en particular, no recreamos su icono ni
-                    // reiniciamos su animacion. Esto evita trabajo innecesario
-                    // cuando hay muchos vehiculos y solo unos pocos se movieron.
                     const prevPos = vehicleLastKnownPos[markerId];
                     if (prevPos && prevPos.lat === live.lat && prevPos.lng === live.lng &&
                         prevPos.timestamp === live.timestamp) {
                         return;
                     }
 
-                    // Si el conductor no envio heading nativo, lo calculamos
-                    // comparando con la posicion previa que ya teniamos guardada.
                     let heading = (typeof live.heading === 'number') ? live.heading : null;
                     if (heading === null && prevPos) {
                         const distM = haversine(prevPos.lat, prevPos.lng, live.lat, live.lng);
@@ -291,25 +244,12 @@
                         const fromLatLng = vehicleMarkers[markerId].getLatLng();
                         animateMarkerTo(vehicleMarkers[markerId], fromLatLng, [live.lat, live.lng], 2500);
                         vehicleMarkers[markerId].setIcon(createVehicleIcon(sentidoColor, moving, plateLabel, heading));
-                        // setIcon reconstruye el div del icono, asi que el
-                        // atenuado de Modo enfoque hay que reaplicarlo cada
-                        // vez (si no, "sobrevive" solo hasta el proximo GPS).
                         applyDimClass(vehicleMarkers[markerId], markerId);
                     } else {
-                        // Parte 43: ya no se usa bindPopup aqui. Antes, al
-                        // tocar el marcador, Leaflet abria el popup Y se
-                        // disparaba el 'click' que abre el panel de detalle
-                        // al mismo tiempo — el popup aparecia un instante y
-                        // quedaba tapado de inmediato por el panel. El panel
-                        // ya muestra toda esa informacion (y mas), asi que
-                        // el popup era pura redundancia visual.
                         const marker = L.marker([live.lat, live.lng], {
                             icon: createVehicleIcon(sentidoColor, moving, plateLabel, heading)
                         }).addTo(map);
 
-                        // Pequeño "pop" de entrada cuando aparece un vehiculo
-                        // nuevo en el mapa, para que no se sienta que aparece
-                        // de golpe sin transicion.
                         const el = marker.getElement && marker.getElement();
                         if (el) {
                             el.style.opacity = '0';
@@ -347,10 +287,6 @@
             return (Date.now() - live.timestamp) < 60000;
         }
 
-
-        // Estima minutos de llegada al destino de la ruta correspondiente
-        // (ida o retorno, segun el sentido reportado por el conductor),
-        // usando velocidad real si hay, o un promedio conservador de 18 km/h.
         function getActiveRoutePoints(company, live) {
             const sentido = (live && live.sentido) || 'ida';
             if (sentido === 'retorno' && company.routePointsRetorno && company.routePointsRetorno.length) {
@@ -358,14 +294,8 @@
             }
             return company.routePointsIda;
         }
-
-        // Proyecta un punto (lat,lng) sobre un segmento de recta A-B y devuelve
-        // el punto mas cercano sobre ese segmento, junto con que fraccion (0-1)
-        // del segmento representa. Se usa para "pegar" la posicion del vehiculo
-        // a la ruta real en vez de medir en linea recta hacia el destino.
+        // ==================== PROYECCIÓN EN RUTA ====================
         function projectPointOnSegment(lat, lng, aLat, aLng, bLat, bLng) {
-            // Conversion simple a un plano local en metros, suficiente para
-            // distancias cortas como las de una ruta urbana.
             const toXY = (la, ln) => ({
                 x: (ln - aLng) * 111320 * Math.cos(aLat * Math.PI / 180),
                 y: (la - aLat) * 110540
@@ -386,10 +316,6 @@
             return { lat: projLat, lng: projLng, t, distToSegment };
         }
 
-        // Calcula la distancia restante siguiendo la ruta real (no en linea
-        // recta): encuentra el segmento de la polyline mas cercano al vehiculo,
-        // se "pega" a ese punto, y suma la longitud de todos los segmentos
-        // que quedan hasta el final de la ruta.
         function distanceAlongRoute(points, lat, lng) {
             if (!points || points.length < 2) return null;
 
@@ -408,9 +334,6 @@
                 }
             }
 
-            // Si el vehiculo esta muy lejos de toda la ruta (>800m), el
-            // "snapping" ya no es confiable; usamos linea recta al destino
-            // como respaldo en vez de un numero engañosamente preciso.
             if (bestDist > 800) return null;
 
             let remaining = haversine(
@@ -429,8 +352,6 @@
 
             let distM = distanceAlongRoute(points, live.lat, live.lng);
             if (distM === null) {
-                // Respaldo: linea recta al destino si el vehiculo esta
-                // demasiado lejos de la ruta dibujada como para "pegarlo" a ella.
                 const dest = points[points.length - 1];
                 distM = haversine(live.lat, live.lng, dest[0], dest[1]);
             }
@@ -453,18 +374,7 @@
             return distM / 1000;
         }
 
-        // ==================== CONFIANZA DEL ETA (Parte 47) ====================
-        // No es lo mismo "preciso" GPS (eso ya lo muestra gpsQuality, mide
-        // la señal del telefono) que "confiable" el TIEMPO ESTIMADO: el
-        // ETA puede tener buena señal GPS pero seguir siendo una mala
-        // estimacion si el dato es viejo o si el vehiculo esta detenido
-        // (en ese caso, estimateEtaMinutes usa un promedio de respaldo de
-        // 18 km/h en vez de la velocidad real, porque no hay velocidad
-        // real que usar). Combinamos 3 señales en un puntaje 0-5:
-        //   - que tan reciente es el ultimo dato GPS (mas peso, porque un
-        //     dato viejo invalida todo lo demas)
-        //   - precision GPS del telefono del conductor
-        //   - si el calculo uso velocidad real o el promedio de respaldo
+        // ==================== CONFIANZA DEL ETA ====================
         function estimateEtaConfidence(live) {
             if (!live || !live.timestamp) return null;
 
@@ -487,3 +397,52 @@
             if (score >= 2) return { level: 'medium', label: 'Aproximado', dot: '🟡' };
             return { level: 'low', label: 'Poco confiable', dot: '🔴' };
         }
+
+        // ==================== EMPRESA REGISTRADA? ====================
+        // Función auxiliar para verificar si una empresa está registrada
+        function isCompanyRegistered(companyId) {
+            const company = companies[companyId];
+            return company && company.registered === true;
+        }
+
+        // Función para obtener el badge de estado de la empresa
+        function getCompanyStatusBadge(companyId) {
+            const company = companies[companyId];
+            if (!company) return '';
+            if (company.registered === true) {
+                return '<span class="company-status-badge registered">✅ Activa</span>';
+            }
+            return '<span class="company-status-badge unregistered">📋 Ruta disponible</span>';
+        }
+        // ==================== CALIDAD GPS ====================
+        function gpsQuality(accuracyMeters) {
+            if (accuracyMeters === null || accuracyMeters === undefined) {
+                return { level: 'unknown', label: 'Sin datos', dot: '⚪', cssClass: 'accuracy-unknown' };
+            }
+            if (accuracyMeters < 20) {
+                return { level: 'good', label: 'GPS excelente', dot: '🟢', cssClass: 'accuracy-good' };
+            }
+            if (accuracyMeters < 100) {
+                return { level: 'medium', label: 'Precisión media', dot: '🟡', cssClass: 'accuracy-medium' };
+            }
+            return { level: 'bad', label: 'Señal débil', dot: '🔴', cssClass: 'accuracy-bad' };
+        }
+
+        // ==================== EXPORTS GLOBALES ====================
+        // Exponer funciones para que otros scripts las usen
+        window.initMap = initMap;
+        window.showRoute = showRoute;
+        window.getRouteBoundsForCompany = getRouteBoundsForCompany;
+        window.updateMapFromLiveData = updateMapFromLiveData;
+        window.isOnline = isOnline;
+        window.estimateEtaMinutes = estimateEtaMinutes;
+        window.estimateDistanceKm = estimateDistanceKm;
+        window.getActiveRoutePoints = getActiveRoutePoints;
+        window.estimateEtaConfidence = estimateEtaConfidence;
+        window.setWaitingTarget = setWaitingTarget;
+        window.isCompanyRegistered = isCompanyRegistered;
+        window.getCompanyStatusBadge = getCompanyStatusBadge;
+        window.createVehicleIcon = createVehicleIcon;
+        window.animateMarkerTo = animateMarkerTo;
+        window.removeVehicleMarker = removeVehicleMarker;
+        window.vehicleKey = vehicleKey;
