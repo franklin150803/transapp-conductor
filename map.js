@@ -114,8 +114,8 @@
             const opacity = isSelected ? 1.0 : (isRegistered ? 0.6 : 0.2);
             const dash = isSelected ? null : (isRegistered ? null : '10, 8');
 
-            const idaColor = isSelected ? '#ff3333' : (isRegistered ? '#ef4444' : '#b91c1c');
-            const retornoColor = isSelected ? '#ff8800' : (isRegistered ? '#f97316' : '#c2410c');
+            const idaColor = isSelected ? '#22D3EE' : (isRegistered ? '#22D3EE' : '#0891b2');
+            const retornoColor = isSelected ? '#FF5252' : (isRegistered ? '#FF5252' : '#dc2626');
 
             const idaPoints = await fetchOrsRoute(routePointsIda) || routePointsIda;
             const idaLine = L.polyline(idaPoints, {
