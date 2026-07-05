@@ -26,15 +26,13 @@
                         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     }).addTo(map);
 
-                    window.glMap = glLayer.getMaplibreMap();
-
-                   glLayer.getMaplibreMap().once('styledata', () => {
+                   window.glMap = glLayer.getMaplibreMap();
+glLayer.getMaplibreMap().once('styledata', () => {
     const glMap = glLayer.getMaplibreMap();
     glMap.setPitch(0);
     glMap.setBearing(0);
 });
-
-                    map.on('click', function(e) {
+map.on('click', function(e) {
                         const lat = e.latlng.lat;
                         const lng = e.latlng.lng;
                         if (window.userLocationMarker) {
