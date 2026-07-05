@@ -28,11 +28,11 @@
 
                     window.glMap = glLayer.getMaplibreMap();
 
-                    glLayer.getMaplibreMap().once('styledata', () => {
-                        const glMap = glLayer.getMaplibreMap();
-                        glMap.setPitch(55);
-                        glMap.setBearing(-10);
-                    });
+                   glLayer.getMaplibreMap().once('styledata', () => {
+    const glMap = glLayer.getMaplibreMap();
+    glMap.setPitch(0);
+    glMap.setBearing(0);
+});
 
                     map.on('click', function(e) {
                         const lat = e.latlng.lat;
