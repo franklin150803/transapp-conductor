@@ -903,7 +903,7 @@
         let previousLiveVehicles = {}; // snapshot anterior, para detectar cambios que merecen notificacion
         let notifiedEtaKeys = {}; // evita repetir el mismo aviso de "esta cerca" una y otra vez
         let selectedCompanyId = null;
-        let map = null;
+        let map = null; window.map = null;
         let driverMap = null;
         let vehicleMarkers = {};
         let vehicleLastKnownPos = {}; // ultima posicion/heading conocido por marcador, para animar y calcular rumbo
