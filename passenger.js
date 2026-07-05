@@ -527,9 +527,9 @@
             }
 
             setTimeout(() => {
-                if (!map) initMap();
-window.map = map; // ← agregar esta línea
-                map.invalidateSize();
+               if (!map) initMap();
+window.map = map;
+map.invalidateSize();
                 Object.keys(companies).forEach(cid => showRoute(cid, companies[cid]));
                 const bounds = getRouteBoundsForCompany(companyId);
                 if (bounds) {
