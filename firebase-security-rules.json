@@ -1,0 +1,243 @@
+{
+  "rules": {
+    // ============ DEFAULT: DENY ALL ============
+    // Por defecto, NADA está permitido. Solo lo que explícitamente autorizamos.
+    
+    // ============ USUARIOS (usuarios/) ============
+    "usuarios": {
+      "$uid": {
+        // Solo el usuario puede leer sus propios datos
+        ".read": "$uid === auth.uid",
+        
+        // Solo el usuario puede escribir sus propios datos
+        ".write": "$uid === auth.uid",
+        
+        // Validar estructura de datos
+        ".validate": "newData.hasChildren(['email', 'role', 'createdAt'])",
+        
+        "email": {
+          ".validate": "newData.isString() && newData.val().matches(/^[^@]+@[^@]+\\.[^@]+$/)"
+        },
+        
+        "role": {
+          // 'passenger', 'driver', 'admin', 'conductor', 'pasajero'
+          ".validate": "newData.isString() && (newData.val() === 'passenger' || newData.val() === 'driver' || newData.val() === 'admin' || newData.val() === 'conductor' || newData.val() === 'pasajero')"
+        },
+        
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+
+    // ============ ROUTES (rutas/) ============
+    "routes": {
+      // Solo lectura pública (cualquiera puede ver rutas)
+      ".read": true,
+      
+      "$routeId": {
+        // Solo admin puede escribir/crear rutas
+        ".write": "root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        ".validate": "newData.hasChildren(['name', 'color', 'stops'])",
+        
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+        },
+        
+        "color": {
+          // Formato: #RRGGBB
+          ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)"
+        },
+        
+        "stops": {
+          // Array de paradas
+          ".validate": "newData.isObject()"
+        }
+      }
+    },
+
+    // ============ VEHICLES (vehículos/) ============
+    "vehicles": {
+      "$vehicleId": {
+        // Conductor puede leer/escribir su vehículo
+        ".read": "auth.uid === data.child('driverId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        ".write": "auth.uid === data.child('driverId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        ".validate": "newData.hasChildren(['driverId', 'plate', 'status'])",
+        
+        "driverId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        
+        "plate": {
+          // Formato: XXX-999
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Z]{3}-\\d{3}$/)"
+        },
+        
+        "status": {
+          // 'idle', 'in_route', 'offline'
+          ".validate": "newData.isString() && (newData.val() === 'idle' || newData.val() === 'in_route' || newData.val() === 'offline')"
+        },
+        
+        "location": {
+          ".validate": "newData.hasChildren(['lat', 'lng', 'timestamp'])",
+          
+          "lat": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          
+          "lng": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          },
+          
+          "timestamp": {
+            ".validate": "newData.isNumber() && newData.val() > 0"
+          }
+        }
+      }
+    },
+
+    // ============ TRIPS (viajes/) ============
+    "trips": {
+      "$tripId": {
+        // Pasajero/Conductor puede leer sus propios viajes, admin todo
+        ".read": "auth.uid === data.child('passengerId').val() || auth.uid === data.child('driverId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        // Pasajero/Conductor puede escribir sus propios viajes
+        ".write": "auth.uid === newData.child('passengerId').val() || auth.uid === newData.child('driverId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        ".validate": "newData.hasChildren(['passengerId', 'driverId', 'startTime'])",
+        
+        "passengerId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        
+        "driverId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        
+        "startTime": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        
+        "endTime": {
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() > parent.child('startTime').val())"
+        }
+      }
+    },
+
+    // ============ VEHÍCULOS EN VIVO (vehiculos_live/) ============
+    "vehiculos_live": {
+      "$companyId": {
+        "$vehicleId": {
+          // Cualquiera puede leer la ubicación en vivo de los buses
+          ".read": "true",
+          
+          // Solo los usuarios con rol 'conductor' y con el vehicleId coincidente en su perfil
+          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'conductor' && root.child('usuarios').child(auth.uid).child('vehicleId').val() === $vehicleId"
+        }
+      }
+    },
+
+    // ============ HISTORIAL (historial/) ============
+    "historial": {
+      ".read": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+      "$companyId": {
+        ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('role').val() === 'admin' || root.child('usuarios').child(auth.uid).child('role').val() === 'conductor')",
+        "$recordId": {
+          // Solo administradores (isAdmin === true) o el propio conductor del vehículo pueden escribir registros
+          ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('isAdmin').val() === true || root.child('usuarios').child(auth.uid).child('vehicleId').val() === newData.child('vehicleId').val())"
+        }
+      }
+    },
+
+    // ============ LOCATIONS (ubicaciones en vivo/) ============
+    "liveLocations": {
+      "$vehicleId": {
+        ".read": true,
+        ".write": "auth.uid === root.child('vehicles').child($vehicleId).child('driverId').val()",
+        ".validate": "newData.hasChildren(['lat', 'lng', 'timestamp'])",
+        "lat": {
+          ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+        },
+        "lng": {
+          ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now"
+        },
+        "speed": {
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)"
+        }
+      }
+    },
+
+    // ============ INCIDENTS (reportes/) ============
+    "incidents": {
+      "$incidentId": {
+        // Reportante/Admin puede leer
+        ".read": "auth.uid === data.child('reporterId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        // Reportante/Admin puede escribir
+        ".write": "auth.uid === newData.child('reporterId').val() || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        ".validate": "newData.hasChildren(['reporterId', 'type', 'timestamp'])",
+        
+        "reporterId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        
+        "type": {
+          // 'safety', 'harassment', 'accident', 'other'
+          ".validate": "newData.isString()"
+        },
+        
+        "timestamp": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        }
+      }
+    },
+
+    // ============ ADMIN SETTINGS (solo admin) ============
+    "settings": {
+      ".read": "root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+      ".validate": "newData.isObject()"
+    },
+
+    // ============ FAVORITES (favoritos del usuario) ============
+    "favorites": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "$stopId": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    // ============ NOTIFICATIONS (notificaciones) ============
+    "notifications": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        
+        // Usuario puede escribir sus notificaciones
+        ".write": "$uid === auth.uid || root.child('usuarios').child(auth.uid).child('role').val() === 'admin'",
+        
+        "$notificationId": {
+          ".validate": "newData.hasChildren(['title', 'timestamp'])"
+        }
+      }
+    },
+
+    // ============ INDEX RULES (para performance) ============
+    ".indexOn": {
+      "vehicles": ["driverId", "status", "location/timestamp"],
+      "trips": ["passengerId", "driverId", "startTime"],
+      "incidents": ["reporterId", "timestamp"],
+      "liveLocations": ["timestamp"]
+    }
+  }
+}
