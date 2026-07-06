@@ -178,6 +178,9 @@
                 schedule: schedule || null,
                 destinos,
                 verified: true,
+                registered: true, // FIX: sin esto, updateMapFromLiveData() y showRoute()
+                                   // nunca muestran los vehiculos de esta empresa al
+                                   // pasajero (comparan company.registered === true).
                 color: colors[Object.keys(companies).length % colors.length],
                 routePointsIda,
                 routePointsRetorno,
