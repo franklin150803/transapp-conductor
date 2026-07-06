@@ -462,6 +462,10 @@
 
         function onDriverPosition(pos) {
             if (!activeDriverPath) return;
+            // FIX: una lectura exitosa cierra cualquier ciclo de reintento
+            // y quita el boton de "abrir ajustes" si estaba visible.
+            gpsRetryCount = 0;
+            clearGpsRecoveryButton();
             const { companyId, vehicleId } = activeDriverPath;
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
@@ -657,10 +661,66 @@
             }
         }
 
+        // FIX: antes onDriverError solo mostraba el mensaje y se quedaba ahi.
+        // Si el permiso de ubicacion estaba denegado, el conductor no tenia
+        // forma de recuperarse sin recargar la pagina; si era timeout o GPS
+        // no disponible (interiores, tunel), tampoco habia reintento
+        // automatico. Ahora: permiso denegado -> boton para abrir ajustes;
+        // timeout/no disponible -> reintento con backoff hasta 3 veces.
+        let gpsRetryCount = 0;
+        const MAX_GPS_RETRIES = 3;
+
+        function clearGpsRecoveryButton() {
+            const existing = document.getElementById('gpsRecoveryBtn');
+            if (existing) existing.remove();
+        }
+
         function onDriverError(err) {
             const friendly = friendlyGpsError(err);
             setDriverStatus('err', friendly);
             addLog(`Error de geolocalización (código ${err.code}): ${err.message}`);
+            clearGpsRecoveryButton();
+
+            if (err.code === 1) { // PERMISSION_DENIED
+                const statusEl = document.getElementById('driverStatusText');
+                if (statusEl && statusEl.parentNode) {
+                    const btn = document.createElement('button');
+                    btn.id = 'gpsRecoveryBtn';
+                    btn.type = 'button';
+                    btn.className = 'btn btn-primary';
+                    btn.style.marginTop = '10px';
+                    btn.textContent = '🔓 Abrir ajustes de ubicación';
+                    btn.onclick = () => {
+                        if (/android/i.test(navigator.userAgent)) {
+                            window.location.href = 'intent:#Intent;action=android.settings.LOCATION_SOURCE_SETTINGS;end';
+                        } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+                            window.location.href = 'App-Prefs:root=Privacy&path=LOCATION';
+                        } else {
+                            showToast('Ve a Configuración del navegador > Privacidad > Ubicación y actívala para este sitio.', 'info');
+                        }
+                    };
+                    statusEl.parentNode.appendChild(btn);
+                }
+                return;
+            }
+
+            // TIMEOUT (3) o POSITION_UNAVAILABLE (2): reintentar con backoff.
+            if (err.code === 2 || err.code === 3) {
+                gpsRetryCount++;
+                if (gpsRetryCount <= MAX_GPS_RETRIES) {
+                    const delay = Math.min(1000 * 2 ** gpsRetryCount, 15000);
+                    addLog(`Reintentando GPS en ${Math.round(delay / 1000)}s (intento ${gpsRetryCount}/${MAX_GPS_RETRIES})...`);
+                    setTimeout(() => {
+                        if (activeDriverPath && watchId === null) {
+                            watchId = navigator.geolocation.watchPosition(onDriverPosition, onDriverError, {
+                                enableHighAccuracy: true, maximumAge: 0, timeout: 20000
+                            });
+                        }
+                    }, delay);
+                } else {
+                    setDriverStatus('err', 'GPS no disponible tras varios intentos. Verifica tu señal e inicia el recorrido de nuevo.');
+                }
+            }
         }
 
         function confirmFinishRecorrido() {
