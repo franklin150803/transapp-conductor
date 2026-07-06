@@ -19,7 +19,11 @@
   --primary-dark:   #2563eb;
   --danger:         #f43f5e;
   --warning:        #fbbf24;
-  --success:        #3b82f6;
+  /* FIX: --success era el mismo azul que --primary/--ida-color, asi que
+     estados como .accuracy-good y .status-moving (precision GPS buena,
+     vehiculo en movimiento) se pintaban azules en vez de verdes,
+     perdiendo el significado semantico del color. */
+  --success:        #22c55e;
   --accent:         #6366f1;
 
   /* Route colors */
