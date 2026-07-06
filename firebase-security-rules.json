@@ -134,9 +134,16 @@
         "$vehicleId": {
           // Cualquiera puede leer la ubicación en vivo de los buses
           ".read": "true",
-          
-          // Solo los usuarios con rol 'conductor' y con el vehicleId coincidente en su perfil
-          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'conductor' && root.child('usuarios').child(auth.uid).child('vehicleId').val() === $vehicleId"
+
+          // FIX: la regla anterior comparaba contra usuarios/{uid}/vehicleId,
+          // pero ese campo nunca se guarda al registrar un conductor (auth.js
+          // solo guarda companyId y vehiclePlate) y driver.js permite al
+          // conductor elegir CUALQUIER vehiculo de su empresa cada sesion
+          // (populateDriverVehicleSelect). Con la regla vieja, ningun
+          // conductor podia escribir nunca su posicion en vivo.
+          // Ahora se exige rol 'conductor' y que la empresa del vehiculo
+          // coincida con la empresa registrada en su perfil.
+          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'conductor' && root.child('usuarios').child(auth.uid).child('companyId').val() === $companyId"
         }
       }
     },
@@ -147,8 +154,11 @@
       "$companyId": {
         ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('role').val() === 'admin' || root.child('usuarios').child(auth.uid).child('role').val() === 'conductor')",
         "$recordId": {
-          // Solo administradores (isAdmin === true) o el propio conductor del vehículo pueden escribir registros
-          ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('isAdmin').val() === true || root.child('usuarios').child(auth.uid).child('vehicleId').val() === newData.child('vehicleId').val())"
+          // FIX: mismo problema que en vehiculos_live — usuarios/{uid}/vehicleId
+          // no existe. driver.js (stopDriverMode) escribe el historial con el
+          // companyId del recorrido activo, asi que validamos contra eso.
+          // Solo administradores (isAdmin === true) o un conductor de esa empresa pueden escribir registros
+          ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('isAdmin').val() === true || (root.child('usuarios').child(auth.uid).child('role').val() === 'conductor' && root.child('usuarios').child(auth.uid).child('companyId').val() === $companyId))"
         }
       }
     },
